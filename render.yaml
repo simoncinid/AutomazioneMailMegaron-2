@@ -1,0 +1,13 @@
+# Esempio Render: servizio Background Worker (polling orario).
+# Adatta il nome del servizio e le env nel dashboard.
+
+services:
+  - type: worker
+    name: automazione-mail-megaron-worker
+    runtime: node
+    buildCommand: npm install && npm run build
+    startCommand: npm run start:worker
+    envVars:
+      - key: NODE_ENV
+        value: production
+      # Aggiungi nel dashboard: GRAPH_*, MAILBOX_USER, GOOGLE_SERVICE_ACCOUNT_JSON, MAPPING_*, ecc.
