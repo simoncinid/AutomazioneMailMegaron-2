@@ -6,7 +6,8 @@ Servizio **Node.js 20+** (TypeScript) che:
 2. Estrae **ID annuncio** dal corpo/HTML.
 3. Risolve l’annuncio tramite **API** Render o **PostgreSQL** (`gestim_listings`).
 4. Legge la **zona** e instrada sul **tab Google Sheet** corretto (mapping da env JSON **oppure** da foglio `mapping` colonne A–B).
-5. **Appende** righe lead con colonne: **Data**, **Nome e Cognome**, **Telefono**, **Riferimento immobile**, **Tempo da invio mail** (delta tra ricezione messaggio ed elaborazione).
+5. **Appende** righe lead con colonne: **Email**, **ID annuncio**, **Orario arrivo**, **Telefono**, **Zona**.
+6. Regole ID: `0` ID -> tab `no-id-trovato`, `>1` ID -> tab `no-singolo-id`, `1` ID -> lookup `gestim_listings.id_annuncio_gestim` e routing per zona.
 
 ## Stack
 

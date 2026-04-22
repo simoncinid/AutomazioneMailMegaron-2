@@ -31,14 +31,13 @@ export interface ParsedInboundEmail {
   htmlBody?: string;
 }
 
-/** Riga da appendere nel foglio lead (5 colonne operative). */
+/** Riga da appendere nel foglio lead (5 colonne operative A:E). */
 export interface LeadRowPayload {
-  dataIt: string;
-  nomeCognome: string;
-  telefono: string;
-  riferimentoImmobile: string;
-  /** Delta tra ricezione messaggio e elaborazione (vedi formatTempoDaInvioMail). */
-  tempoDaInvioMail: string;
+  leadEmail: string;
+  listingId: string;
+  arrivalTime: string;
+  phone: string;
+  zone: string;
   spreadsheetId: string;
   sheetTitle: string;
 }

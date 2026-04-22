@@ -53,6 +53,11 @@ export const rawEnvSchema = z.object({
 
   UNMAPPED_ZONE_SPREADSHEET_ID: z.string().optional(),
   UNMAPPED_ZONE_SHEET_TITLE: z.string().optional(),
+  NO_ID_FOUND_SHEET_TITLE: z.string().default("no-id-trovato"),
+  MULTI_ID_FOUND_SHEET_TITLE: z.string().default("no-singolo-id"),
+  BLOCKED_EMAIL_SUBSTRINGS: z.string().default(
+    "immobiliare,noreply,no-reply,idealista,gruppoinsieme,mailer-daemon",
+  ),
 
   EXTRA_ID_REGEX: z.string().optional(),
 

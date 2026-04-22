@@ -1,7 +1,23 @@
 node_modules/
 dist/
-# Google Cloud — chiavi service account (contengono segreti; non committare)
-megaron-493608-*.json
 *.log
 .DS_Store
 coverage/
+test_imap_aruba.py
+
+# Credenziali locali hardcoded (esclusi i service account)
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+*credentials*.json
+client_secret*.json
+token*.json
+secrets*.json
+.env
+.env.local
+!.env.example
+!*service-account*.json
+!*service_account*.json
+!*serviceaccount*.json

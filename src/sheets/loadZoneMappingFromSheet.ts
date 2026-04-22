@@ -1,5 +1,6 @@
 import type { ZoneSheetRule } from "../domain/types.js";
 import { getSheetsClient } from "./sheetsClient.js";
+import { withGoogleSheetsRateLimit } from "./googleSheetsRateLimiter.js";
 import { formatSheetRange } from "./sheetRange.js";
 
 export interface LoadZoneMappingOptions {
@@ -19,10 +20,12 @@ export async function loadZoneMappingFromSheet(
 ): Promise<ZoneSheetRule[]> {
   const sheets = await getSheetsClient();
   const range = formatSheetRange(options.sheetName, "A:B");
-  const res = await sheets.spreadsheets.values.get({
-    spreadsheetId: options.spreadsheetId,
-    range,
-  });
+  const res = await withGoogleSheetsRateLimit(async () =>
+    sheets.spreadsheets.values.get({
+      spreadsheetId: options.spreadsheetId,
+      range,
+    }),
+  );
   const rows = res.data.values ?? [];
   const rules: ZoneSheetRule[] = [];
   for (let i = 0; i < rows.length; i++) {

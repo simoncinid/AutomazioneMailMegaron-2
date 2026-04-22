@@ -13,11 +13,13 @@ import {
 } from "./graph/microsoftGraph.js";
 import { logger } from "./logging/logger.js";
 import { createListingRepository } from "./repositories/createListingRepository.js";
+import type { GestimListingRow, ParsedInboundEmail } from "./domain/types.js";
 import {
-  appendProcessedMessageId,
+  appendProcessedMessageIds,
   loadProcessedMessageIds,
 } from "./state/graphProcessedIds.js";
 import { GoogleSheetsWriter } from "./sheets/googleSheetsWriter.js";
+import { extractExternalListingIds } from "./services/idExtractor.js";
 import { processInboundEmail } from "./services/leadProcessor.js";
 
 const log = logger.child({ module: "worker" });
@@ -75,37 +77,77 @@ async function runCycle(env: AppEnv): Promise<void> {
 
   const listings = createListingRepository(env);
   const sheets = new GoogleSheetsWriter();
+  const listingCache = new Map<string, GestimListingRow | null>();
+  const messageIdsToPersist: string[] = [];
   const extraIdPatterns = env.EXTRA_ID_REGEX
     ? env.EXTRA_ID_REGEX.split("|")
         .map((s) => s.trim())
         .filter(Boolean)
     : undefined;
 
-  for (const item of list) {
-    if (!item.id || processed.has(item.id)) continue;
+  try {
+    const pending = list.filter((item) => item.id && !processed.has(item.id));
+    const parsedMessages: Array<{ messageId: string; email: ParsedInboundEmail }> = [];
+    const lookupIds = new Set<string>();
 
-    const detail = await getMessageDetail({
-      accessToken: token,
-      mailboxUser: env.MAILBOX_USER!,
-      messageId: item.id,
-    });
-    const email = graphMessageToParsedEmail(detail);
-    const processedAt = new Date();
-
-    try {
-      await processInboundEmail(
-        email,
-        { env, listings, sheets, extraIdPatterns },
-        processedAt,
-      );
-      await appendProcessedMessageId({
-        spreadsheetId: stateSpreadsheetId,
-        sheetName: env.GRAPH_STATE_SHEET_NAME,
-        messageId: item.id,
+    for (const item of pending) {
+      const detail = await getMessageDetail({
+        accessToken: token,
+        mailboxUser: env.MAILBOX_USER!,
+        messageId: item.id!,
       });
-      processed.add(item.id);
-    } catch (e) {
-      log.error({ err: e, messageId: item.id }, "Elaborazione messaggio fallita");
+      const email = graphMessageToParsedEmail(detail);
+      parsedMessages.push({ messageId: item.id!, email });
+
+      const extracted = extractExternalListingIds(email.textBody, email.htmlBody, {
+        extraRegexStrings: extraIdPatterns,
+      });
+      const uniqueIds = [...new Set(extracted)];
+      if (uniqueIds.length === 1) lookupIds.add(uniqueIds[0]!);
+    }
+
+    if (lookupIds.size > 0) {
+      const preloaded = await listings.findLatestByExternalListingIds([...lookupIds]);
+      for (const listingId of lookupIds) {
+        listingCache.set(listingId, preloaded.get(listingId) ?? null);
+      }
+    }
+
+    for (const item of parsedMessages) {
+      const processedAt = new Date();
+      try {
+        await processInboundEmail(
+          item.email,
+          {
+            env,
+            listings,
+            sheets,
+            extraIdPatterns,
+            listingCache,
+            deferSheetFlush: true,
+          },
+          processedAt,
+        );
+        messageIdsToPersist.push(item.messageId);
+        processed.add(item.messageId);
+      } catch (e) {
+        log.error({ err: e, messageId: item.messageId }, "Elaborazione messaggio fallita");
+      }
+    }
+
+    await sheets.flush();
+    await appendProcessedMessageIds({
+      spreadsheetId: stateSpreadsheetId,
+      sheetName: env.GRAPH_STATE_SHEET_NAME,
+      messageIds: messageIdsToPersist,
+    });
+  } finally {
+    sheets.clear();
+    listingCache.clear();
+    processed.clear();
+    messageIdsToPersist.length = 0;
+    if ("end" in listings && typeof listings.end === "function") {
+      await listings.end();
     }
   }
 }

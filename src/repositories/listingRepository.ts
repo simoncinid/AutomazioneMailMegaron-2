@@ -108,8 +108,8 @@ export class PostgresListingRepository implements ListingRepository {
     if (unique.length === 0) return out;
 
     const q = `
-      SELECT DISTINCT ON (external_listing_id)
-        external_listing_id AS "externalListingId",
+      SELECT DISTINCT ON (id_annuncio_gestim)
+        id_annuncio_gestim AS "externalListingId",
         title,
         city,
         zone,
@@ -122,8 +122,8 @@ export class PostgresListingRepository implements ListingRepository {
         bathrooms,
         updated_at AS "updatedAt"
       FROM gestim_listings
-      WHERE external_listing_id = ANY($1::text[])
-      ORDER BY external_listing_id, updated_at DESC NULLS LAST
+      WHERE id_annuncio_gestim = ANY($1::text[])
+      ORDER BY id_annuncio_gestim, updated_at DESC NULLS LAST
     `;
     const r = await this.pool.query(q, [unique]);
     for (const row of r.rows as Record<string, unknown>[]) {

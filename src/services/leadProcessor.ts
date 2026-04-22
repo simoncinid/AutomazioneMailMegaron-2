@@ -4,9 +4,8 @@ import type { GestimListingRow, LeadRowPayload, ParsedInboundEmail } from "../do
 import { logger } from "../logging/logger.js";
 import type { ListingRepository } from "../repositories/listingRepository.js";
 import { GoogleSheetsWriter } from "../sheets/googleSheetsWriter.js";
+import { extractFirstBodyEmail, extractFirstPhone } from "./contactExtractor.js";
 import { extractExternalListingIds } from "./idExtractor.js";
-import { extractFirstPhone, nomeFromEmailAddress } from "./contactExtractor.js";
-import { formatDataIt, formatTempoDaInvioMail } from "./dateFormatIt.js";
 
 const log = logger.child({ module: "leadProcessor" });
 
@@ -15,147 +14,142 @@ export interface LeadProcessorDeps {
   listings: ListingRepository;
   sheets: GoogleSheetsWriter;
   extraIdPatterns?: string[];
+  listingCache?: Map<string, GestimListingRow | null>;
+  deferSheetFlush?: boolean;
 }
 
 function combinedBody(email: ParsedInboundEmail): string {
   return [email.textBody, email.htmlBody ?? ""].join("\n");
 }
 
-function buildContactFields(email: ParsedInboundEmail): {
-  nomeCognome: string;
-  telefono: string;
-} {
-  const nome =
-    (email.fromDisplayName && email.fromDisplayName.trim()) ||
-    nomeFromEmailAddress(email.from) ||
-    "";
-  const telefono = extractFirstPhone(combinedBody(email));
-  return { nomeCognome: nome, telefono };
+function parseBlockedSubstrings(env: AppEnv): string[] {
+  return env.BLOCKED_EMAIL_SUBSTRINGS.split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
 }
 
-function tempoField(email: ParsedInboundEmail, processedAt: Date): string {
-  return formatTempoDaInvioMail(processedAt.getTime() - email.receivedAt.getTime());
+function formatArrivalTime(receivedAt: Date): string {
+  const hh = String(receivedAt.getHours()).padStart(2, "0");
+  const mm = String(receivedAt.getMinutes()).padStart(2, "0");
+  const ss = String(receivedAt.getSeconds()).padStart(2, "0");
+  return `${hh}:${mm}:${ss}`;
 }
 
 /**
- * Orchestrazione: estrazione ID → match → zona → foglio → append (5 colonne).
+ * Orchestrazione worker:
+ * - Estrae ID annuncio dal corpo
+ * - Estrae email lead dal corpo saltando indirizzi "bloccati"
+ * - Instrada per numero ID:
+ *   0 -> NO_ID_FOUND_SHEET_TITLE
+ *   >1 -> MULTI_ID_FOUND_SHEET_TITLE
+ *   1 -> lookup DB/API, mappa zona -> foglio
+ * - Appende una riga A:E
  */
 export async function processInboundEmail(
   email: ParsedInboundEmail,
   deps: LeadProcessorDeps,
-  processedAt: Date = new Date(),
+  _processedAt: Date = new Date(),
 ): Promise<void> {
-  const ids = extractExternalListingIds(email.textBody, email.htmlBody, {
+  const extractedIds = extractExternalListingIds(email.textBody, email.htmlBody, {
     extraRegexStrings: deps.extraIdPatterns,
   });
-
-  const { nomeCognome, telefono } = buildContactFields(email);
-  const dataIt = formatDataIt(email.receivedAt);
+  const uniqueIds = [...new Set(extractedIds)];
+  const telefono = extractFirstPhone(combinedBody(email));
+  const blockedSubstrings = parseBlockedSubstrings(deps.env);
+  const leadEmail = extractFirstBodyEmail(email.textBody, email.htmlBody, blockedSubstrings);
+  const arrivalTime = formatArrivalTime(email.receivedAt);
 
   log.info(
     {
       messageId: email.messageId,
       from: email.from,
-      idCount: ids.length,
-      ids,
+      idCount: uniqueIds.length,
+      ids: uniqueIds,
+      leadEmail,
     },
     "Email normalizzata",
   );
 
-  if (ids.length === 0) {
-    await appendLeadRow(deps, email, processedAt, {
-      dataIt,
-      nomeCognome,
-      telefono,
-      riferimentoImmobile: "",
-      target: resolveUnmappedOrDefault(deps.env),
-      routingLog: "no_external_listing_id_extracted",
+  if (uniqueIds.length === 0) {
+    await appendLeadRow(deps, {
+      leadEmail,
+      listingId: "",
+      arrivalTime,
+      phone: telefono,
+      zone: "",
+      target: {
+        spreadsheetId: deps.env.defaultSpreadsheetIdResolved,
+        sheetTitle: deps.env.NO_ID_FOUND_SHEET_TITLE,
+      },
+      routingLog: "no_id_found",
     });
     return;
   }
 
-  const uniqueIds = [...new Set(ids)];
-
-  let listingById: Map<string, GestimListingRow>;
-  try {
-    listingById = await deps.listings.findLatestByExternalListingIds(uniqueIds);
-  } catch (e) {
-    log.error({ err: e, ids: uniqueIds }, "Errore nel recupero annunci (batch)");
-    for (const externalId of uniqueIds) {
-      await appendLeadRow(deps, email, processedAt, {
-        dataIt,
-        nomeCognome,
-        telefono,
-        riferimentoImmobile: externalId,
-        target: resolveUnmappedOrDefault(deps.env),
-        routingLog: `listing_lookup_error:${e instanceof Error ? e.message : String(e)}`,
-      });
-    }
+  if (uniqueIds.length > 1) {
+    await appendLeadRow(deps, {
+      leadEmail,
+      listingId: uniqueIds.join(","),
+      arrivalTime,
+      phone: telefono,
+      zone: "",
+      target: {
+        spreadsheetId: deps.env.defaultSpreadsheetIdResolved,
+        sheetTitle: deps.env.MULTI_ID_FOUND_SHEET_TITLE,
+      },
+      routingLog: "multiple_ids_found",
+    });
     return;
   }
 
-  log.info(
-    { messageId: email.messageId, requested: uniqueIds.length, found: listingById.size },
-    "Dettagli annunci caricati (batch)",
-  );
+  const listingId = uniqueIds[0]!;
+  let zone = "";
+  let target = resolveUnmappedOrDefault(deps.env);
+  let routingLog = "listing_not_found";
 
-  for (const externalId of uniqueIds) {
-    const listing = listingById.get(externalId);
-
-    if (!listing) {
-      log.warn({ externalId }, "ID annuncio non trovato nel DB/API");
-      const target = resolveUnmappedOrDefault(deps.env);
-      await appendLeadRow(deps, email, processedAt, {
-        dataIt,
-        nomeCognome,
-        telefono,
-        riferimentoImmobile: externalId,
-        target,
-        routingLog: "listing_not_found",
-      });
-      continue;
+  try {
+    let listing = deps.listingCache?.get(listingId) ?? null;
+    if (!deps.listingCache?.has(listingId)) {
+      listing = await deps.listings.findLatestByExternalListingId(listingId);
+      deps.listingCache?.set(listingId, listing);
     }
+    if (listing?.zone?.trim()) {
+      zone = listing.zone.trim();
+      routingLog = "zone_mapped";
+      const resolved = resolveSheetForZone(
+        zone,
+        deps.env.zoneSheetRules,
+        deps.env.defaultSpreadsheetIdResolved,
+        deps.env.DEFAULT_SHEET_TITLE,
+      );
 
-    const zone = listing.zone;
-    const resolved = resolveSheetForZone(
-      zone,
-      deps.env.zoneSheetRules,
-      deps.env.defaultSpreadsheetIdResolved,
-      deps.env.DEFAULT_SHEET_TITLE,
-    );
+      let spreadsheetId = resolved.spreadsheetId;
+      let sheetTitle = resolved.sheetTitle;
+      routingLog = resolved.fallback
+        ? "zone_unmapped_used_default"
+        : `zone_mapped:${resolved.matchedRule?.name ?? resolved.matchedRule?.pattern ?? "rule"}`;
 
-    let spreadsheetId = resolved.spreadsheetId;
-    let sheetTitle = resolved.sheetTitle;
-    let routingLog = resolved.fallback
-      ? "zone_unmapped_used_default"
-      : `zone_mapped:${resolved.matchedRule?.name ?? resolved.matchedRule?.pattern ?? "rule"}`;
-
-    if (resolved.fallback && deps.env.UNMAPPED_ZONE_SPREADSHEET_ID) {
-      spreadsheetId = deps.env.UNMAPPED_ZONE_SPREADSHEET_ID;
-      sheetTitle =
-        deps.env.UNMAPPED_ZONE_SHEET_TITLE ?? deps.env.DEFAULT_SHEET_TITLE;
-      routingLog = "zone_unmapped_routed_to_unmapped_bucket";
+      if (resolved.fallback && deps.env.UNMAPPED_ZONE_SPREADSHEET_ID) {
+        spreadsheetId = deps.env.UNMAPPED_ZONE_SPREADSHEET_ID;
+        sheetTitle = deps.env.UNMAPPED_ZONE_SHEET_TITLE ?? deps.env.DEFAULT_SHEET_TITLE;
+        routingLog = "zone_unmapped_routed_to_unmapped_bucket";
+      }
+      target = { spreadsheetId, sheetTitle };
     }
-
-    log.info(
-      { externalId, zone, spreadsheetId, sheetTitle, routingLog },
-      "Lead instradato",
-    );
-
-    await deps.sheets.appendLead(
-      buildPayload(
-        email,
-        processedAt,
-        {
-          dataIt,
-          nomeCognome,
-          telefono,
-          riferimentoImmobile: externalId,
-        },
-        { spreadsheetId, sheetTitle },
-      ),
-    );
+  } catch (e) {
+    log.error({ err: e, listingId }, "Errore nel recupero annuncio");
+    routingLog = `listing_lookup_error:${e instanceof Error ? e.message : String(e)}`;
   }
+
+  await appendLeadRow(deps, {
+    leadEmail,
+    listingId,
+    arrivalTime,
+    phone: telefono,
+    zone,
+    target,
+    routingLog,
+  });
 }
 
 function resolveUnmappedOrDefault(env: AppEnv): {
@@ -176,50 +170,59 @@ function resolveUnmappedOrDefault(env: AppEnv): {
 
 async function appendLeadRow(
   deps: LeadProcessorDeps,
-  email: ParsedInboundEmail,
-  processedAt: Date,
   args: {
-    dataIt: string;
-    nomeCognome: string;
-    telefono: string;
-    riferimentoImmobile: string;
+    leadEmail: string;
+    listingId: string;
+    arrivalTime: string;
+    phone: string;
+    zone: string;
     target: { spreadsheetId: string; sheetTitle: string };
     routingLog: string;
   },
 ): Promise<void> {
-  log.info({ routingLog: args.routingLog }, "Lead (fallback / errore)");
-  await deps.sheets.appendLead(
-    buildPayload(
-      email,
-      processedAt,
-      {
-        dataIt: args.dataIt,
-        nomeCognome: args.nomeCognome,
-        telefono: args.telefono,
-        riferimentoImmobile: args.riferimentoImmobile,
-      },
-      args.target,
-    ),
+  log.info(
+    {
+      routingLog: args.routingLog,
+      spreadsheetId: args.target.spreadsheetId,
+      sheetTitle: args.target.sheetTitle,
+      listingId: args.listingId,
+      zone: args.zone,
+    },
+    "Lead instradato",
   );
+  const payload = buildPayload(
+    {
+      leadEmail: args.leadEmail,
+      listingId: args.listingId,
+      arrivalTime: args.arrivalTime,
+      phone: args.phone,
+      zone: args.zone,
+    },
+    args.target,
+  );
+  if (deps.deferSheetFlush) {
+    deps.sheets.queueLead(payload);
+    return;
+  }
+  await deps.sheets.appendLead(payload);
 }
 
 function buildPayload(
-  email: ParsedInboundEmail,
-  processedAt: Date,
   fields: {
-    dataIt: string;
-    nomeCognome: string;
-    telefono: string;
-    riferimentoImmobile: string;
+    leadEmail: string;
+    listingId: string;
+    arrivalTime: string;
+    phone: string;
+    zone: string;
   },
   target: { spreadsheetId: string; sheetTitle: string },
 ): LeadRowPayload {
   return {
-    dataIt: fields.dataIt,
-    nomeCognome: fields.nomeCognome,
-    telefono: fields.telefono,
-    riferimentoImmobile: fields.riferimentoImmobile,
-    tempoDaInvioMail: tempoField(email, processedAt),
+    leadEmail: fields.leadEmail,
+    listingId: fields.listingId,
+    arrivalTime: fields.arrivalTime,
+    phone: fields.phone,
+    zone: fields.zone,
     spreadsheetId: target.spreadsheetId,
     sheetTitle: target.sheetTitle,
   };

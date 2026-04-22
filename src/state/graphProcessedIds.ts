@@ -1,5 +1,6 @@
 import { logger } from "../logging/logger.js";
 import { getSheetsClient } from "../sheets/sheetsClient.js";
+import { withGoogleSheetsRateLimit } from "../sheets/googleSheetsRateLimiter.js";
 import { formatSheetRange } from "../sheets/sheetRange.js";
 
 const log = logger.child({ module: "graphProcessedIds" });
@@ -16,10 +17,12 @@ export async function loadProcessedMessageIds(params: {
   const range = formatSheetRange(params.sheetName, "A:A");
   let res;
   try {
-    res = await sheets.spreadsheets.values.get({
-      spreadsheetId: params.spreadsheetId,
-      range,
-    });
+    res = await withGoogleSheetsRateLimit(async () =>
+      sheets.spreadsheets.values.get({
+        spreadsheetId: params.spreadsheetId,
+        range,
+      }),
+    );
   } catch (e) {
     log.warn(
       { err: e },
@@ -41,13 +44,28 @@ export async function appendProcessedMessageId(params: {
   sheetName: string;
   messageId: string;
 }): Promise<void> {
+  await appendProcessedMessageIds({
+    spreadsheetId: params.spreadsheetId,
+    sheetName: params.sheetName,
+    messageIds: [params.messageId],
+  });
+}
+
+export async function appendProcessedMessageIds(params: {
+  spreadsheetId: string;
+  sheetName: string;
+  messageIds: string[];
+}): Promise<void> {
+  if (params.messageIds.length === 0) return;
   const sheets = await getSheetsClient();
   const range = formatSheetRange(params.sheetName, "A:A");
-  await sheets.spreadsheets.values.append({
-    spreadsheetId: params.spreadsheetId,
-    range,
-    valueInputOption: "RAW",
-    insertDataOption: "INSERT_ROWS",
-    requestBody: { values: [[params.messageId]] },
-  });
+  await withGoogleSheetsRateLimit(async () =>
+    sheets.spreadsheets.values.append({
+      spreadsheetId: params.spreadsheetId,
+      range,
+      valueInputOption: "RAW",
+      insertDataOption: "INSERT_ROWS",
+      requestBody: { values: params.messageIds.map((messageId) => [messageId]) },
+    }),
+  );
 }
