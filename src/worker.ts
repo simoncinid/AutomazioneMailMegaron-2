@@ -1,16 +1,9 @@
 import "dotenv/config";
 
 /**
- * Worker Render: polling periodico della posta in arrivo via Microsoft Graph (client credentials).
- * Pattern analogo a JospaAutomation: loop + sleep, niente Outlook desktop.
+ * Worker Render: polling periodico della posta in arrivo via IMAP Aruba.
  */
 import { bootstrapEnv, type AppEnv } from "./config/loadEnv.js";
-import { graphMessageToParsedEmail } from "./graph/graphMessageToParsedEmail.js";
-import {
-  getGraphAccessToken,
-  getMessageDetail,
-  listInboxMessagesSince,
-} from "./graph/microsoftGraph.js";
 import { logger } from "./logging/logger.js";
 import { createListingRepository } from "./repositories/createListingRepository.js";
 import type { GestimListingRow, ParsedInboundEmail } from "./domain/types.js";
@@ -21,6 +14,7 @@ import {
 import { GoogleSheetsWriter } from "./sheets/googleSheetsWriter.js";
 import { extractExternalListingIds } from "./services/idExtractor.js";
 import { processInboundEmail } from "./services/leadProcessor.js";
+import { listInboxMessagesFromImap } from "./imap/imapAruba.js";
 
 const log = logger.child({ module: "worker" });
 
@@ -28,27 +22,16 @@ function sleep(ms: number): Promise<void> {
   return new Promise((r) => setTimeout(r, ms));
 }
 
-function requireGraphEnv(env: AppEnv): void {
-  if (
-    !env.GRAPH_TENANT_ID ||
-    !env.GRAPH_CLIENT_ID ||
-    !env.GRAPH_CLIENT_SECRET ||
-    !env.MAILBOX_USER
-  ) {
+function requireImapEnv(env: AppEnv): void {
+  if (!env.IMAP_EMAIL || !env.IMAP_PASSWORD) {
     throw new Error(
-      "Worker Graph: impostare GRAPH_TENANT_ID, GRAPH_CLIENT_ID, GRAPH_CLIENT_SECRET, MAILBOX_USER",
+      "Worker IMAP: impostare IMAP_EMAIL e IMAP_PASSWORD (server Aruba di default: imaps.aruba.it:993)",
     );
   }
 }
 
-function lookbackIso(hours: number): string {
-  const d = new Date();
-  d.setHours(d.getHours() - hours);
-  return d.toISOString();
-}
-
 async function runCycle(env: AppEnv): Promise<void> {
-  requireGraphEnv(env);
+  requireImapEnv(env);
   const stateSpreadsheetId =
     env.GRAPH_STATE_SPREADSHEET_ID ?? env.defaultSpreadsheetIdResolved;
   const processed = await loadProcessedMessageIds({
@@ -56,22 +39,18 @@ async function runCycle(env: AppEnv): Promise<void> {
     sheetName: env.GRAPH_STATE_SHEET_NAME,
   });
 
-  const token = await getGraphAccessToken({
-    tenantId: env.GRAPH_TENANT_ID!,
-    clientId: env.GRAPH_CLIENT_ID!,
-    clientSecret: env.GRAPH_CLIENT_SECRET!,
-  });
-
-  const sinceIso = lookbackIso(env.GRAPH_LOOKBACK_HOURS);
-  const list = await listInboxMessagesSince({
-    accessToken: token,
-    mailboxUser: env.MAILBOX_USER!,
-    sinceIso,
-    top: 50,
+  const list = await listInboxMessagesFromImap({
+    host: env.IMAP_SERVER,
+    port: env.IMAP_PORT,
+    user: env.IMAP_EMAIL!,
+    password: env.IMAP_PASSWORD!,
+    secure: env.IMAP_SECURE,
+    lookbackHours: env.IMAP_LOOKBACK_HOURS,
+    limit: env.IMAP_FETCH_LIMIT,
   });
 
   log.info(
-    { count: list.length, sinceIso, mailbox: env.MAILBOX_USER },
+    { count: list.length, mailbox: env.IMAP_EMAIL, host: env.IMAP_SERVER },
     "Messaggi inbox da analizzare",
   );
 
@@ -86,18 +65,12 @@ async function runCycle(env: AppEnv): Promise<void> {
     : undefined;
 
   try {
-    const pending = list.filter((item) => item.id && !processed.has(item.id));
+    const pending = list.filter((email) => email.messageId && !processed.has(email.messageId));
     const parsedMessages: Array<{ messageId: string; email: ParsedInboundEmail }> = [];
     const lookupIds = new Set<string>();
 
-    for (const item of pending) {
-      const detail = await getMessageDetail({
-        accessToken: token,
-        mailboxUser: env.MAILBOX_USER!,
-        messageId: item.id!,
-      });
-      const email = graphMessageToParsedEmail(detail);
-      parsedMessages.push({ messageId: item.id!, email });
+    for (const email of pending) {
+      parsedMessages.push({ messageId: email.messageId!, email });
 
       const extracted = extractExternalListingIds(email.textBody, email.htmlBody, {
         extraRegexStrings: extraIdPatterns,
@@ -153,7 +126,7 @@ async function runCycle(env: AppEnv): Promise<void> {
 }
 
 async function main(): Promise<void> {
-  log.info("Avvio worker Graph + lead");
+  log.info("Avvio worker IMAP Aruba + lead");
   for (;;) {
     let sleepMinutes = 60;
     try {

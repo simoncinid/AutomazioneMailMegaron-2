@@ -63,7 +63,19 @@ export const rawEnvSchema = z.object({
 
   EXTRA_ID_REGEX: z.string().optional(),
 
-  /** Microsoft Graph (worker posta in arrivo) */
+  /** Worker IMAP Aruba (sorgente inbox) */
+  IMAP_EMAIL: z.string().optional(),
+  IMAP_PASSWORD: z.string().optional(),
+  IMAP_SERVER: z.string().default("imaps.aruba.it"),
+  IMAP_PORT: z.coerce.number().default(993),
+  IMAP_SECURE: z
+    .string()
+    .optional()
+    .transform((s) => (s == null ? true : s === "true" || s === "1")),
+  IMAP_LOOKBACK_HOURS: z.coerce.number().min(1).default(24),
+  IMAP_FETCH_LIMIT: z.coerce.number().min(1).max(500).default(50),
+
+  /** Microsoft Graph (legacy, opzionale) */
   GRAPH_TENANT_ID: z.string().optional(),
   GRAPH_CLIENT_ID: z.string().optional(),
   GRAPH_CLIENT_SECRET: z.string().optional(),
