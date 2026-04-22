@@ -38,6 +38,8 @@ export const rawEnvSchema = z.object({
 
   /** Alternativa al foglio "mapping": regole JSON */
   ZONE_SHEET_MAP_JSON: z.string().default("[]"),
+  /** Mapping "hardcoded" stile test python: righe tab-delimitate zona<TAB>foglio */
+  ZONE_SHEET_MAPPING_RAW: z.string().optional(),
 
   /** Se impostato, colonne A–B del tab leggono zona → nome foglio (stesso file). */
   MAPPING_SPREADSHEET_ID: z.string().optional(),
@@ -89,6 +91,41 @@ function parseZoneMapJson(json: string): ZoneSheetRule[] {
   return arr;
 }
 
+function normalizeZone(zone: string): string {
+  return zone.trim().toLowerCase().replace(/\s+/g, " ");
+}
+
+function parseZoneMappingRaw(raw: string, spreadsheetId: string): ZoneSheetRule[] {
+  const rules: ZoneSheetRule[] = [];
+  const rows = raw
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+
+  for (const row of rows) {
+    const cells = row
+      .split("\t")
+      .map((cell) => cell.trim())
+      .filter(Boolean);
+    if (cells.length < 2) continue;
+    if (cells.length % 2 !== 0) {
+      throw new Error(`ZONE_SHEET_MAPPING_RAW non valido: colonne dispari nella riga "${row}"`);
+    }
+    for (let i = 0; i < cells.length; i += 2) {
+      const zone = cells[i]!;
+      const sheetTitle = cells[i + 1]!;
+      rules.push({
+        name: `raw_mapping_${normalizeZone(zone).replace(/\s+/g, "_")}`,
+        pattern: zone,
+        match: "equals",
+        spreadsheetId,
+        sheetTitle,
+      });
+    }
+  }
+  return rules;
+}
+
 function validateGoogleCreds(r: RawEnv): void {
   if (!r.GOOGLE_APPLICATION_CREDENTIALS && !r.GOOGLE_SERVICE_ACCOUNT_JSON) {
     throw new Error(
@@ -115,8 +152,38 @@ export async function bootstrapEnv(): Promise<AppEnv> {
 
   let zoneSheetRules: ZoneSheetRule[];
   let defaultSpreadsheetIdResolved: string;
+  const hasJsonMapping = parsed.ZONE_SHEET_MAP_JSON.trim() !== "[]";
+  const hasRawMapping = Boolean(parsed.ZONE_SHEET_MAPPING_RAW?.trim());
 
-  if (parsed.MAPPING_SPREADSHEET_ID) {
+  if (hasRawMapping || hasJsonMapping) {
+    defaultSpreadsheetIdResolved =
+      parsed.DEFAULT_SPREADSHEET_ID ?? parsed.MAPPING_SPREADSHEET_ID ?? "";
+    if (!defaultSpreadsheetIdResolved) {
+      throw new Error(
+        "Con ZONE_SHEET_MAPPING_RAW/ZONE_SHEET_MAP_JSON devi impostare DEFAULT_SPREADSHEET_ID oppure MAPPING_SPREADSHEET_ID",
+      );
+    }
+    if (hasRawMapping) {
+      zoneSheetRules = parseZoneMappingRaw(
+        parsed.ZONE_SHEET_MAPPING_RAW ?? "",
+        defaultSpreadsheetIdResolved,
+      );
+      if (zoneSheetRules.length === 0) {
+        throw new Error("ZONE_SHEET_MAPPING_RAW impostato ma senza righe valide");
+      }
+    } else {
+      try {
+        zoneSheetRules = parseZoneMapJson(parsed.ZONE_SHEET_MAP_JSON);
+      } catch (e) {
+        throw new Error(
+          `ZONE_SHEET_MAP_JSON non valido: ${e instanceof Error ? e.message : String(e)}`,
+        );
+      }
+      if (zoneSheetRules.length === 0) {
+        throw new Error("ZONE_SHEET_MAP_JSON impostato ma senza regole valide");
+      }
+    }
+  } else if (parsed.MAPPING_SPREADSHEET_ID) {
     zoneSheetRules = await loadZoneMappingFromSheet({
       spreadsheetId: parsed.MAPPING_SPREADSHEET_ID,
       sheetName: parsed.MAPPING_SHEET_NAME,
