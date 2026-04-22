@@ -1,7 +1,10 @@
 import type { ZoneSheetRule } from "../domain/types.js";
+import { logger } from "../logging/logger.js";
 import { getSheetsClient } from "./sheetsClient.js";
 import { withGoogleSheetsRateLimit } from "./googleSheetsRateLimiter.js";
 import { formatSheetRange } from "./sheetRange.js";
+
+const log = logger.child({ module: "loadZoneMappingFromSheet" });
 
 export interface LoadZoneMappingOptions {
   spreadsheetId: string;
@@ -19,13 +22,28 @@ export async function loadZoneMappingFromSheet(
   options: LoadZoneMappingOptions,
 ): Promise<ZoneSheetRule[]> {
   const sheets = await getSheetsClient();
-  const range = formatSheetRange(options.sheetName, "A:B");
-  const res = await withGoogleSheetsRateLimit(async () =>
-    sheets.spreadsheets.values.get({
-      spreadsheetId: options.spreadsheetId,
-      range,
-    }),
-  );
+  const normalizedSheetName = options.sheetName.trim();
+  const range = formatSheetRange(normalizedSheetName, "A:B");
+  let res;
+  try {
+    res = await withGoogleSheetsRateLimit(async () =>
+      sheets.spreadsheets.values.get({
+        spreadsheetId: options.spreadsheetId,
+        range,
+      }),
+    );
+  } catch (e) {
+    log.warn(
+      {
+        err: e,
+        spreadsheetId: options.spreadsheetId,
+        sheetName: normalizedSheetName,
+        range,
+      },
+      "Impossibile leggere il foglio mapping: verranno usate solo le destinazioni di default",
+    );
+    return [];
+  }
   const rows = res.data.values ?? [];
   const rules: ZoneSheetRule[] = [];
   for (let i = 0; i < rows.length; i++) {
