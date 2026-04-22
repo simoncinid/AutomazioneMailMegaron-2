@@ -4,6 +4,11 @@ import { hasDatabaseConnection } from "./pgPool.js";
 import { logger } from "../logging/logger.js";
 import { loadZoneMappingFromSheet } from "../sheets/loadZoneMappingFromSheet.js";
 
+const HARD_CODED_ZONE_SHEET_MAPPING_RAW = `
+BARBARICINA\tAG\tBORGHETTO\tEROS\tCALAMBRONE\tAG\tCEP\tAG\tCISANELLO\tSTEFANIA\tCOLTANO\tREBECCA\tDON BOSCO\tAG\tGAGNO\tAG\tGHEZZANO\tDAVIDE\tI PASSI\tAG\tLA FONTINA\tDAVIDE\tLA VETTOLA\tAG\tMARINA DI PISA\tAG\tMONTACCHIELLO\tREBECCA\tORATOIO\tAG\tOSPEDALETTO\tREBECCA\tPIAGGE\tSTEFANIA\tPISANOVA\tAG\tPORTA A LUCCA\tGIUSEPPE\tPORTA A MARE\tVALENTINA\tPORTA FIORENTINA\tAG\tPORTA NUOVA\tMATTIA\tPRATALE\tGIUSEPPE\tPUTIGNANO\tAG\tRIGLIONE\tAG\tSAN FRANCESCO\tEROS\tSAN GIUSTO\tAG\tSAN MARCO\tAG\tSAN MARTINO\tSAMUELE\tSAN PIERO A GRADO\tAG\tSAN ROSSORE\tAG\tSANTA MARIA\tMATTIA\tSANT'ANTONIO\tVALENTINA\tSANT'ERMETE\tAG\tSTAZIONE\tSAMUELE\tTIRRENIA\tAG
+Bientina\tAG\tButi\tAG\tCalci\tGIUSEPPE\tCalcinaia\tREBECCA\tCapannoli\tPATRIZIA\tCasale Marittimo\tAG\tCasciana Terme Lari\tFAUSTO\tCascina\tTOMMASO\tCastelfranco di Sotto\tAG\tCastellina Marittima\tAG\tCastelnuovo di Val di Cecina\tAG\tChianni\tAG\tCrespina Lorenzana\tFAUSTO\tFauglia\tAG\tGuardistallo\tAG\tLajatico\tAG\tLorenzana\tAG\tMontecatini Val di Cecina\tAG\tMontescudaio\tAG\tMonteverdi Marittimo\tAG\tMontopoli in Val d'Arno\tAG\tOrciano Pisano\tAG\tPalaia\tAG\tPeccioli\tAG\tPomarance\tAG\tPonsacco\tAG\tPontedera\tELISABETTA\tRiparbella\tAG\tSan Giuliano Terme\tDAVIDE\tSan Miniato\tAG\tSanta Croce sull'Arno\tAG\tSanta Luce\tAG\tSanta Maria a Monte\tAG\tTerricciola\tAG\tVecchiano\tDAVIDE\tVicopisano\tLUIS\tVolterra\tAG
+`.trim();
+
 const zoneRuleSchema = z.object({
   name: z.string().optional(),
   pattern: z.string().min(1),
@@ -38,8 +43,8 @@ export const rawEnvSchema = z.object({
 
   /** Alternativa al foglio "mapping": regole JSON */
   ZONE_SHEET_MAP_JSON: z.string().default("[]"),
-  /** Mapping "hardcoded" stile test python: righe tab-delimitate zona<TAB>foglio */
-  ZONE_SHEET_MAPPING_RAW: z.string().optional(),
+  /** Mapping hardcoded (default) stile test python: righe tab-delimitate zona<TAB>foglio */
+  ZONE_SHEET_MAPPING_RAW: z.string().default(HARD_CODED_ZONE_SHEET_MAPPING_RAW),
 
   /** Se impostato, colonne A–B del tab leggono zona → nome foglio (stesso file). */
   MAPPING_SPREADSHEET_ID: z.string().optional(),
