@@ -155,14 +155,16 @@ async function runCycle(env: AppEnv): Promise<void> {
 async function main(): Promise<void> {
   log.info("Avvio worker Graph + lead");
   for (;;) {
-    const env = await bootstrapEnv();
+    let sleepMinutes = 60;
     try {
+      const env = await bootstrapEnv();
+      sleepMinutes = env.WORKER_POLL_INTERVAL_MINUTES;
       await runCycle(env);
     } catch (e) {
       log.error({ err: e }, "Errore nel ciclo worker");
     }
-    const ms = env.WORKER_POLL_INTERVAL_MINUTES * 60_000;
-    log.info({ sleepMinutes: env.WORKER_POLL_INTERVAL_MINUTES }, "Pausa prima del prossimo ciclo");
+    const ms = sleepMinutes * 60_000;
+    log.info({ sleepMinutes }, "Pausa prima del prossimo ciclo");
     await sleep(ms);
   }
 }
