@@ -9,13 +9,13 @@ export { formatSheetRange } from "./sheetRange.js";
 export const LEAD_SHEET_COLUMNS = [
   "Email",
   "ID annuncio",
-  "Orario arrivo",
+  "Data assegnazione",
   "Telefono",
   "Zona",
 ] as const;
 
 function rowFromPayload(p: LeadRowPayload): (string | number)[] {
-  return [p.leadEmail, p.listingId, p.arrivalTime, p.phone, p.zone];
+  return [p.leadEmail, p.listingId, p.assignmentDate, p.phone, p.zone];
 }
 
 export class GoogleSheetsWriter {

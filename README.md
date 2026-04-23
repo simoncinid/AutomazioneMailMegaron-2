@@ -6,8 +6,9 @@ Servizio **Node.js 20+** (TypeScript) che:
 2. Estrae **ID annuncio** dal corpo/HTML.
 3. Risolve l’annuncio tramite **API** Render o **PostgreSQL** (`gestim_listings`).
 4. Legge la **zona** e instrada sul **tab Google Sheet** corretto (mapping da env JSON **oppure** da foglio `mapping` colonne A–B).
-5. **Appende** righe lead con colonne: **Email**, **ID annuncio**, **Orario arrivo**, **Telefono**, **Zona**.
+5. **Appende** righe lead con colonne: **Email**, **ID annuncio**, **Data assegnazione**, **Telefono**, **Zona**.
 6. Regole ID: `0` ID -> tab `no-id-trovato`, `>1` ID -> tab `no-singolo-id`, `1` ID -> lookup `gestim_listings.id_annuncio_gestim` e routing per zona.
+7. Regola anti-duplicato: una email già assegnata viene **skippata per 6 mesi** in base alla data presente in colonna **C** (su tutti i tab usati dal routing); dopo 6 mesi viene assegnata di nuovo con nuova data in C.
 
 ## Stack
 

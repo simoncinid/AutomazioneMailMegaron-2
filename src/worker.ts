@@ -12,6 +12,7 @@ import {
   loadProcessedMessageIds,
 } from "./state/graphProcessedIds.js";
 import { GoogleSheetsWriter } from "./sheets/googleSheetsWriter.js";
+import { LeadAssignmentCooldown } from "./services/leadAssignmentCooldown.js";
 import { extractExternalListingIds } from "./services/idExtractor.js";
 import { processInboundEmail } from "./services/leadProcessor.js";
 import { listInboxMessagesFromImap } from "./imap/imapAruba.js";
@@ -56,6 +57,7 @@ async function runCycle(env: AppEnv): Promise<void> {
 
   const listings = createListingRepository(env);
   const sheets = new GoogleSheetsWriter();
+  const assignmentCooldown = new LeadAssignmentCooldown(env);
   const listingCache = new Map<string, GestimListingRow | null>();
   const messageIdsToPersist: string[] = [];
   const extraIdPatterns = env.EXTRA_ID_REGEX
@@ -95,6 +97,7 @@ async function runCycle(env: AppEnv): Promise<void> {
             env,
             listings,
             sheets,
+            assignmentCooldown,
             extraIdPatterns,
             listingCache,
             deferSheetFlush: true,

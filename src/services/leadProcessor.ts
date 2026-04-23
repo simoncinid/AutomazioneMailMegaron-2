@@ -4,6 +4,7 @@ import type { GestimListingRow, LeadRowPayload, ParsedInboundEmail } from "../do
 import { logger } from "../logging/logger.js";
 import type { ListingRepository } from "../repositories/listingRepository.js";
 import { GoogleSheetsWriter } from "../sheets/googleSheetsWriter.js";
+import type { LeadAssignmentCooldown } from "./leadAssignmentCooldown.js";
 import { extractFirstBodyEmail, extractFirstPhone } from "./contactExtractor.js";
 import { extractExternalListingIds } from "./idExtractor.js";
 
@@ -13,6 +14,7 @@ export interface LeadProcessorDeps {
   env: AppEnv;
   listings: ListingRepository;
   sheets: GoogleSheetsWriter;
+  assignmentCooldown?: LeadAssignmentCooldown;
   extraIdPatterns?: string[];
   listingCache?: Map<string, GestimListingRow | null>;
   deferSheetFlush?: boolean;
@@ -28,11 +30,33 @@ function parseBlockedSubstrings(env: AppEnv): string[] {
     .filter(Boolean);
 }
 
-function formatArrivalTime(receivedAt: Date): string {
-  const hh = String(receivedAt.getHours()).padStart(2, "0");
-  const mm = String(receivedAt.getMinutes()).padStart(2, "0");
-  const ss = String(receivedAt.getSeconds()).padStart(2, "0");
-  return `${hh}:${mm}:${ss}`;
+function formatAssignmentDate(value: Date): string {
+  const dateParts = new Intl.DateTimeFormat("it-IT", {
+    timeZone: "Europe/Rome",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  })
+    .formatToParts(value)
+    .reduce<Record<string, string>>((acc, part) => {
+      if (part.type !== "literal") acc[part.type] = part.value;
+      return acc;
+    }, {});
+
+  const timeParts = new Intl.DateTimeFormat("it-IT", {
+    timeZone: "Europe/Rome",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hourCycle: "h23",
+  })
+    .formatToParts(value)
+    .reduce<Record<string, string>>((acc, part) => {
+      if (part.type !== "literal") acc[part.type] = part.value;
+      return acc;
+    }, {});
+
+  return `${dateParts.day}/${dateParts.month}/${dateParts.year} ${timeParts.hour}:${timeParts.minute}:${timeParts.second}`;
 }
 
 /**
@@ -48,7 +72,7 @@ function formatArrivalTime(receivedAt: Date): string {
 export async function processInboundEmail(
   email: ParsedInboundEmail,
   deps: LeadProcessorDeps,
-  _processedAt: Date = new Date(),
+  processedAt: Date = new Date(),
 ): Promise<void> {
   const extractedIds = extractExternalListingIds(email.textBody, email.htmlBody, {
     extraRegexStrings: deps.extraIdPatterns,
@@ -57,7 +81,7 @@ export async function processInboundEmail(
   const telefono = extractFirstPhone(combinedBody(email));
   const blockedSubstrings = parseBlockedSubstrings(deps.env);
   const leadEmail = extractFirstBodyEmail(email.textBody, email.htmlBody, blockedSubstrings);
-  const arrivalTime = formatArrivalTime(email.receivedAt);
+  const assignmentDate = formatAssignmentDate(processedAt);
 
   log.info(
     {
@@ -70,11 +94,26 @@ export async function processInboundEmail(
     "Email normalizzata",
   );
 
+  if (leadEmail && deps.assignmentCooldown) {
+    const decision = await deps.assignmentCooldown.shouldSkip(leadEmail, processedAt);
+    if (decision.shouldSkip) {
+      log.info(
+        {
+          leadEmail,
+          lastAssignedAt: decision.lastAssignedAt?.toISOString(),
+          blockedUntil: decision.blockedUntil?.toISOString(),
+        },
+        "Lead skip: email già assegnata negli ultimi 6 mesi",
+      );
+      return;
+    }
+  }
+
   if (uniqueIds.length === 0) {
     await appendLeadRow(deps, {
       leadEmail,
       listingId: "",
-      arrivalTime,
+      assignmentDate,
       phone: telefono,
       zone: "",
       target: {
@@ -82,6 +121,7 @@ export async function processInboundEmail(
         sheetTitle: deps.env.NO_ID_FOUND_SHEET_TITLE,
       },
       routingLog: "no_id_found",
+      processedAt,
     });
     return;
   }
@@ -90,7 +130,7 @@ export async function processInboundEmail(
     await appendLeadRow(deps, {
       leadEmail,
       listingId: uniqueIds.join(","),
-      arrivalTime,
+      assignmentDate,
       phone: telefono,
       zone: "",
       target: {
@@ -98,6 +138,7 @@ export async function processInboundEmail(
         sheetTitle: deps.env.MULTI_ID_FOUND_SHEET_TITLE,
       },
       routingLog: "multiple_ids_found",
+      processedAt,
     });
     return;
   }
@@ -144,11 +185,12 @@ export async function processInboundEmail(
   await appendLeadRow(deps, {
     leadEmail,
     listingId,
-    arrivalTime,
+    assignmentDate,
     phone: telefono,
     zone,
     target,
     routingLog,
+    processedAt,
   });
 }
 
@@ -173,11 +215,12 @@ async function appendLeadRow(
   args: {
     leadEmail: string;
     listingId: string;
-    arrivalTime: string;
+    assignmentDate: string;
     phone: string;
     zone: string;
     target: { spreadsheetId: string; sheetTitle: string };
     routingLog: string;
+    processedAt?: Date;
   },
 ): Promise<void> {
   log.info(
@@ -194,7 +237,7 @@ async function appendLeadRow(
     {
       leadEmail: args.leadEmail,
       listingId: args.listingId,
-      arrivalTime: args.arrivalTime,
+      assignmentDate: args.assignmentDate,
       phone: args.phone,
       zone: args.zone,
     },
@@ -202,16 +245,22 @@ async function appendLeadRow(
   );
   if (deps.deferSheetFlush) {
     deps.sheets.queueLead(payload);
+    if (args.leadEmail && args.processedAt) {
+      deps.assignmentCooldown?.recordAssignment(args.leadEmail, args.processedAt);
+    }
     return;
   }
   await deps.sheets.appendLead(payload);
+  if (args.leadEmail && args.processedAt) {
+    deps.assignmentCooldown?.recordAssignment(args.leadEmail, args.processedAt);
+  }
 }
 
 function buildPayload(
   fields: {
     leadEmail: string;
     listingId: string;
-    arrivalTime: string;
+    assignmentDate: string;
     phone: string;
     zone: string;
   },
@@ -220,7 +269,7 @@ function buildPayload(
   return {
     leadEmail: fields.leadEmail,
     listingId: fields.listingId,
-    arrivalTime: fields.arrivalTime,
+    assignmentDate: fields.assignmentDate,
     phone: fields.phone,
     zone: fields.zone,
     spreadsheetId: target.spreadsheetId,

@@ -3,6 +3,7 @@ import type { AppEnv } from "../config/loadEnv.js";
 import { logger } from "../logging/logger.js";
 import { createListingRepository } from "../repositories/createListingRepository.js";
 import { GoogleSheetsWriter } from "../sheets/googleSheetsWriter.js";
+import { LeadAssignmentCooldown } from "../services/leadAssignmentCooldown.js";
 import { processInboundEmail } from "../services/leadProcessor.js";
 import { parseGenericJson } from "./parseWebhookBody.js";
 
@@ -21,6 +22,7 @@ export function createApp(env: AppEnv): express.Application {
   });
 
   const sheets = new GoogleSheetsWriter();
+  const assignmentCooldown = new LeadAssignmentCooldown(env);
   const listings = createListingRepository(env);
 
   const extraIdPatterns = env.EXTRA_ID_REGEX
@@ -38,6 +40,7 @@ export function createApp(env: AppEnv): express.Application {
         env,
         listings,
         sheets,
+        assignmentCooldown,
         extraIdPatterns,
       });
       res.status(200).json({ ok: true });

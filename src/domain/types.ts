@@ -35,7 +35,7 @@ export interface ParsedInboundEmail {
 export interface LeadRowPayload {
   leadEmail: string;
   listingId: string;
-  arrivalTime: string;
+  assignmentDate: string;
   phone: string;
   zone: string;
   spreadsheetId: string;
