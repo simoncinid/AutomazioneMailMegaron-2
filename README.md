@@ -3,7 +3,7 @@
 Servizio **Node.js 20+** (TypeScript) che:
 
 1. Legge la posta (**Microsoft Graph** + worker in loop, oppure **webhook HTTP**).
-2. Estrae **ID annuncio** dal corpo/HTML.
+2. Estrae **nome, cognome, email lead e ID annuncio** dal corpo/HTML con **OpenAI (`gpt-4o-mini`)**.
 3. Risolve l’annuncio tramite **API** Render o **PostgreSQL** (`gestim_listings`).
 4. Legge la **zona** e instrada sul **tab Google Sheet** corretto (mapping da env JSON **oppure** da foglio `mapping` colonne A–B).
 5. **Appende** righe lead con colonne: **Email**, **ID annuncio**, **Data assegnazione**, **Telefono**, **Zona**.
@@ -71,6 +71,8 @@ Colonna **A** = testo zona (match con `MAPPING_ZONE_MATCH`: `contains` o `equals
 
 | Variabile | Descrizione |
 |-----------|-------------|
+| `OPENAI_API_KEY` | API key OpenAI usata per parsing email (`gpt-4o-mini`) |
+| `OPENAI_MODEL` | Modello OpenAI (default `gpt-4o-mini`) |
 | `GRAPH_TENANT_ID`, `GRAPH_CLIENT_ID`, `GRAPH_CLIENT_SECRET` | Azure AD (worker) |
 | `MAILBOX_USER` | Casella da leggere (UPN, es. `megaron@dominio.it`) |
 | `GRAPH_LOOKBACK_HOURS` | Finestra messaggi da rileggere (default 24) |

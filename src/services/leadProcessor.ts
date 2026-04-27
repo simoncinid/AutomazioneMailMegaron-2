@@ -6,6 +6,7 @@ import type { ListingRepository } from "../repositories/listingRepository.js";
 import { GoogleSheetsWriter } from "../sheets/googleSheetsWriter.js";
 import type { LeadAssignmentCooldown } from "./leadAssignmentCooldown.js";
 import { extractFirstBodyEmail, extractFirstPhone } from "./contactExtractor.js";
+import { extractLeadDataWithAi } from "./leadAiExtractor.js";
 import { extractExternalListingIds } from "./idExtractor.js";
 
 const log = logger.child({ module: "leadProcessor" });
@@ -61,8 +62,8 @@ function formatAssignmentDate(value: Date): string {
 
 /**
  * Orchestrazione worker:
- * - Estrae ID annuncio dal corpo
- * - Estrae email lead dal corpo saltando indirizzi "bloccati"
+ * - Estrae nome/cognome/email/ID annuncio via OpenAI (con fallback regex per resilienza)
+ * - Filtra email lead con blacklist substring
  * - Instrada per numero ID:
  *   0 -> NO_ID_FOUND_SHEET_TITLE
  *   >1 -> MULTI_ID_FOUND_SHEET_TITLE
@@ -74,19 +75,43 @@ export async function processInboundEmail(
   deps: LeadProcessorDeps,
   processedAt: Date = new Date(),
 ): Promise<void> {
-  const extractedIds = extractExternalListingIds(email.textBody, email.htmlBody, {
+  let aiResult = {
+    nome: "",
+    numeroTelefono: "",
+    cognome: "",
+    idAnnuncio: "",
+    email: "",
+  };
+  try {
+    aiResult = await extractLeadDataWithAi(email, deps.env);
+  } catch (e) {
+    log.error({ err: e, messageId: email.messageId }, "Errore estrazione lead via OpenAI");
+  }
+
+  const fallbackIds = extractExternalListingIds(email.textBody, email.htmlBody, {
     extraRegexStrings: deps.extraIdPatterns,
   });
-  const uniqueIds = [...new Set(extractedIds)];
-  const telefono = extractFirstPhone(combinedBody(email));
+  const uniqueIds = aiResult.idAnnuncio
+    ? [aiResult.idAnnuncio]
+    : [...new Set(fallbackIds)];
+  const telefono = aiResult.numeroTelefono || extractFirstPhone(combinedBody(email));
   const blockedSubstrings = parseBlockedSubstrings(deps.env);
-  const leadEmail = extractFirstBodyEmail(email.textBody, email.htmlBody, blockedSubstrings);
+  const aiEmailBlocked = blockedSubstrings.some((s) =>
+    aiResult.email.toLowerCase().includes(s.toLowerCase()),
+  );
+  const leadEmail =
+    aiResult.email && !aiEmailBlocked
+      ? aiResult.email
+      : extractFirstBodyEmail(email.textBody, email.htmlBody, blockedSubstrings);
   const assignmentDate = formatAssignmentDate(processedAt);
 
   log.info(
     {
       messageId: email.messageId,
       from: email.from,
+      nome: aiResult.nome,
+      cognome: aiResult.cognome,
+      telefono,
       idCount: uniqueIds.length,
       ids: uniqueIds,
       leadEmail,
