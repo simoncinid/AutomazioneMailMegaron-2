@@ -31,13 +31,51 @@ export interface ParsedInboundEmail {
   htmlBody?: string;
 }
 
-/** Riga da appendere nel foglio lead (5 colonne operative A:E). */
+/** Riga da appendere nel foglio lead (7 colonne operative A:G). */
 export interface LeadRowPayload {
   leadEmail: string;
   listingId: string;
   assignmentDate: string;
   phone: string;
   zone: string;
+  nome: string;
+  cognome: string;
+  spreadsheetId: string;
+  sheetTitle: string;
+}
+
+/**
+ * Riga diagnostica per `no-id-trovato` (8 colonne A:H):
+ * data, ora, mittente, corpo, nome, cognome, email_lead, telefono.
+ */
+export interface NoIdRowPayload {
+  dataMail: string;
+  oraMail: string;
+  mittente: string;
+  corpoMail: string;
+  nome: string;
+  cognome: string;
+  leadEmail: string;
+  phone: string;
+  spreadsheetId: string;
+  sheetTitle: string;
+}
+
+/**
+ * Riga diagnostica per `no-singolo-id` (9 colonne A:I):
+ * data, ora, mittente, corpo, nome, cognome, email_lead, telefono, lista_id.
+ */
+export interface MultiIdRowPayload {
+  dataMail: string;
+  oraMail: string;
+  mittente: string;
+  corpoMail: string;
+  nome: string;
+  cognome: string;
+  leadEmail: string;
+  phone: string;
+  /** Lista ID separati da virgola. */
+  listaId: string;
   spreadsheetId: string;
   sheetTitle: string;
 }

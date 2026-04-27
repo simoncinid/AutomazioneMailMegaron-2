@@ -8,7 +8,8 @@ export interface ImapFetchOptions {
   user: string;
   password: string;
   secure: boolean;
-  lookbackHours: number;
+  /** Finestra `SINCE` in giorni (allineato al test Python `IMAP_TEST_SINCE_DAYS`). */
+  lookbackDays: number;
   limit: number;
 }
 
@@ -20,10 +21,17 @@ function toAddressText(
   return value.text;
 }
 
-function lookbackDate(hours: number): Date {
-  return new Date(Date.now() - hours * 60 * 60 * 1000);
+function lookbackDate(days: number): Date {
+  return new Date(Date.now() - days * 24 * 60 * 60 * 1000);
 }
 
+/**
+ * Tutti i messaggi della INBOX con `INTERNALDATE >= now - lookbackDays`,
+ * limitati agli ultimi `limit` UID (allineato a `test_imap_aruba.py`).
+ *
+ * Il valore restituito espone `messageId = "imap-uid-<UID>"` quando il
+ * Message-ID originale manca, in modo da poter usare l'UID nei log STDOUT.
+ */
 export async function listInboxMessagesFromImap(
   options: ImapFetchOptions,
 ): Promise<ParsedInboundEmail[]> {
@@ -37,7 +45,7 @@ export async function listInboxMessagesFromImap(
   await client.connect();
   const lock = await client.getMailboxLock("INBOX");
   try {
-    const since = lookbackDate(options.lookbackHours);
+    const since = lookbackDate(options.lookbackDays);
     const uids = (await client.search({ since })) || [];
     const selectedUids = uids.slice(-Math.max(1, options.limit));
     const out: ParsedInboundEmail[] = [];

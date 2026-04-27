@@ -17,6 +17,7 @@ token*.json
 secrets*.json
 .env
 .env.local
+.google_megaron_sa.json
 !.env.example
 !*service-account*.json
 !*service_account*.json

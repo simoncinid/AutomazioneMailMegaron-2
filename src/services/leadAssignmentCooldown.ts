@@ -7,9 +7,18 @@ import { formatSheetRange } from "../sheets/sheetRange.js";
 const log = logger.child({ module: "leadAssignmentCooldown" });
 const COOLDOWN_MONTHS = 6;
 
+/**
+ * "lead"        => riga A:G  (A = email, C = data assegnazione)
+ * "diagnostic"  => riga A:H/A:I  (A = data, G = email lead)
+ *
+ * Indica al loader come scoprire `(email, data)` su ciascun tab.
+ */
+type TargetKind = "lead" | "diagnostic";
+
 interface SheetTarget {
   spreadsheetId: string;
   sheetTitle: string;
+  kind: TargetKind;
 }
 
 export interface LeadCooldownDecision {
@@ -18,6 +27,15 @@ export interface LeadCooldownDecision {
   blockedUntil?: Date;
 }
 
+/**
+ * Cooldown 6 mesi per email lead, calcolato globalmente su:
+ *  - tab lead (DEFAULT_SHEET_TITLE + tutte le destinazioni del mapping zona)
+ *  - tab diagnostici `no-id-trovato` e `no-singolo-id`
+ *
+ * Lo stato viene caricato 1 volta dai Google Sheets e poi aggiornato in memoria
+ * tramite `recordAssignment` man mano che il worker scrive righe nel ciclo:
+ * così due mail uguali nello stesso run non finiscono in due righe duplicate.
+ */
 export class LeadAssignmentCooldown {
   private readonly targets: SheetTarget[];
   private readonly lastAssignmentByEmail = new Map<string, Date>();
@@ -61,9 +79,12 @@ export class LeadAssignmentCooldown {
 
   private async loadFromSheets(): Promise<void> {
     const sheets = await getSheetsClient();
+    let leadTargets = 0;
+    let diagnosticTargets = 0;
 
     for (const target of this.targets) {
-      const range = formatSheetRange(target.sheetTitle, "A:C");
+      const rangeSuffix = target.kind === "lead" ? "A:C" : "A:G";
+      const range = formatSheetRange(target.sheetTitle, rangeSuffix);
       try {
         const res = await withGoogleSheetsRateLimit(async () =>
           sheets.spreadsheets.values.get({
@@ -75,21 +96,33 @@ export class LeadAssignmentCooldown {
         );
         const rows = res.data.values ?? [];
         for (const row of rows) {
-          const emailCell = row[0];
-          const dateCell = row[2];
+          let emailCell: unknown;
+          let dateCell: unknown;
+          if (target.kind === "lead") {
+            emailCell = row[0];
+            dateCell = row[2];
+          } else {
+            // Layout diagnostico: A=data, G=email (indice 6).
+            dateCell = row[0];
+            emailCell = row[6];
+          }
           if (typeof emailCell !== "string") continue;
+          if (!emailCell.includes("@")) continue;
           const normalizedEmail = normalizeEmail(emailCell);
           if (!normalizedEmail) continue;
           const assignedAt = parseSheetDateCell(dateCell);
           if (!assignedAt) continue;
           upsertLatest(this.lastAssignmentByEmail, normalizedEmail, assignedAt);
         }
+        if (target.kind === "lead") leadTargets += 1;
+        else diagnosticTargets += 1;
       } catch (error) {
         log.warn(
           {
             err: error,
             spreadsheetId: target.spreadsheetId,
             sheetTitle: target.sheetTitle,
+            kind: target.kind,
           },
           "Impossibile leggere tab per cooldown lead: continuo con gli altri",
         );
@@ -98,34 +131,40 @@ export class LeadAssignmentCooldown {
 
     log.info(
       {
-        trackedTargets: this.targets.length,
+        leadTargets,
+        diagnosticTargets,
         trackedEmails: this.lastAssignmentByEmail.size,
       },
-      "Cooldown lead caricato",
+      "Cooldown lead caricato (ricerca globale: lead A:C + diagnostici A:G)",
     );
   }
 }
 
+/**
+ * Tutti i tab che contengono email lead da considerare per il cooldown:
+ *  - DEFAULT_SHEET_TITLE (es. "AG") e tutte le destinazioni del mapping zona  -> layout "lead"
+ *  - NO_ID_FOUND_SHEET_TITLE e MULTI_ID_FOUND_SHEET_TITLE                    -> layout "diagnostic"
+ */
 function buildTrackedTargets(env: AppEnv): SheetTarget[] {
   const out = new Map<string, SheetTarget>();
-  const push = (spreadsheetId: string | undefined, sheetTitle: string | undefined): void => {
+  const push = (
+    spreadsheetId: string | undefined,
+    sheetTitle: string | undefined,
+    kind: TargetKind,
+  ): void => {
     const sid = (spreadsheetId ?? "").trim();
     const st = (sheetTitle ?? "").trim();
     if (!sid || !st) return;
-    out.set(`${sid}::${st}`, { spreadsheetId: sid, sheetTitle: st });
+    out.set(`${sid}::${st}`, { spreadsheetId: sid, sheetTitle: st, kind });
   };
 
-  push(env.defaultSpreadsheetIdResolved, env.DEFAULT_SHEET_TITLE);
-  push(env.defaultSpreadsheetIdResolved, env.NO_ID_FOUND_SHEET_TITLE);
-  push(env.defaultSpreadsheetIdResolved, env.MULTI_ID_FOUND_SHEET_TITLE);
-
-  if (env.UNMAPPED_ZONE_SPREADSHEET_ID) {
-    push(env.UNMAPPED_ZONE_SPREADSHEET_ID, env.UNMAPPED_ZONE_SHEET_TITLE ?? env.DEFAULT_SHEET_TITLE);
-  }
-
+  push(env.defaultSpreadsheetIdResolved, env.DEFAULT_SHEET_TITLE, "lead");
   for (const rule of env.zoneSheetRules) {
-    push(rule.spreadsheetId, rule.sheetTitle);
+    push(rule.spreadsheetId, rule.sheetTitle, "lead");
   }
+
+  push(env.defaultSpreadsheetIdResolved, env.NO_ID_FOUND_SHEET_TITLE, "diagnostic");
+  push(env.defaultSpreadsheetIdResolved, env.MULTI_ID_FOUND_SHEET_TITLE, "diagnostic");
 
   return [...out.values()];
 }

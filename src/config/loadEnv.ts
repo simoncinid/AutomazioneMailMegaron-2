@@ -51,6 +51,7 @@ export const rawEnvSchema = z.object({
   /** Se impostato, colonne A–B del tab leggono zona → nome foglio (stesso file). */
   MAPPING_SPREADSHEET_ID: z.string().optional(),
   MAPPING_SHEET_NAME: z.string().default("mapping"),
+  /** Allineato al test Python (`IMAP_ZONE_MATCH=contains`). */
   MAPPING_ZONE_MATCH: z.enum(["contains", "equals"]).default("contains"),
 
   /** Obbligatorio se non usi solo MAPPING_SPREADSHEET_ID (viene defaultato al mapping file). */
@@ -60,8 +61,6 @@ export const rawEnvSchema = z.object({
   GOOGLE_APPLICATION_CREDENTIALS: z.string().optional(),
   GOOGLE_SERVICE_ACCOUNT_JSON: z.string().optional(),
 
-  UNMAPPED_ZONE_SPREADSHEET_ID: z.string().optional(),
-  UNMAPPED_ZONE_SHEET_TITLE: z.string().optional(),
   NO_ID_FOUND_SHEET_TITLE: z.string().default("no-id-trovato"),
   MULTI_ID_FOUND_SHEET_TITLE: z.string().default("no-singolo-id"),
   BLOCKED_EMAIL_SUBSTRINGS: z.string().default(
@@ -70,7 +69,7 @@ export const rawEnvSchema = z.object({
 
   EXTRA_ID_REGEX: z.string().optional(),
 
-  /** Worker IMAP Aruba (sorgente inbox) */
+  /** Worker IMAP Aruba (sorgente inbox). Allineato al test Python (`IMAP_TEST_SINCE_DAYS=7`). */
   IMAP_EMAIL: z.string().optional(),
   IMAP_PASSWORD: z.string().optional(),
   IMAP_SERVER: z.string().default("imaps.aruba.it"),
@@ -79,21 +78,12 @@ export const rawEnvSchema = z.object({
     .string()
     .optional()
     .transform((s) => (s == null ? true : s === "true" || s === "1")),
-  IMAP_LOOKBACK_HOURS: z.coerce.number().min(1).default(24),
-  IMAP_FETCH_LIMIT: z.coerce.number().min(1).max(500).default(50),
-
-  /** Microsoft Graph (legacy, opzionale) */
-  GRAPH_TENANT_ID: z.string().optional(),
-  GRAPH_CLIENT_ID: z.string().optional(),
-  GRAPH_CLIENT_SECRET: z.string().optional(),
-  /** UPN o indirizzo della casella da leggere (es. megaron@...) */
-  MAILBOX_USER: z.string().optional(),
+  /** Finestra IMAP `SINCE` in giorni (default 7 = ultima settimana, come `test_imap_aruba.py`). */
+  IMAP_LOOKBACK_DAYS: z.coerce.number().min(1).default(7),
+  /** Numero massimo di messaggi processati per ciclo (allineato al test). */
+  IMAP_FETCH_LIMIT: z.coerce.number().min(1).max(1000).default(200),
 
   WORKER_POLL_INTERVAL_MINUTES: z.coerce.number().min(5).default(60),
-  GRAPH_LOOKBACK_HOURS: z.coerce.number().min(1).default(24),
-  /** Dove memorizzare gli id messaggio già processati (stesso file dei lead se omesso). */
-  GRAPH_STATE_SPREADSHEET_ID: z.string().optional(),
-  GRAPH_STATE_SHEET_NAME: z.string().default("_graph_processed"),
 });
 
 export type RawEnv = z.infer<typeof rawEnvSchema>;
@@ -114,7 +104,16 @@ function normalizeZone(zone: string): string {
   return zone.trim().toLowerCase().replace(/\s+/g, " ");
 }
 
-function parseZoneMappingRaw(raw: string, spreadsheetId: string): ZoneSheetRule[] {
+/**
+ * Allineato al test Python `_resolve_sheet_for_zone`: ogni regola usa
+ * `MAPPING_ZONE_MATCH` (default `contains`); con `contains`, le chiavi più
+ * lunghe vengono valutate prima per evitare match parziali troppo aggressivi.
+ */
+function parseZoneMappingRaw(
+  raw: string,
+  spreadsheetId: string,
+  matchMode: "contains" | "equals",
+): ZoneSheetRule[] {
   const rules: ZoneSheetRule[] = [];
   const rows = raw
     .split(/\r?\n/)
@@ -136,11 +135,15 @@ function parseZoneMappingRaw(raw: string, spreadsheetId: string): ZoneSheetRule[
       rules.push({
         name: `raw_mapping_${normalizeZone(zone).replace(/\s+/g, "_")}`,
         pattern: zone,
-        match: "equals",
+        match: matchMode,
         spreadsheetId,
         sheetTitle,
       });
     }
+  }
+
+  if (matchMode === "contains") {
+    rules.sort((a, b) => b.pattern.length - a.pattern.length);
   }
   return rules;
 }
@@ -186,6 +189,7 @@ export async function bootstrapEnv(): Promise<AppEnv> {
       zoneSheetRules = parseZoneMappingRaw(
         parsed.ZONE_SHEET_MAPPING_RAW ?? "",
         defaultSpreadsheetIdResolved,
+        parsed.MAPPING_ZONE_MATCH,
       );
       if (zoneSheetRules.length === 0) {
         throw new Error("ZONE_SHEET_MAPPING_RAW impostato ma senza righe valide");

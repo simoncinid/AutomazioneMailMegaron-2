@@ -60,5 +60,10 @@ export async function loadZoneMappingFromSheet(
       sheetTitle,
     });
   }
+  // In modalità "contains" valutiamo prima i pattern più lunghi: stessa euristica
+  // del test Python (`_resolve_sheet_for_zone`).
+  if (options.matchMode === "contains") {
+    rules.sort((a, b) => b.pattern.length - a.pattern.length);
+  }
   return rules;
 }
