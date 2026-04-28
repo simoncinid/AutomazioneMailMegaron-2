@@ -17,6 +17,12 @@ const zoneRuleSchema = z.object({
   sheetTitle: z.string().min(1),
 });
 
+function parseEnvBoolean(input: string | undefined): boolean {
+  if (input == null) return false;
+  const normalized = input.trim().toLowerCase();
+  return normalized === "true" || normalized === "1" || normalized === "yes" || normalized === "on";
+}
+
 export const rawEnvSchema = z.object({
   NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
   PORT: z.coerce.number().default(3000),
@@ -39,7 +45,7 @@ export const rawEnvSchema = z.object({
   DB_SSL: z
     .string()
     .optional()
-    .transform((s) => s === "true" || s === "1"),
+    .transform(parseEnvBoolean),
   /** PEM della CA (o catena) per verificare il certificato del server; supporta `\n` letterali */
   TLS_CERT: z.string().optional(),
 
