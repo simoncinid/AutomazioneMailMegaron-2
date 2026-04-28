@@ -79,10 +79,11 @@ describe("pgPool TLS helpers", () => {
     const cfg = resolvePgPoolConfig(env);
     expect(cfg.connectionString).toBe("postgresql://user:pass@195.154.71.55:18973/rdb");
     expect(cfg.host).toBe("195.154.71.55");
-    expect(cfg.ssl).toEqual({
-      rejectUnauthorized: true,
-      ca: "-----BEGIN CERTIFICATE-----\nabc\n-----END CERTIFICATE-----",
-    });
+    expect((cfg.ssl as Record<string, unknown>).rejectUnauthorized).toBe(true);
+    expect((cfg.ssl as Record<string, unknown>).ca).toBe(
+      "-----BEGIN CERTIFICATE-----\nabc\n-----END CERTIFICATE-----",
+    );
+    expect(typeof (cfg.ssl as Record<string, unknown>).checkServerIdentity).toBe("function");
   });
 
   it("con DB_SSL=true forza rejectUnauthorized=false e ripulisce l'URL", () => {

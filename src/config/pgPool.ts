@@ -1,5 +1,6 @@
 import type { PoolConfig } from "pg";
 import type { RawEnv } from "./loadEnv.js";
+import { checkServerIdentity as tlsCheckServerIdentity } from "node:tls";
 
 /** Normalizza certificati PEM salvati in env con `\n` letterali. */
 export function normalizeTlsPem(s: string): string {
@@ -76,6 +77,14 @@ export function resolvePgPoolConfig(env: RawEnv): PoolConfig {
       cfg.ssl = {
         rejectUnauthorized: true,
         ca: normalizeTlsPem(env.TLS_CERT),
+        ...(hostFromUrl
+          ? {
+              // Difende da host runtime alterato (es. PGHOST=localhost su PaaS):
+              // verifichiamo il cert contro l'host della DATABASE_URL.
+              checkServerIdentity: (_presentedHost, cert) =>
+                tlsCheckServerIdentity(hostFromUrl, cert),
+            }
+          : {}),
       };
     } else if (env.DB_SSL) {
       cfg.ssl = { rejectUnauthorized: false };
