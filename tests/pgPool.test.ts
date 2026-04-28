@@ -54,6 +54,11 @@ describe("pgPool TLS helpers", () => {
     expect(normalizeTlsPem(input)).toBe("-----BEGIN CERTIFICATE-----\nabc\n-----END CERTIFICATE-----");
   });
 
+  it("normalizza PEM anche con virgolette e CRLF escaped", () => {
+    const input = "\"-----BEGIN CERTIFICATE-----\\r\\nabc\\r\\n-----END CERTIFICATE-----\"";
+    expect(normalizeTlsPem(input)).toBe("-----BEGIN CERTIFICATE-----\nabc\n-----END CERTIFICATE-----");
+  });
+
   it("rimuove i parametri ssl* dalla DATABASE_URL", () => {
     const input =
       "postgresql://user:pass@db.example.com:5432/app?sslmode=require&sslrootcert=/tmp/ca.pem&application_name=worker";

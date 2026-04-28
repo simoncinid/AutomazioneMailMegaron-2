@@ -3,7 +3,8 @@ import type { RawEnv } from "./loadEnv.js";
 
 /** Normalizza certificati PEM salvati in env con `\n` letterali. */
 export function normalizeTlsPem(s: string): string {
-  return s.replace(/\\n/g, "\n").trim();
+  const trimmed = s.trim().replace(/^['"]|['"]$/g, "");
+  return trimmed.replace(/\\r\\n/g, "\n").replace(/\\n/g, "\n").trim();
 }
 
 const SSL_URL_PARAMS = ["sslmode", "sslcert", "sslkey", "sslrootcert", "ssl"];

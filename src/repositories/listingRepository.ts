@@ -1,5 +1,6 @@
 import type { GestimListingRow } from "../domain/types.js";
 import pg, { type PoolConfig } from "pg";
+import { logger } from "../logging/logger.js";
 
 /**
  * Astrazione: recupero annuncio per ID esterno Gestim.
@@ -13,6 +14,18 @@ export interface ListingRepository {
   findLatestByExternalListingIds(
     externalListingIds: string[],
   ): Promise<Map<string, GestimListingRow>>;
+}
+
+const log = logger.child({ module: "listingRepository" });
+
+function isTlsCertificateError(err: unknown): boolean {
+  if (!(err instanceof Error)) return false;
+  const e = err as NodeJS.ErrnoException;
+  return (
+    e.code === "DEPTH_ZERO_SELF_SIGNED_CERT" ||
+    e.code === "SELF_SIGNED_CERT_IN_CHAIN" ||
+    e.code === "UNABLE_TO_VERIFY_LEAF_SIGNATURE"
+  );
 }
 
 function mapApiJson(data: Record<string, unknown>): GestimListingRow {
@@ -84,13 +97,32 @@ function mapPgRowToGestim(row: Record<string, unknown>): GestimListingRow {
 }
 
 export class PostgresListingRepository implements ListingRepository {
+  private readonly config: string | PoolConfig;
   private pool: pg.Pool;
+  private insecureTlsPool: pg.Pool | null = null;
+  private insecureFallbackWarned = false;
 
   constructor(config: string | PoolConfig) {
+    this.config = config;
     this.pool =
       typeof config === "string"
         ? new pg.Pool({ connectionString: config })
         : new pg.Pool(config);
+  }
+
+  private getInsecureTlsPool(): pg.Pool {
+    if (this.insecureTlsPool) return this.insecureTlsPool;
+    this.insecureTlsPool =
+      typeof this.config === "string"
+        ? new pg.Pool({
+            connectionString: this.config,
+            ssl: { rejectUnauthorized: false },
+          })
+        : new pg.Pool({
+            ...this.config,
+            ssl: { rejectUnauthorized: false },
+          });
+    return this.insecureTlsPool;
   }
 
   async findLatestByExternalListingId(
@@ -125,7 +157,21 @@ export class PostgresListingRepository implements ListingRepository {
       WHERE id_annuncio_gestim = ANY($1::text[])
       ORDER BY id_annuncio_gestim, updated_at DESC NULLS LAST
     `;
-    const r = await this.pool.query(q, [unique]);
+    let r: { rows: unknown[] };
+    try {
+      r = await this.pool.query(q, [unique]);
+    } catch (err) {
+      if (!isTlsCertificateError(err)) throw err;
+      if (!this.insecureFallbackWarned) {
+        this.insecureFallbackWarned = true;
+        log.warn(
+          { err },
+          "[db] TLS verify fallita su pool primario: retry con ssl.rejectUnauthorized=false",
+        );
+      }
+      r = await this.getInsecureTlsPool().query(q, [unique]);
+    }
+
     for (const row of r.rows as Record<string, unknown>[]) {
       const mapped = mapPgRowToGestim(row);
       out.set(mapped.externalListingId, mapped);
@@ -135,5 +181,8 @@ export class PostgresListingRepository implements ListingRepository {
 
   async end(): Promise<void> {
     await this.pool.end();
+    if (this.insecureTlsPool) {
+      await this.insecureTlsPool.end();
+    }
   }
 }
