@@ -27,6 +27,16 @@ export function stripSslParamsFromDatabaseUrl(connectionString: string): string 
   }
 }
 
+function extractHostFromDatabaseUrl(connectionString: string): string | null {
+  try {
+    const url = new URL(connectionString);
+    const host = url.hostname?.trim();
+    return host ? host : null;
+  } catch {
+    return null;
+  }
+}
+
 /** True se è configurata una connessione DB (URL oppure host/user/pass/name). */
 export function hasDatabaseConnection(env: RawEnv): boolean {
   if (env.DATABASE_URL?.trim()) return true;
@@ -54,10 +64,13 @@ export function resolvePgPoolConfig(env: RawEnv): PoolConfig {
   if (env.DATABASE_URL?.trim()) {
     const rawConnectionString = env.DATABASE_URL.trim();
     const mustForceSslConfig = Boolean(env.TLS_CERT?.trim() || env.DB_SSL);
+    const hostFromUrl = extractHostFromDatabaseUrl(rawConnectionString);
     const cfg: PoolConfig = {
       connectionString: mustForceSslConfig
         ? stripSslParamsFromDatabaseUrl(rawConnectionString)
         : rawConnectionString,
+      // Evita override accidentale da env PGHOST (es. localhost su piattaforme PaaS).
+      ...(hostFromUrl ? { host: hostFromUrl } : {}),
     };
     if (env.TLS_CERT?.trim()) {
       cfg.ssl = {

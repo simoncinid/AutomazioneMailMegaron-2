@@ -24,7 +24,8 @@ function isTlsCertificateError(err: unknown): boolean {
   return (
     e.code === "DEPTH_ZERO_SELF_SIGNED_CERT" ||
     e.code === "SELF_SIGNED_CERT_IN_CHAIN" ||
-    e.code === "UNABLE_TO_VERIFY_LEAF_SIGNATURE"
+    e.code === "UNABLE_TO_VERIFY_LEAF_SIGNATURE" ||
+    e.code === "ERR_TLS_CERT_ALTNAME_INVALID"
   );
 }
 
