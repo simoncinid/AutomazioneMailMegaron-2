@@ -75,7 +75,7 @@ export const rawEnvSchema = z.object({
 
   EXTRA_ID_REGEX: z.string().optional(),
 
-  /** Worker IMAP Aruba (sorgente inbox). Allineato al test Python (`IMAP_TEST_SINCE_DAYS=7`). */
+  /** Worker IMAP Aruba (sorgente inbox). */
   IMAP_EMAIL: z.string().optional(),
   IMAP_PASSWORD: z.string().optional(),
   IMAP_SERVER: z.string().default("imaps.aruba.it"),
@@ -84,8 +84,8 @@ export const rawEnvSchema = z.object({
     .string()
     .optional()
     .transform((s) => (s == null ? true : s === "true" || s === "1")),
-  /** Finestra IMAP `SINCE` in giorni (default 7 = ultima settimana, come `test_imap_aruba.py`). */
-  IMAP_LOOKBACK_DAYS: z.coerce.number().min(1).default(7),
+  /** Finestra IMAP in ore (default 1 = ultima ora). */
+  IMAP_LOOKBACK_HOURS: z.coerce.number().min(1).default(1),
   /** Numero massimo di messaggi processati per ciclo (allineato al test). */
   IMAP_FETCH_LIMIT: z.coerce.number().min(1).max(1000).default(200),
 

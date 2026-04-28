@@ -8,8 +8,8 @@ export interface ImapFetchOptions {
   user: string;
   password: string;
   secure: boolean;
-  /** Finestra `SINCE` in giorni (allineato al test Python `IMAP_TEST_SINCE_DAYS`). */
-  lookbackDays: number;
+  /** Finestra temporale in ore. */
+  lookbackHours: number;
   limit: number;
 }
 
@@ -21,13 +21,13 @@ function toAddressText(
   return value.text;
 }
 
-function lookbackDate(days: number): Date {
-  return new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+function lookbackDate(hours: number): Date {
+  return new Date(Date.now() - hours * 60 * 60 * 1000);
 }
 
 /**
- * Tutti i messaggi della INBOX con `INTERNALDATE >= now - lookbackDays`,
- * limitati agli ultimi `limit` UID (allineato a `test_imap_aruba.py`).
+ * Tutti i messaggi della INBOX con `INTERNALDATE >= now - lookbackHours`,
+ * limitati agli ultimi `limit` UID.
  *
  * Il valore restituito espone `messageId = "imap-uid-<UID>"` quando il
  * Message-ID originale manca, in modo da poter usare l'UID nei log STDOUT.
@@ -45,7 +45,7 @@ export async function listInboxMessagesFromImap(
   await client.connect();
   const lock = await client.getMailboxLock("INBOX");
   try {
-    const since = lookbackDate(options.lookbackDays);
+    const since = lookbackDate(options.lookbackHours);
     const uids = (await client.search({ since })) || [];
     const selectedUids = uids.slice(-Math.max(1, options.limit));
     const out: ParsedInboundEmail[] = [];
@@ -63,11 +63,14 @@ export async function listInboxMessagesFromImap(
         if (!msg.source) continue;
         const parsed = await simpleParser(msg.source, {});
         const fromValue = parsed.from?.text ?? msg.envelope?.from?.[0]?.address ?? "";
-        const receivedAt = parsed.date
-          ? new Date(parsed.date)
-          : msg.internalDate
-            ? new Date(msg.internalDate)
+        const internalReceivedAt = msg.internalDate
+          ? new Date(msg.internalDate)
+          : parsed.date
+            ? new Date(parsed.date)
             : new Date();
+        if (internalReceivedAt.getTime() < since.getTime()) continue;
+
+        const receivedAt = internalReceivedAt;
         out.push({
           messageId: parsed.messageId ?? `imap-uid-${msg.uid}`,
           from: fromValue,

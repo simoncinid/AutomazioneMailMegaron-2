@@ -3,7 +3,7 @@ import "dotenv/config";
 /**
  * Worker Render: ciclo di polling IMAP Aruba allineato a `test_imap_aruba.py`.
  *
- * - Finestra `SINCE` configurabile in giorni (`IMAP_LOOKBACK_DAYS`, default 7).
+ * - Finestra configurabile in ore (`IMAP_LOOKBACK_HOURS`, default 1).
  * - Per ogni mail: estrae i campi via OpenAI, scrive su Google Sheets (lead A:G,
  *   diagnostiche A:H/A:I), aggiorna il cooldown 6 mesi sui tab lead.
  * - Logging: STDOUT contiene SOLO il blocco "campi OpenAI" per ciascuna mail
@@ -41,7 +41,7 @@ async function runCycle(env: AppEnv): Promise<void> {
     {
       mailbox: env.IMAP_EMAIL,
       host: env.IMAP_SERVER,
-      lookbackDays: env.IMAP_LOOKBACK_DAYS,
+      lookbackHours: env.IMAP_LOOKBACK_HOURS,
       limit: env.IMAP_FETCH_LIMIT,
     },
     "Avvio ciclo IMAP",
@@ -53,7 +53,7 @@ async function runCycle(env: AppEnv): Promise<void> {
     user: env.IMAP_EMAIL!,
     password: env.IMAP_PASSWORD!,
     secure: env.IMAP_SECURE,
-    lookbackDays: env.IMAP_LOOKBACK_DAYS,
+    lookbackHours: env.IMAP_LOOKBACK_HOURS,
     limit: env.IMAP_FETCH_LIMIT,
   });
 
