@@ -9,6 +9,7 @@ Servizio **Node.js 20+** (TypeScript) che:
 5. **Appende** righe lead con colonne: **Email**, **ID annuncio**, **Data assegnazione**, **Telefono**, **Zona**.
 6. Regole ID: massimo `1` ID per mail; se assente o non risolto in `gestim_listings` -> tab `no-id-trovato`, altrimenti lookup `gestim_listings.id_annuncio_gestim` e routing per zona.
 7. Regola anti-duplicato: una email già assegnata viene **skippata per 6 mesi** in base alla data presente in colonna **C** (su tutti i tab usati dal routing); dopo 6 mesi viene assegnata di nuovo con nuova data in C.
+8. Dopo scrittura riga lead, invia una risposta automatica: se il tab e' `AG` usa contatto agenzia; per gli altri tab usa il contatto agente configurato.
 
 ## Stack
 
@@ -82,6 +83,10 @@ Colonna **A** = testo zona (match con `MAPPING_ZONE_MATCH`: `contains` o `equals
 | `ZONE_SHEET_MAP_JSON` | Alternativa JSON |
 | `DEFAULT_SHEET_TITLE` | Tab fallback |
 | `GOOGLE_APPLICATION_CREDENTIALS` o `GOOGLE_SERVICE_ACCOUNT_JSON` | Service account |
+| `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_FROM` | SMTP per risposta automatica |
+| `LEAD_REPLY_FORCE_TO` | Destinatario forzato test (default `simoncinidiego10@gmail.com`) |
+| `AGENCY_REPLY_PHONE`, `AGENCY_REPLY_EMAIL` | Contatto usato per tab `AG` |
+| `AGENT_REPLY_CONTACTS_JSON` | Mappa contatti agente per nome sheet (JSON) |
 
 Elenco completo: `.env.example`.
 

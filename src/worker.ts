@@ -16,6 +16,7 @@ import { createListingRepository } from "./repositories/createListingRepository.
 import type { GestimListingRow } from "./domain/types.js";
 import { GoogleSheetsWriter } from "./sheets/googleSheetsWriter.js";
 import { LeadAssignmentCooldown } from "./services/leadAssignmentCooldown.js";
+import { LeadAutoReplyService } from "./services/leadAutoReply.js";
 import { extractExternalListingIds } from "./services/idExtractor.js";
 import { processInboundEmail } from "./services/leadProcessor.js";
 import { listInboxMessagesFromImap } from "./imap/imapAruba.js";
@@ -62,6 +63,7 @@ async function runCycle(env: AppEnv): Promise<void> {
   const listings = createListingRepository(env);
   const sheets = new GoogleSheetsWriter();
   const assignmentCooldown = new LeadAssignmentCooldown(env);
+  const leadAutoReply = new LeadAutoReplyService(env);
   const listingCache = new Map<string, GestimListingRow | null>();
   const extraIdPatterns = env.EXTRA_ID_REGEX
     ? env.EXTRA_ID_REGEX.split("|")
@@ -102,6 +104,7 @@ async function runCycle(env: AppEnv): Promise<void> {
             listings,
             sheets,
             assignmentCooldown,
+            leadAutoReply,
             extraIdPatterns,
             listingCache,
             deferSheetFlush: true,

@@ -10,6 +10,7 @@ import { logger, printOpenAiExtractionBlock } from "../logging/logger.js";
 import type { ListingRepository } from "../repositories/listingRepository.js";
 import { GoogleSheetsWriter } from "../sheets/googleSheetsWriter.js";
 import type { LeadAssignmentCooldown } from "./leadAssignmentCooldown.js";
+import type { LeadAutoReplyService } from "./leadAutoReply.js";
 import { extractFirstBodyEmail, extractFirstPhone } from "./contactExtractor.js";
 import {
   buildCombinedBodyForModel,
@@ -28,6 +29,7 @@ export interface LeadProcessorDeps {
   listings: ListingRepository;
   sheets: GoogleSheetsWriter;
   assignmentCooldown?: LeadAssignmentCooldown;
+  leadAutoReply?: LeadAutoReplyService;
   extraIdPatterns?: string[];
   listingCache?: Map<string, GestimListingRow | null>;
   /** Se true le righe vengono accodate e flushate dal chiamante (worker batch). */
@@ -303,6 +305,14 @@ export async function processInboundEmail(
       sheetTitle: target.sheetTitle,
     });
     if (leadEmail) deps.assignmentCooldown?.recordAssignment(leadEmail, processedAt);
+    if (leadEmail) {
+      await deps.leadAutoReply?.sendReplyForLeadAssignment({
+        leadEmail,
+        sheetTitle: target.sheetTitle,
+        originalSubject: email.subject,
+        originalMessageId: email.messageId,
+      });
+    }
     log.info({ uid: uidLabel, sheet: target.sheetTitle }, "[sheets] riga lead A:G (ok)");
   } catch (e) {
     log.error(

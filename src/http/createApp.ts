@@ -4,6 +4,7 @@ import { logger } from "../logging/logger.js";
 import { createListingRepository } from "../repositories/createListingRepository.js";
 import { GoogleSheetsWriter } from "../sheets/googleSheetsWriter.js";
 import { LeadAssignmentCooldown } from "../services/leadAssignmentCooldown.js";
+import { LeadAutoReplyService } from "../services/leadAutoReply.js";
 import { processInboundEmail } from "../services/leadProcessor.js";
 import { parseGenericJson } from "./parseWebhookBody.js";
 
@@ -23,6 +24,7 @@ export function createApp(env: AppEnv): express.Application {
 
   const sheets = new GoogleSheetsWriter();
   const assignmentCooldown = new LeadAssignmentCooldown(env);
+  const leadAutoReply = new LeadAutoReplyService(env);
   const listings = createListingRepository(env);
 
   const extraIdPatterns = env.EXTRA_ID_REGEX
@@ -41,6 +43,7 @@ export function createApp(env: AppEnv): express.Application {
         listings,
         sheets,
         assignmentCooldown,
+        leadAutoReply,
         extraIdPatterns,
       });
       res.status(200).json({ ok: true });

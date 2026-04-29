@@ -74,6 +74,29 @@ export const rawEnvSchema = z.object({
 
   EXTRA_ID_REGEX: z.string().optional(),
 
+  /** Outbound SMTP per risposta automatica lead. */
+  SMTP_HOST: z.string().min(1, "SMTP_HOST obbligatorio"),
+  SMTP_PORT: z.coerce.number().int().min(1).max(65535).default(587),
+  SMTP_SECURE: z
+    .string()
+    .optional()
+    .transform((s) => (s == null ? false : s === "true" || s === "1")),
+  SMTP_USER: z.string().min(1, "SMTP_USER obbligatorio"),
+  SMTP_PASSWORD: z.string().min(1, "SMTP_PASSWORD obbligatorio"),
+  SMTP_FROM: z.string().email("SMTP_FROM deve essere una email valida"),
+
+  /** Finche' siamo in test, invia tutte le risposte qui invece che al lead reale. */
+  LEAD_REPLY_FORCE_TO: z.string().email().default("simoncinidiego10@gmail.com"),
+  /** Contatto agenzia usato quando la riga finisce su sheet AG. */
+  AGENCY_REPLY_PHONE: z.string().min(1, "AGENCY_REPLY_PHONE obbligatorio"),
+  AGENCY_REPLY_EMAIL: z.string().email("AGENCY_REPLY_EMAIL deve essere una email valida"),
+  /**
+   * Mappa contatti agenti per nome sheet.
+   * Esempio:
+   * {"EROS":{"phone":"+3900000000","email":"eros@dominio.it"}}
+   */
+  AGENT_REPLY_CONTACTS_JSON: z.string().default("{}"),
+
   /** Worker IMAP Aruba (sorgente inbox). */
   IMAP_EMAIL: z.string().optional(),
   IMAP_PASSWORD: z.string().optional(),
