@@ -61,25 +61,6 @@ export interface NoIdRowPayload {
   sheetTitle: string;
 }
 
-/**
- * Riga diagnostica per `no-singolo-id` (9 colonne A:I):
- * data, ora, mittente, corpo, nome, cognome, email_lead, telefono, lista_id.
- */
-export interface MultiIdRowPayload {
-  dataMail: string;
-  oraMail: string;
-  mittente: string;
-  corpoMail: string;
-  nome: string;
-  cognome: string;
-  leadEmail: string;
-  phone: string;
-  /** Lista ID separati da virgola. */
-  listaId: string;
-  spreadsheetId: string;
-  sheetTitle: string;
-}
-
 export type ZoneMatchMode = "contains" | "equals" | "regex";
 
 export interface ZoneSheetRule {

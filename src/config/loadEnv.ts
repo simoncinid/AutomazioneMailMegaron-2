@@ -68,7 +68,6 @@ export const rawEnvSchema = z.object({
   GOOGLE_SERVICE_ACCOUNT_JSON: z.string().optional(),
 
   NO_ID_FOUND_SHEET_TITLE: z.string().default("no-id-trovato"),
-  MULTI_ID_FOUND_SHEET_TITLE: z.string().default("no-singolo-id"),
   BLOCKED_EMAIL_SUBSTRINGS: z.string().default(
     "immobiliare,noreply,no-reply,idealista,gruppoinsieme,mailer-daemon",
   ),

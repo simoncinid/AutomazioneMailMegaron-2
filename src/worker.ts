@@ -5,7 +5,7 @@ import "dotenv/config";
  *
  * - Finestra configurabile in ore (`IMAP_LOOKBACK_HOURS`, default 1).
  * - Per ogni mail: estrae i campi via OpenAI, scrive su Google Sheets (lead A:G,
- *   diagnostiche A:H/A:I), aggiorna il cooldown 6 mesi sui tab lead.
+ *   diagnostiche A:H), aggiorna il cooldown 6 mesi sui tab lead.
  * - Logging: STDOUT contiene SOLO il blocco "campi OpenAI" per ciascuna mail
  *   (nome / cognome / email / id_annuncio); tutto il resto (setup, decisioni di
  *   routing, errori) finisce su STDERR via pino.
@@ -73,14 +73,14 @@ async function runCycle(env: AppEnv): Promise<void> {
     // Mirror del test Python: percorre i messaggi più recenti per primi.
     const pending = [...list].reverse();
 
-    // Pre-warm cache annunci per il caso ID singolo (riduce latenza DB nel ciclo).
+    // Pre-warm cache annunci sul primo ID candidato (riduce latenza DB nel ciclo).
     const lookupIds = new Set<string>();
     for (const email of pending) {
       const extracted = extractExternalListingIds(email.textBody, email.htmlBody, {
         extraRegexStrings: extraIdPatterns,
       });
-      const uniqueIds = [...new Set(extracted)];
-      if (uniqueIds.length === 1) lookupIds.add(uniqueIds[0]!);
+      const firstId = extracted[0];
+      if (firstId) lookupIds.add(firstId);
     }
     if (lookupIds.size > 0) {
       const preloaded = await listings.findLatestByExternalListingIds([...lookupIds]);

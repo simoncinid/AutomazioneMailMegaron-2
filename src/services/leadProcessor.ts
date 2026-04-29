@@ -3,7 +3,6 @@ import { resolveSheetForZone } from "../config/resolveSheetForZone.js";
 import type {
   GestimListingRow,
   LeadRowPayload,
-  MultiIdRowPayload,
   NoIdRowPayload,
   ParsedInboundEmail,
 } from "../domain/types.js";
@@ -130,15 +129,14 @@ function uidFromEmail(email: ParsedInboundEmail): string {
  *  3. Cooldown 6 mesi sull'email lead (cache globale: tutti i tab lead + diagnostici).
  *     Se l'email è già stata vista negli ultimi 6 mesi (anche da una riga inserita
  *     poco prima nello stesso ciclo), la mail viene saltata interamente — niente
- *     duplicati neanche tra `no-id-trovato` / `no-singolo-id` / tab lead.
- *  4. Routing per numero ID:
- *     - 0 ID  -> tab `no-id-trovato`  (A:H = data, ora, mittente, corpo, nome, cognome, email, tel)
- *     - >1 ID -> tab `no-singolo-id`  (A:I = + lista ID)
- *     - 1 ID  -> lookup zona in gestim_listings:
+ *     duplicati neanche tra `no-id-trovato` / tab lead.
+ *  4. Routing:
+ *     - Nessun ID -> tab `no-id-trovato`  (A:H = data, ora, mittente, corpo, nome, cognome, email, tel)
+ *     - Un ID     -> lookup zona in gestim_listings:
  *           * nessuna zona/annuncio -> `no-id-trovato` con prefisso "[ID …: nessuna zona/annuncio]"
  *           * zona in DB -> mapping `MAPPING_ZONE_MATCH` (default `contains`); fallback DEFAULT_SHEET_TITLE
  *     Riga lead A:G = email, ID, data assegnazione, telefono, zona, nome, cognome.
- *  5. Dopo OGNI riga inserita (lead/no-id/multi-id) la cache cooldown viene
+ *  5. Dopo OGNI riga inserita (lead/no-id) la cache cooldown viene
  *     aggiornata in memoria, in modo che la prossima mail con la stessa email
  *     dello stesso ciclo venga skippata.
  */
@@ -173,7 +171,7 @@ export async function processInboundEmail(
   const fallbackIds = extractExternalListingIds(email.textBody, email.htmlBody, {
     extraRegexStrings: deps.extraIdPatterns,
   });
-  const uniqueIds = aiResult.idAnnuncio ? [aiResult.idAnnuncio] : [...new Set(fallbackIds)];
+  const selectedListingId = aiResult.idAnnuncio || fallbackIds[0] || "";
 
   const blockedSubstrings = parseBlockedSubstrings(deps.env);
   const aiEmailBlocked = blockedSubstrings.some((s) =>
@@ -210,7 +208,7 @@ export async function processInboundEmail(
     }
   }
 
-  if (uniqueIds.length === 0) {
+  if (!selectedListingId) {
     await emitNoIdRow(deps, {
       dataMail,
       oraMail,
@@ -231,29 +229,7 @@ export async function processInboundEmail(
     return;
   }
 
-  if (uniqueIds.length > 1) {
-    await emitMultiIdRow(deps, {
-      dataMail,
-      oraMail,
-      mittente,
-      corpoMail,
-      nome,
-      cognome,
-      leadEmail,
-      phone,
-      listaId: uniqueIds.join(","),
-      spreadsheetId: deps.env.defaultSpreadsheetIdResolved,
-      sheetTitle: deps.env.MULTI_ID_FOUND_SHEET_TITLE,
-    });
-    if (leadEmail) deps.assignmentCooldown?.recordAssignment(leadEmail, processedAt);
-    log.info(
-      { uid: uidLabel, sheet: deps.env.MULTI_ID_FOUND_SHEET_TITLE, ids: uniqueIds },
-      "[sheets] no-singolo-id A:I (con lista ID)",
-    );
-    return;
-  }
-
-  const listingId = uniqueIds[0]!;
+  const listingId = selectedListingId;
   let zone = "";
   let target: { spreadsheetId: string; sheetTitle: string } = {
     spreadsheetId: deps.env.defaultSpreadsheetIdResolved,
@@ -350,12 +326,4 @@ async function emitNoIdRow(deps: LeadProcessorDeps, payload: NoIdRowPayload): Pr
     return;
   }
   await deps.sheets.appendNoId(payload);
-}
-
-async function emitMultiIdRow(deps: LeadProcessorDeps, payload: MultiIdRowPayload): Promise<void> {
-  if (deps.deferSheetFlush) {
-    deps.sheets.queueMultiId(payload);
-    return;
-  }
-  await deps.sheets.appendMultiId(payload);
 }

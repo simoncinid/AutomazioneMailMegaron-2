@@ -20,6 +20,7 @@ const SYSTEM_PROMPT = [
   "Devi rispondere solo con JSON valido (nessun testo extra).",
   "Output obbligatorio: {\"nome\":\"\",\"numero_telefono\":\"\",\"cognome\":\"\",\"id_annuncio\":\"\",\"email\":\"\"}.",
   "Regole estrazione ID annuncio:",
+  "0) `id_annuncio` deve contenere al massimo un solo ID (mai una lista).",
   "1) Cerca vicino a etichette come: \"Messaggio ricevuto per l’annuncio:\", \"Ref.\", \"Rif.\", \"Codice dell'annuncio:\", \"ID annuncio\".",
   "2) Esempi frequenti: trovatoimmobiliare -> \"Messaggio ricevuto per l’annuncio: <ID>\"; idealista/casa.it -> \"Ref. <ID>\".",
   "3) Non confondere ID con telefono, prezzo, CAP, civico, data/ora o codici email tecnici.",
@@ -108,7 +109,7 @@ function stripCssLikeResidue(s: string): string {
 /**
  * Unisce text/plain e testo da HTML: evita di mandare due volte lo stesso contenuto (risparmio token).
  * Esposta perché viene riutilizzata anche per la colonna "corpo" sui fogli diagnostici (`no-id-trovato`,
- * `no-singolo-id`), così quanto scritto sul foglio è esattamente ciò che riceve OpenAI.
+ * così quanto scritto sul foglio è esattamente ciò che riceve OpenAI.
  */
 export function buildCombinedBodyForModel(textBody: string, htmlBody: string): string {
   const t = (textBody ?? "").replace(/\s+/g, " ").trim();

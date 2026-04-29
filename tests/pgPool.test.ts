@@ -33,7 +33,6 @@ function makeEnv(overrides: Partial<RawEnv> = {}): RawEnv {
     GOOGLE_APPLICATION_CREDENTIALS: "./dummy.json",
     GOOGLE_SERVICE_ACCOUNT_JSON: undefined,
     NO_ID_FOUND_SHEET_TITLE: "no-id-trovato",
-    MULTI_ID_FOUND_SHEET_TITLE: "no-singolo-id",
     BLOCKED_EMAIL_SUBSTRINGS: "",
     EXTRA_ID_REGEX: undefined,
     IMAP_EMAIL: undefined,

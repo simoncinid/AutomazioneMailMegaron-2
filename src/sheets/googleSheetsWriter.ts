@@ -1,6 +1,5 @@
 import type {
   LeadRowPayload,
-  MultiIdRowPayload,
   NoIdRowPayload,
 } from "../domain/types.js";
 import { getSheetsClient } from "./sheetsClient.js";
@@ -10,10 +9,9 @@ import { formatSheetRange } from "./sheetRange.js";
 export { formatSheetRange } from "./sheetRange.js";
 
 /**
- * Tre tipi di riga gestiti, allineati al test Python `test_imap_aruba.py`:
+ * Due tipi di riga gestiti, allineati al test Python `test_imap_aruba.py`:
  *  - "lead"     => A:G  (email, ID, data, telefono, zona, nome, cognome)
  *  - "no-id"    => A:H  (data, ora, mittente, corpo, nome, cognome, email, telefono)
- *  - "multi-id" => A:I  (data, ora, mittente, corpo, nome, cognome, email, telefono, listaID)
  */
 export const LEAD_SHEET_COLUMNS = [
   "Email",
@@ -36,19 +34,7 @@ export const NO_ID_SHEET_COLUMNS = [
   "Telefono",
 ] as const;
 
-export const MULTI_ID_SHEET_COLUMNS = [
-  "Data",
-  "Ora",
-  "Mittente",
-  "Corpo mail",
-  "Nome",
-  "Cognome",
-  "Email",
-  "Telefono",
-  "Lista ID trovati",
-] as const;
-
-type RowKind = "lead" | "no-id" | "multi-id";
+type RowKind = "lead" | "no-id";
 
 interface QueueEntry {
   kind: RowKind;
@@ -58,7 +44,6 @@ interface QueueEntry {
 const RANGE_BY_KIND: Record<RowKind, string> = {
   lead: "A:G",
   "no-id": "A:H",
-  "multi-id": "A:I",
 };
 
 /**
@@ -100,20 +85,6 @@ function rowFromNoId(p: NoIdRowPayload): (string | number)[] {
   ];
 }
 
-function rowFromMultiId(p: MultiIdRowPayload): (string | number)[] {
-  return [
-    p.dataMail,
-    p.oraMail,
-    p.mittente,
-    p.corpoMail,
-    p.nome,
-    p.cognome,
-    p.leadEmail,
-    p.phone,
-    p.listaId,
-  ];
-}
-
 function bufferKey(spreadsheetId: string, sheetTitle: string, kind: RowKind): string {
   return `${spreadsheetId}::${sheetTitle}::${kind}`;
 }
@@ -129,10 +100,6 @@ export class GoogleSheetsWriter {
     this.queue(payload.spreadsheetId, payload.sheetTitle, "no-id", rowFromNoId(payload));
   }
 
-  queueMultiId(payload: MultiIdRowPayload): void {
-    this.queue(payload.spreadsheetId, payload.sheetTitle, "multi-id", rowFromMultiId(payload));
-  }
-
   async appendLead(payload: LeadRowPayload): Promise<void> {
     this.queueLead(payload);
     await this.flush();
@@ -140,11 +107,6 @@ export class GoogleSheetsWriter {
 
   async appendNoId(payload: NoIdRowPayload): Promise<void> {
     this.queueNoId(payload);
-    await this.flush();
-  }
-
-  async appendMultiId(payload: MultiIdRowPayload): Promise<void> {
-    this.queueMultiId(payload);
     await this.flush();
   }
 
