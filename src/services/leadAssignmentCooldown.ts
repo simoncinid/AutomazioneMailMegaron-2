@@ -138,8 +138,8 @@ export class LeadAssignmentCooldown {
           if (!assignedAt) continue;
 
           const keys = buildIdentityKeys({
-            email: typeof emailCell === "string" ? emailCell : "",
-            phone: typeof phoneCell === "string" ? phoneCell : "",
+            email: cellToString(emailCell),
+            phone: cellToString(phoneCell),
           });
           if (keys.length === 0) continue;
           for (const k of keys) {
@@ -215,6 +215,12 @@ function normalizePhone(phone: string): string {
   if (!digits) return "";
   if (digits.length >= 11 && digits.startsWith("39")) return digits.slice(2);
   return digits;
+}
+
+function cellToString(value: unknown): string {
+  if (typeof value === "string") return value;
+  if (typeof value === "number" && Number.isFinite(value)) return String(value);
+  return "";
 }
 
 function buildIdentityKeys(identity: {
