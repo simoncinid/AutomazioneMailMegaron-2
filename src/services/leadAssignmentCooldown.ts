@@ -29,7 +29,7 @@ export interface LeadCooldownDecision {
 
 /**
  * Cooldown 6 mesi per email lead, calcolato globalmente su:
- *  - tab lead (DEFAULT_SHEET_TITLE + tutte le destinazioni del mapping zona)
+ *  - tab lead (tutte le destinazioni del mapping zona)
  *  - tab diagnostico `no-id-trovato`
  *
  * Lo stato viene caricato 1 volta dai Google Sheets e poi aggiornato in memoria
@@ -142,7 +142,7 @@ export class LeadAssignmentCooldown {
 
 /**
  * Tutti i tab che contengono email lead da considerare per il cooldown:
- *  - DEFAULT_SHEET_TITLE (es. "AG") e tutte le destinazioni del mapping zona  -> layout "lead"
+ *  - tutte le destinazioni del mapping zona                                   -> layout "lead"
  *  - NO_ID_FOUND_SHEET_TITLE                                                 -> layout "diagnostic"
  */
 function buildTrackedTargets(env: AppEnv): SheetTarget[] {
@@ -158,7 +158,6 @@ function buildTrackedTargets(env: AppEnv): SheetTarget[] {
     out.set(`${sid}::${st}`, { spreadsheetId: sid, sheetTitle: st, kind });
   };
 
-  push(env.defaultSpreadsheetIdResolved, env.DEFAULT_SHEET_TITLE, "lead");
   for (const rule of env.zoneSheetRules) {
     push(rule.spreadsheetId, rule.sheetTitle, "lead");
   }
