@@ -34,6 +34,7 @@ function mapApiJson(data: Record<string, unknown>): GestimListingRow {
     externalListingId: String(data.externalListingId ?? ""),
     title: (data.title as string) ?? null,
     city: (data.city as string) ?? null,
+    province: ((data.province as string) ?? (data.provincia as string)) ?? null,
     zone: (data.zone as string) ?? null,
     address: (data.address as string) ?? null,
     price: (data.price as string | number) ?? null,
@@ -85,6 +86,7 @@ function mapPgRowToGestim(row: Record<string, unknown>): GestimListingRow {
     externalListingId: String(row.externalListingId ?? ""),
     title: (row.title as string) ?? null,
     city: (row.city as string) ?? null,
+    province: (row.province as string) ?? null,
     zone: (row.zone as string) ?? null,
     address: (row.address as string) ?? null,
     price: row.price as string | number | null,
@@ -102,6 +104,8 @@ export class PostgresListingRepository implements ListingRepository {
   private pool: pg.Pool;
   private insecureTlsPool: pg.Pool | null = null;
   private insecureFallbackWarned = false;
+  private provinceSelectExprPromise: Promise<string> | null = null;
+  private provinceSelectExprCached: string | null = null;
 
   constructor(config: string | PoolConfig) {
     this.config = config;
@@ -126,6 +130,61 @@ export class PostgresListingRepository implements ListingRepository {
     return this.insecureTlsPool;
   }
 
+  private async queryWithTlsFallback(
+    queryText: string,
+    values: unknown[],
+  ): Promise<{ rows: Record<string, unknown>[] }> {
+    try {
+      return await this.pool.query(queryText, values);
+    } catch (err) {
+      if (!isTlsCertificateError(err)) throw err;
+      if (!this.insecureFallbackWarned) {
+        this.insecureFallbackWarned = true;
+        log.warn(
+          { err },
+          "[db] TLS verify fallita su pool primario: retry con ssl.rejectUnauthorized=false",
+        );
+      }
+      return await this.getInsecureTlsPool().query(queryText, values);
+    }
+  }
+
+  private async resolveProvinceSelectExpression(): Promise<string> {
+    if (this.provinceSelectExprCached) return this.provinceSelectExprCached;
+    if (this.provinceSelectExprPromise) return this.provinceSelectExprPromise;
+
+    this.provinceSelectExprPromise = (async () => {
+      const q = `
+        SELECT column_name
+        FROM information_schema.columns
+        WHERE table_name = 'gestim_listings'
+          AND column_name IN ('province', 'provincia')
+        ORDER BY CASE WHEN column_name = 'province' THEN 0 ELSE 1 END
+        LIMIT 1
+      `;
+      try {
+        const r = await this.queryWithTlsFallback(q, []);
+        const col = (r.rows[0]?.column_name as string | undefined) ?? "";
+        if (col === "province" || col === "provincia") {
+          this.provinceSelectExprCached = `${col} AS "province"`;
+        } else {
+          this.provinceSelectExprCached = `NULL::text AS "province"`;
+        }
+      } catch (err) {
+        log.warn(
+          { err },
+          "[db] impossibile leggere metadata colonna provincia: fallback a NULL::text AS province",
+        );
+        this.provinceSelectExprCached = `NULL::text AS "province"`;
+      } finally {
+        this.provinceSelectExprPromise = null;
+      }
+      return this.provinceSelectExprCached;
+    })();
+
+    return this.provinceSelectExprPromise;
+  }
+
   async findLatestByExternalListingId(
     externalListingId: string,
   ): Promise<GestimListingRow | null> {
@@ -140,11 +199,13 @@ export class PostgresListingRepository implements ListingRepository {
     const out = new Map<string, GestimListingRow>();
     if (unique.length === 0) return out;
 
+    const provinceSelectExpr = await this.resolveProvinceSelectExpression();
     const q = `
       SELECT DISTINCT ON (id_annuncio_gestim)
         id_annuncio_gestim AS "externalListingId",
         title,
         city,
+        ${provinceSelectExpr},
         zone,
         address,
         price,
@@ -158,20 +219,7 @@ export class PostgresListingRepository implements ListingRepository {
       WHERE id_annuncio_gestim = ANY($1::text[])
       ORDER BY id_annuncio_gestim, updated_at DESC NULLS LAST
     `;
-    let r: { rows: unknown[] };
-    try {
-      r = await this.pool.query(q, [unique]);
-    } catch (err) {
-      if (!isTlsCertificateError(err)) throw err;
-      if (!this.insecureFallbackWarned) {
-        this.insecureFallbackWarned = true;
-        log.warn(
-          { err },
-          "[db] TLS verify fallita su pool primario: retry con ssl.rejectUnauthorized=false",
-        );
-      }
-      r = await this.getInsecureTlsPool().query(q, [unique]);
-    }
+    const r = await this.queryWithTlsFallback(q, [unique]);
 
     for (const row of r.rows as Record<string, unknown>[]) {
       const mapped = mapPgRowToGestim(row);

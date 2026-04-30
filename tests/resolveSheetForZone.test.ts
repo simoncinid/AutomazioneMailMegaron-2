@@ -51,6 +51,82 @@ describe("resolveSheetForZone", () => {
     const r = resolveSheetForZone("   ", rules, "def-id", "DefaultTab");
     expect(r.fallback).toBe(true);
   });
+
+  it("disambigua CAPOLUOGO usando city", () => {
+    const capRules: ZoneSheetRule[] = [
+      {
+        pattern: "Capoluogo",
+        match: "contains",
+        spreadsheetId: "sid",
+        sheetTitle: "GIUSEPPE",
+      },
+      {
+        pattern: "Capoluogo",
+        match: "contains",
+        spreadsheetId: "sid",
+        sheetTitle: "DAVIDE",
+      },
+      {
+        pattern: "Capoluogo",
+        match: "contains",
+        spreadsheetId: "sid",
+        sheetTitle: "TOMMASO",
+      },
+    ];
+
+    const r = resolveSheetForZone("Capoluogo", capRules, "sid", "DefaultTab", {
+      city: "San Giuliano Terme",
+    });
+    expect(r.sheetTitle).toBe("DAVIDE");
+    expect(r.fallback).toBe(false);
+  });
+
+  it("disambigua LORENZANA usando city prima di province", () => {
+    const lorenzanaRules: ZoneSheetRule[] = [
+      {
+        pattern: "Lorenzana",
+        match: "contains",
+        spreadsheetId: "sid",
+        sheetTitle: "AG-PISA",
+      },
+      {
+        pattern: "Lorenzana",
+        match: "contains",
+        spreadsheetId: "sid",
+        sheetTitle: "FAUSTO",
+      },
+    ];
+
+    const r = resolveSheetForZone("Lorenzana", lorenzanaRules, "sid", "DefaultTab", {
+      city: "Crespina Lorenzana",
+      province: "Pisa",
+    });
+    expect(r.sheetTitle).toBe("FAUSTO");
+    expect(r.fallback).toBe(false);
+  });
+
+  it("disambigua PORTA A MARE su GUIDO per city Livorno", () => {
+    const portaRules: ZoneSheetRule[] = [
+      {
+        pattern: "PORTA A MARE",
+        match: "contains",
+        spreadsheetId: "sid",
+        sheetTitle: "VALENTINA",
+      },
+      {
+        pattern: "PORTA A MARE",
+        match: "contains",
+        spreadsheetId: "sid",
+        sheetTitle: "GUIDO",
+      },
+    ];
+
+    const r = resolveSheetForZone("PORTA A MARE", portaRules, "sid", "DefaultTab", {
+      city: "Livorno",
+    });
+    expect(r.sheetTitle).toBe("GUIDO");
+    expect(r.fallback).toBe(false);
+  });
 });
 
 describe("matchesZone", () => {

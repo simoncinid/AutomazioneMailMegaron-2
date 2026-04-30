@@ -136,7 +136,8 @@ function uidFromEmail(email: ParsedInboundEmail): string {
  *     - Nessun ID -> tab `no-id-trovato`  (A:H = data, ora, mittente, corpo, nome, cognome, email, tel)
  *     - Un ID     -> lookup zona in gestim_listings:
  *           * nessuna zona/annuncio -> `no-id-trovato` con prefisso "[ID …: nessuna zona/annuncio]"
- *           * zona in DB -> mapping `MAPPING_ZONE_MATCH` (default `contains`); fallback DEFAULT_SHEET_TITLE
+ *           * zona in DB -> mapping `MAPPING_ZONE_MATCH` (default `contains`);
+ *             se il routing non si risolve, la mail va in `no-id-trovato` (fallback sheet disabilitato)
  *     Riga lead A:G = email, ID, data assegnazione, telefono, zona, nome, cognome.
  *  5. Dopo OGNI riga inserita (lead/no-id) la cache cooldown viene
  *     aggiornata in memoria, in modo che la prossima mail con la stessa email
@@ -233,10 +234,7 @@ export async function processInboundEmail(
 
   const listingId = selectedListingId;
   let zone = "";
-  let target: { spreadsheetId: string; sheetTitle: string } = {
-    spreadsheetId: deps.env.defaultSpreadsheetIdResolved,
-    sheetTitle: deps.env.DEFAULT_SHEET_TITLE,
-  };
+  let target: { spreadsheetId: string; sheetTitle: string } | null = null;
   let routingLog = "fallback_default";
 
   try {
@@ -269,22 +267,90 @@ export async function processInboundEmail(
     }
 
     zone = listing.zone.trim();
+    const listingCity = listing.city?.trim() ?? "";
+    const listingProvince = listing.province?.trim() ?? "";
     const resolved = resolveSheetForZone(
       zone,
       deps.env.zoneSheetRules,
       deps.env.defaultSpreadsheetIdResolved,
       deps.env.DEFAULT_SHEET_TITLE,
+      { city: listing.city, province: listing.province ?? null },
     );
+    if (resolved.fallback) {
+      const corpoNoRouting = `[ID ${listingId}: routing non risolto per zona="${zone}" city="${listingCity}" province="${listingProvince}"]\n${corpoMail}`;
+      await emitNoIdRow(deps, {
+        dataMail,
+        oraMail,
+        mittente,
+        corpoMail: corpoNoRouting,
+        nome,
+        cognome,
+        leadEmail,
+        phone,
+        spreadsheetId: deps.env.defaultSpreadsheetIdResolved,
+        sheetTitle: deps.env.NO_ID_FOUND_SHEET_TITLE,
+      });
+      if (leadEmail) deps.assignmentCooldown?.recordAssignment(leadEmail, processedAt);
+      log.warn(
+        {
+          uid: uidLabel,
+          listingId,
+          zone,
+          city: listingCity,
+          province: listingProvince,
+          sheet: deps.env.NO_ID_FOUND_SHEET_TITLE,
+        },
+        "[routing] fallback disabilitato: lead inviato a no-id-trovato",
+      );
+      return;
+    }
+
     target = { spreadsheetId: resolved.spreadsheetId, sheetTitle: resolved.sheetTitle };
+    if (resolved.resolutionSource === "disambiguation") {
+      log.info(
+        {
+          uid: uidLabel,
+          listingId,
+          zone,
+          city: listing.city ?? "",
+          province: listing.province ?? "",
+          selectedSheet: resolved.sheetTitle,
+          disambiguation: resolved.disambiguationHint ?? "",
+        },
+        "[routing] disambiguazione zona tramite city/province",
+      );
+    }
     routingLog = resolved.fallback
       ? `zone_unmapped_used_default(${zone})`
       : `zone_mapped:${resolved.matchedRule?.name ?? resolved.matchedRule?.pattern ?? "rule"}`;
   } catch (e) {
+    const corpoNoRoutingError = `[ID ${listingId}: errore lookup/routing (${e instanceof Error ? e.message : String(e)})]\n${corpoMail}`;
+    await emitNoIdRow(deps, {
+      dataMail,
+      oraMail,
+      mittente,
+      corpoMail: corpoNoRoutingError,
+      nome,
+      cognome,
+      leadEmail,
+      phone,
+      spreadsheetId: deps.env.defaultSpreadsheetIdResolved,
+      sheetTitle: deps.env.NO_ID_FOUND_SHEET_TITLE,
+    });
+    if (leadEmail) deps.assignmentCooldown?.recordAssignment(leadEmail, processedAt);
     log.error(
-      { err: e, uid: uidLabel, listingId },
-      "[db] lookup gestim_listings fallito (fallback default)",
+      { err: e, uid: uidLabel, listingId, sheet: deps.env.NO_ID_FOUND_SHEET_TITLE },
+      "[db] lookup/routing fallito: lead inviato a no-id-trovato",
     );
-    routingLog = `listing_lookup_error:${e instanceof Error ? e.message : String(e)}`;
+    return;
+  }
+
+  if (!target) {
+    log.warn(
+      { uid: uidLabel, listingId, sheet: deps.env.NO_ID_FOUND_SHEET_TITLE },
+      "[routing] target non valorizzato: skip difensivo",
+    );
+    return;
   }
 
   log.info(

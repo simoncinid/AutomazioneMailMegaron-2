@@ -7,6 +7,7 @@ export interface GestimListingRow {
   externalListingId: string;
   title: string | null;
   city: string | null;
+  province?: string | null;
   zone: string | null;
   address: string | null;
   price: string | number | null;
@@ -77,4 +78,6 @@ export interface ResolvedSheetTarget {
   sheetTitle: string;
   matchedRule: ZoneSheetRule | null;
   fallback: boolean;
+  resolutionSource?: "disambiguation" | "mapping_rule" | "default_fallback";
+  disambiguationHint?: string;
 }
