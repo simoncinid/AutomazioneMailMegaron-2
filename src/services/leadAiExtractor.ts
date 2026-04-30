@@ -29,6 +29,8 @@ const SYSTEM_PROMPT = [
   "Regole nome/cognome/email:",
   "- nome/cognome: del lead che scrive (non agente, non brand del portale).",
   "- email: indirizzo del lead, non noreply/indirizzi piattaforma se possibile.",
+  "- se non c'e' una vera email del lead (non di un bot o un indirizzo piattaforma!!), lascia `email` vuota.",
+  "- non usare testi tecnici/asset come email (es. icon-calendar@2x.png).",
   "- Se un campo non è affidabile, usa stringa vuota.",
 ].join("\n");
 

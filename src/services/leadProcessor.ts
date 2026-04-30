@@ -11,7 +11,7 @@ import type { ListingRepository } from "../repositories/listingRepository.js";
 import { GoogleSheetsWriter } from "../sheets/googleSheetsWriter.js";
 import type { LeadAssignmentCooldown } from "./leadAssignmentCooldown.js";
 import type { LeadAutoReplyService } from "./leadAutoReply.js";
-import { extractFirstBodyEmail, extractFirstPhone } from "./contactExtractor.js";
+import { extractFirstBodyEmail, extractFirstPhone, isLikelyLeadEmail } from "./contactExtractor.js";
 import {
   buildCombinedBodyForModel,
   extractLeadDataWithAi,
@@ -180,8 +180,9 @@ export async function processInboundEmail(
   const aiEmailBlocked = blockedSubstrings.some((s) =>
     aiResult.email.toLowerCase().includes(s.toLowerCase()),
   );
+  const aiEmailValid = aiResult.email ? isLikelyLeadEmail(aiResult.email) : false;
   const leadEmail =
-    aiResult.email && !aiEmailBlocked
+    aiResult.email && !aiEmailBlocked && aiEmailValid
       ? aiResult.email
       : extractFirstBodyEmail(email.textBody, email.htmlBody, blockedSubstrings);
   const phone = aiResult.numeroTelefono || extractFirstPhone(combinedBody(email));
@@ -192,6 +193,14 @@ export async function processInboundEmail(
   const { data: dataMail, ora: oraMail } = splitDataOraRome(email.receivedAt);
   const mittente = email.from || "(sconosciuto)";
   const corpoMail = bodyPreviewForSheet(email);
+
+  if (!leadEmail && !phone) {
+    log.info(
+      { uid: uidLabel, listingId: selectedListingId || "", from: mittente },
+      "[sheets] skip mail: nessun contatto utile (email e telefono assenti)",
+    );
+    return;
+  }
 
   // Cooldown GLOBALE prima di qualsiasi routing: la cache include tab lead + diagnostici
   // ed è aggiornata anche dalle righe inserite nei messaggi precedenti dello stesso ciclo.

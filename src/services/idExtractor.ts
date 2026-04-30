@@ -11,7 +11,7 @@ const DEFAULT_EXTRA_PATTERNS: RegExp[] = [
   // path .../annunci/ABC123 o /listing/ABC123
   /\/(?:annunci?|listings?|immobile|detail)\/([A-Za-z0-9._-]{4,64})(?:\/|\?|"|'|$)/gi,
   // Etichette tipo "Codice: XYZ" o "Rif. R123"
-  /(?:codice|rif\.?|reference|id)\s*[:#]?\s*([A-Za-z0-9._-]{4,64})/gi,
+  /\b(?:codice|rif\.?|reference|id)\b\s*[:#]?\s*([A-Za-z0-9][A-Za-z0-9._-]{3,63})/gi,
 ];
 
 export interface IdExtractorOptions {

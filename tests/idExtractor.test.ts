@@ -33,4 +33,10 @@ describe("extractExternalListingIds", () => {
     });
     expect(ids).toContain("XYZ999");
   });
+
+  it("non estrae falsi positivi da parole tipo idealista.it", () => {
+    const text = "Portale idealista.it - nessun id annuncio presente";
+    const ids = extractExternalListingIds(text, undefined);
+    expect(ids).not.toContain("ealista.it");
+  });
 });
