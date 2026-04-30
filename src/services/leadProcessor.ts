@@ -204,15 +204,21 @@ export async function processInboundEmail(
 
   // Cooldown GLOBALE prima di qualsiasi routing: la cache include tab lead + diagnostici
   // ed è aggiornata anche dalle righe inserite nei messaggi precedenti dello stesso ciclo.
-  if (leadEmail && deps.assignmentCooldown) {
-    const decision = await deps.assignmentCooldown.shouldSkip(leadEmail, processedAt);
+  if ((leadEmail || phone) && deps.assignmentCooldown) {
+    const decision = await deps.assignmentCooldown.shouldSkip(
+      { email: leadEmail, phone },
+      processedAt,
+    );
     if (decision.shouldSkip) {
       log.info(
         {
           uid: uidLabel,
           leadEmail,
+          phone,
           lastAssignedAt: decision.lastAssignedAt?.toISOString(),
           blockedUntil: decision.blockedUntil?.toISOString(),
+          matchedOn: decision.matchedOn,
+          matchedValue: decision.matchedValue,
         },
         "[sheets] skip mail: cooldown 6 mesi globale (nessuna riga inserita)",
       );
@@ -233,7 +239,7 @@ export async function processInboundEmail(
       spreadsheetId: deps.env.defaultSpreadsheetIdResolved,
       sheetTitle: deps.env.NO_ID_FOUND_SHEET_TITLE,
     });
-    if (leadEmail) deps.assignmentCooldown?.recordAssignment(leadEmail, processedAt);
+    deps.assignmentCooldown?.recordAssignment({ email: leadEmail, phone }, processedAt);
     log.info(
       { uid: uidLabel, sheet: deps.env.NO_ID_FOUND_SHEET_TITLE },
       "[sheets] no-id-trovato A:H = data, ora, mittente, corpo, nome, cognome, email, tel",
@@ -267,7 +273,7 @@ export async function processInboundEmail(
         spreadsheetId: deps.env.defaultSpreadsheetIdResolved,
         sheetTitle: deps.env.NO_ID_FOUND_SHEET_TITLE,
       });
-      if (leadEmail) deps.assignmentCooldown?.recordAssignment(leadEmail, processedAt);
+      deps.assignmentCooldown?.recordAssignment({ email: leadEmail, phone }, processedAt);
       log.info(
         { uid: uidLabel, listingId, sheet: deps.env.NO_ID_FOUND_SHEET_TITLE },
         "[sheets] ID senza zona in gestim → no-id-trovato (A:H)",
@@ -299,7 +305,7 @@ export async function processInboundEmail(
         spreadsheetId: deps.env.defaultSpreadsheetIdResolved,
         sheetTitle: deps.env.NO_ID_FOUND_SHEET_TITLE,
       });
-      if (leadEmail) deps.assignmentCooldown?.recordAssignment(leadEmail, processedAt);
+      deps.assignmentCooldown?.recordAssignment({ email: leadEmail, phone }, processedAt);
       log.warn(
         {
           uid: uidLabel,
@@ -346,7 +352,7 @@ export async function processInboundEmail(
       spreadsheetId: deps.env.defaultSpreadsheetIdResolved,
       sheetTitle: deps.env.NO_ID_FOUND_SHEET_TITLE,
     });
-    if (leadEmail) deps.assignmentCooldown?.recordAssignment(leadEmail, processedAt);
+    deps.assignmentCooldown?.recordAssignment({ email: leadEmail, phone }, processedAt);
     log.error(
       { err: e, uid: uidLabel, listingId, sheet: deps.env.NO_ID_FOUND_SHEET_TITLE },
       "[db] lookup/routing fallito: lead inviato a no-id-trovato",
@@ -379,7 +385,7 @@ export async function processInboundEmail(
       spreadsheetId: target.spreadsheetId,
       sheetTitle: target.sheetTitle,
     });
-    if (leadEmail) deps.assignmentCooldown?.recordAssignment(leadEmail, processedAt);
+    deps.assignmentCooldown?.recordAssignment({ email: leadEmail, phone }, processedAt);
     if (leadEmail) {
       await deps.leadAutoReply?.sendReplyForLeadAssignment({
         leadEmail,

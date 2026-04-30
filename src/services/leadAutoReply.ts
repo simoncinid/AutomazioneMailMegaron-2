@@ -6,7 +6,7 @@ import { logger } from "../logging/logger.js";
 const log = logger.child({ module: "leadAutoReply" });
 
 interface ReplyContact {
-  phone: string;
+  phone?: string;
   email: string;
   address?: string;
 }
@@ -43,8 +43,8 @@ function parseAgentContacts(raw: string): Map<string, ReplyContact> {
     if (!value || typeof value !== "object") continue;
     const phone = String((value as Record<string, unknown>).phone ?? "").trim();
     const email = String((value as Record<string, unknown>).email ?? "").trim().toLowerCase();
-    if (!phone || !email) continue;
-    out.set(normalizeKey(sheet), { phone, email });
+    if (!email) continue;
+    out.set(normalizeKey(sheet), { phone: phone || undefined, email });
   }
   return out;
 }
@@ -87,11 +87,16 @@ const AGENCY_CONTACTS_BY_SHEET: Record<string, ReplyContact> = {
     phone: "05841840552",
     email: "viareggio@megaronimmobiliare.it",
   },
+  "ag-livorno": {
+    email: "matteo.angelini@megaronimmobiliare.it",
+  },
+  "ag-pontedera": {
+    email: "elisabetta.tinucci@megaronimmobiliare.it",
+  },
 };
 
 export class LeadAutoReplyService {
   private readonly transporter: Transporter;
-  private readonly forcedTo: string;
   private readonly agentContacts: Map<string, ReplyContact>;
 
   constructor(private readonly env: AppEnv) {
@@ -104,7 +109,6 @@ export class LeadAutoReplyService {
         pass: this.env.SMTP_PASSWORD,
       },
     });
-    this.forcedTo = this.env.LEAD_REPLY_FORCE_TO.trim().toLowerCase();
     const configuredAgentContacts = parseAgentContacts(this.env.AGENT_REPLY_CONTACTS_JSON);
     this.agentContacts = new Map<string, ReplyContact>();
     for (const [sheet, contact] of Object.entries(DEFAULT_PERSON_CONTACTS)) {
@@ -117,10 +121,6 @@ export class LeadAutoReplyService {
 
   async sendReplyForLeadAssignment(payload: ReplyPayload): Promise<void> {
     if (!payload.leadEmail.trim()) return;
-    if (!this.forcedTo) {
-      log.warn("LEAD_REPLY_FORCE_TO vuoto: risposta non inviata");
-      return;
-    }
 
     const normalizedSheet = normalizeKey(payload.sheetTitle);
     const agencyContactBySheet = AGENCY_CONTACTS_BY_SHEET[normalizedSheet];
@@ -139,22 +139,26 @@ export class LeadAutoReplyService {
     const text = isAgencySheet
       ? [
           "Grazie per averci contattato.",
-          `Per informazioni puoi contattare l'agenzia al numero ${contact.phone} e alla mail ${contact.email}.`,
+          contact.phone
+            ? `Per informazioni puoi contattare l'agenzia al numero ${contact.phone} e alla mail ${contact.email}.`
+            : `Per informazioni puoi contattare l'agenzia alla mail ${contact.email}.`,
           contact.address
             ? `L'agenzia si trova in ${contact.address}.`
             : "",
         ].join("\n")
       : [
           "Grazie per averci contattato.",
-          `La tua richiesta e' stata presa in carico da un agente. Puoi contattarlo al numero ${contact.phone} e alla mail ${contact.email}.`,
+          contact.phone
+            ? `La tua richiesta e' stata presa in carico da un agente. Puoi contattarlo al numero ${contact.phone} e alla mail ${contact.email}.`
+            : `La tua richiesta e' stata presa in carico da un agente. Puoi contattarlo alla mail ${contact.email}.`,
         ].join("\n");
 
     const replyToMessageId = maybeReplyMessageId(payload.originalMessageId);
     await this.transporter.sendMail({
       from: this.env.SMTP_FROM,
-      to: this.forcedTo,
+      to: payload.leadEmail.trim().toLowerCase(),
       subject,
-      text: `${text}\n\n[TEST MODE]\nDestinatario reale lead: ${payload.leadEmail}`,
+      text,
       inReplyTo: replyToMessageId,
       references: replyToMessageId ? [replyToMessageId] : undefined,
     });
@@ -162,10 +166,9 @@ export class LeadAutoReplyService {
     log.info(
       {
         sheet: payload.sheetTitle,
-        forcedTo: this.forcedTo,
-        realLeadEmail: payload.leadEmail,
+        leadEmail: payload.leadEmail,
       },
-      "Risposta lead inviata (modalita' test)",
+      "Risposta lead inviata",
     );
   }
 }
