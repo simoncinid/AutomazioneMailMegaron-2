@@ -81,6 +81,7 @@ const AGENCY_PISA_CONTACT: ReplyContact = {
 };
 
 const AGENCY_CONTACTS_BY_SHEET: Record<string, ReplyContact> = {
+  ag: AGENCY_PISA_CONTACT,
   "ag-pisa": AGENCY_PISA_CONTACT,
   "ag-lucca": AGENCY_PISA_CONTACT,
   "ag-viareggio": {
@@ -95,9 +96,14 @@ const AGENCY_CONTACTS_BY_SHEET: Record<string, ReplyContact> = {
   },
 };
 
+function isAgencySheet(sheetTitle: string): boolean {
+  return sheetTitle === "ag" || sheetTitle.startsWith("ag-");
+}
+
 export class LeadAutoReplyService {
   private readonly transporter: Transporter;
   private readonly agentContacts: Map<string, ReplyContact>;
+  private readonly agencyFallbackContact: ReplyContact;
 
   constructor(private readonly env: AppEnv) {
     this.transporter = nodemailer.createTransport({
@@ -110,11 +116,16 @@ export class LeadAutoReplyService {
       },
     });
     const configuredAgentContacts = parseAgentContacts(this.env.AGENT_REPLY_CONTACTS_JSON);
+    this.agencyFallbackContact = {
+      phone: this.env.AGENCY_REPLY_PHONE?.trim() || AGENCY_PISA_CONTACT.phone,
+      email: this.env.AGENCY_REPLY_EMAIL?.trim().toLowerCase() || AGENCY_PISA_CONTACT.email,
+      address: AGENCY_PISA_CONTACT.address,
+    };
     this.agentContacts = new Map<string, ReplyContact>();
-    for (const [sheet, contact] of Object.entries(DEFAULT_PERSON_CONTACTS)) {
+    for (const [sheet, contact] of configuredAgentContacts.entries()) {
       this.agentContacts.set(normalizeKey(sheet), contact);
     }
-    for (const [sheet, contact] of configuredAgentContacts.entries()) {
+    for (const [sheet, contact] of Object.entries(DEFAULT_PERSON_CONTACTS)) {
       this.agentContacts.set(normalizeKey(sheet), contact);
     }
   }
@@ -123,9 +134,9 @@ export class LeadAutoReplyService {
     if (!payload.leadEmail.trim()) return;
 
     const normalizedSheet = normalizeKey(payload.sheetTitle);
-    const agencyContactBySheet = AGENCY_CONTACTS_BY_SHEET[normalizedSheet];
-    const isAgencySheet = Boolean(agencyContactBySheet);
-    const contact = isAgencySheet ? agencyContactBySheet : this.agentContacts.get(normalizedSheet);
+    const agencyContactBySheet = AGENCY_CONTACTS_BY_SHEET[normalizedSheet] ?? this.agencyFallbackContact;
+    const sheetIsAgency = isAgencySheet(normalizedSheet);
+    const contact = sheetIsAgency ? agencyContactBySheet : this.agentContacts.get(normalizedSheet);
     if (!contact) {
       log.warn(
         { sheet: payload.sheetTitle },
@@ -136,7 +147,7 @@ export class LeadAutoReplyService {
 
     const cleanSubject = payload.originalSubject.trim() || "Richiesta informazioni immobile";
     const subject = `Re: ${cleanSubject}`;
-    const text = isAgencySheet
+    const text = sheetIsAgency
       ? [
           "Grazie per averci contattato.",
           contact.phone
@@ -153,10 +164,12 @@ export class LeadAutoReplyService {
             : `La tua richiesta e' stata presa in carico da un agente. Puoi contattarlo alla mail ${contact.email}.`,
         ].join("\n");
 
+    const forcedRecipient = this.env.LEAD_REPLY_FORCE_TO.trim().toLowerCase();
+    const recipient = forcedRecipient || payload.leadEmail.trim().toLowerCase();
     const replyToMessageId = maybeReplyMessageId(payload.originalMessageId);
     await this.transporter.sendMail({
       from: this.env.SMTP_FROM,
-      to: payload.leadEmail.trim().toLowerCase(),
+      to: recipient,
       subject,
       text,
       inReplyTo: replyToMessageId,
@@ -167,6 +180,7 @@ export class LeadAutoReplyService {
       {
         sheet: payload.sheetTitle,
         leadEmail: payload.leadEmail,
+        recipient,
       },
       "Risposta lead inviata",
     );

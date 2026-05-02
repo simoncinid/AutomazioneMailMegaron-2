@@ -666,6 +666,9 @@ export const rawEnvSchema = z.object({
 
   /** Finche' siamo in test, invia tutte le risposte qui invece che al lead reale. */
   LEAD_REPLY_FORCE_TO: z.string().email().default("simoncinidiego10@gmail.com"),
+  /** Contatto agenzia usato per tab AG / AG-* (override opzionale dei default hardcoded). */
+  AGENCY_REPLY_PHONE: z.string().optional(),
+  AGENCY_REPLY_EMAIL: z.string().email().optional(),
   /**
    * Mappa contatti agenti per nome sheet.
    * Esempio:
