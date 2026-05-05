@@ -84,6 +84,10 @@ function pickSheetByZoneCityProvince(
       if (cityIn("casciana terme lari")) return "FAUSTO";
       if (cityIn("bientina")) return "AG-PONTEDERA";
       return null;
+    case "quatro strade":
+      if (cityIn("casciana terme lari")) return "AG-PONTEDERA";
+      if (cityIn("bientina")) return "AG-PONTEDERA";
+      return null;
     case "san donato":
       if (cityIn("santa maria a monte")) return "AG-PONTEDERA";
       if (cityIn("lucca")) return "AG-LUCCA";

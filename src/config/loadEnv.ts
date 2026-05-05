@@ -175,6 +175,7 @@ const HARD_CODED_ZONE_SHEET_MAPPING: Array<[string, string]> = [
   ["Località Guerrazzi", "AG-PONTEDERA"],
   ["Puntone", "AG-PONTEDERA"],
   ["Quattro Strade", "AG-PONTEDERA"],
+  ["Quatro strade", "AG-PONTEDERA"],
   ["Quattrostrade", "AG-PONTEDERA"],
   ["S.colomba", "AG-PONTEDERA"],
   ["Santa Colomba", "AG-PONTEDERA"],

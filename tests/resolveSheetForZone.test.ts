@@ -127,6 +127,29 @@ describe("resolveSheetForZone", () => {
     expect(r.sheetTitle).toBe("GUIDO");
     expect(r.fallback).toBe(false);
   });
+
+  it("disambigua QUATRO STRADE su AG-PONTEDERA per city Casciana Terme Lari", () => {
+    const quattroRules: ZoneSheetRule[] = [
+      {
+        pattern: "Quatro strade",
+        match: "contains",
+        spreadsheetId: "sid",
+        sheetTitle: "AG-PONTEDERA",
+      },
+      {
+        pattern: "Quattro strade",
+        match: "contains",
+        spreadsheetId: "sid",
+        sheetTitle: "FAUSTO",
+      },
+    ];
+
+    const r = resolveSheetForZone("Quatro strade", quattroRules, "sid", "DefaultTab", {
+      city: "Casciana Terme Lari",
+    });
+    expect(r.sheetTitle).toBe("AG-PONTEDERA");
+    expect(r.fallback).toBe(false);
+  });
 });
 
 describe("matchesZone", () => {
