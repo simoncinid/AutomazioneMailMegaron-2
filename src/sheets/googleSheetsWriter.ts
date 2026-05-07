@@ -2,6 +2,8 @@ import type {
   LeadRowPayload,
   NoIdRowPayload,
 } from "../domain/types.js";
+import { logger } from "../logging/logger.js";
+import type { sheets_v4 } from "googleapis";
 import { getSheetsClient } from "./sheetsClient.js";
 import { withGoogleSheetsRateLimit } from "./googleSheetsRateLimiter.js";
 import { formatSheetRange } from "./sheetRange.js";
@@ -10,8 +12,8 @@ export { formatSheetRange } from "./sheetRange.js";
 
 /**
  * Due tipi di riga gestiti, allineati al test Python `test_imap_aruba.py`:
- *  - "lead"     => A:G  (email, ID, data, telefono, zona, nome, cognome)
- *  - "no-id"    => A:H  (data, ora, mittente, corpo, nome, cognome, email, telefono)
+ *  - "lead"     => A:H  (email, ID, data, telefono, zona, nome, cognome, stato)
+ *  - "no-id"    => A:I  (data, ora, mittente, corpo, nome, cognome, email, telefono, stato)
  */
 export const LEAD_SHEET_COLUMNS = [
   "Email",
@@ -21,6 +23,7 @@ export const LEAD_SHEET_COLUMNS = [
   "Zona",
   "Nome",
   "Cognome",
+  "Stato",
 ] as const;
 
 export const NO_ID_SHEET_COLUMNS = [
@@ -32,6 +35,7 @@ export const NO_ID_SHEET_COLUMNS = [
   "Cognome",
   "Email",
   "Telefono",
+  "Stato",
 ] as const;
 
 type RowKind = "lead" | "no-id";
@@ -41,10 +45,24 @@ interface QueueEntry {
   values: (string | number)[];
 }
 
+interface TouchedSheet {
+  spreadsheetId: string;
+  sheetTitle: string;
+  minEndColumnIndex: number;
+}
+
 const RANGE_BY_KIND: Record<RowKind, string> = {
-  lead: "A:G",
-  "no-id": "A:H",
+  lead: "A:H",
+  "no-id": "A:I",
 };
+
+const END_COLUMN_INDEX_BY_KIND: Record<RowKind, number> = {
+  lead: LEAD_SHEET_COLUMNS.length,
+  "no-id": NO_ID_SHEET_COLUMNS.length,
+};
+
+const DEFAULT_STATO = "Da Chiamare";
+const log = logger.child({ module: "googleSheetsWriter" });
 
 /**
  * Riempie la colonna A (lead.email) anche se vuota: senza placeholder le righe
@@ -69,6 +87,7 @@ function rowFromLead(p: LeadRowPayload): (string | number)[] {
     p.zone,
     p.nome,
     p.cognome,
+    DEFAULT_STATO,
   ];
 }
 
@@ -82,6 +101,7 @@ function rowFromNoId(p: NoIdRowPayload): (string | number)[] {
     p.cognome,
     p.leadEmail,
     p.phone,
+    DEFAULT_STATO,
   ];
 }
 
@@ -113,11 +133,23 @@ export class GoogleSheetsWriter {
   async flush(): Promise<void> {
     if (this.bufferedRows.size === 0) return;
     const sheets = await getSheetsClient();
+    const touched = new Map<string, TouchedSheet>();
 
     for (const [key, entries] of this.bufferedRows) {
       if (entries.length === 0) continue;
       const [spreadsheetId, sheetTitle, kind] = key.split("::") as [string, string, RowKind];
       const range = formatSheetRange(sheetTitle, RANGE_BY_KIND[kind]);
+      const touchedKey = `${spreadsheetId}::${sheetTitle}`;
+      const currentTouched = touched.get(touchedKey);
+      const minEndColumnIndex = END_COLUMN_INDEX_BY_KIND[kind];
+      if (currentTouched) {
+        currentTouched.minEndColumnIndex = Math.max(
+          currentTouched.minEndColumnIndex,
+          minEndColumnIndex,
+        );
+      } else {
+        touched.set(touchedKey, { spreadsheetId, sheetTitle, minEndColumnIndex });
+      }
       await withGoogleSheetsRateLimit(async () =>
         sheets.spreadsheets.values.append({
           spreadsheetId,
@@ -127,6 +159,10 @@ export class GoogleSheetsWriter {
           requestBody: { values: entries.map((e) => e.values) },
         }),
       );
+    }
+
+    if (touched.size > 0) {
+      await this.syncBasicFilterRange(sheets, [...touched.values()]);
     }
     this.clear();
   }
@@ -145,5 +181,86 @@ export class GoogleSheetsWriter {
     const arr = this.bufferedRows.get(key) ?? [];
     arr.push({ kind, values });
     this.bufferedRows.set(key, arr);
+  }
+
+  private async syncBasicFilterRange(
+    sheets: sheets_v4.Sheets,
+    touchedSheets: TouchedSheet[],
+  ): Promise<void> {
+    const bySpreadsheet = new Map<string, TouchedSheet[]>();
+    for (const target of touchedSheets) {
+      const arr = bySpreadsheet.get(target.spreadsheetId) ?? [];
+      arr.push(target);
+      bySpreadsheet.set(target.spreadsheetId, arr);
+    }
+
+    for (const [spreadsheetId, targets] of bySpreadsheet) {
+      try {
+        const meta = await withGoogleSheetsRateLimit(async () =>
+          sheets.spreadsheets.get({
+            spreadsheetId,
+            fields: "sheets(properties(sheetId,title),basicFilter)",
+          }),
+        );
+        const allSheets = meta.data.sheets ?? [];
+        const byTitle = new Map<string, sheets_v4.Schema$Sheet>();
+        for (const sheet of allSheets) {
+          const title = sheet.properties?.title;
+          if (title) byTitle.set(title, sheet);
+        }
+
+        const requests: sheets_v4.Schema$Request[] = [];
+        for (const target of targets) {
+          const sheet = byTitle.get(target.sheetTitle);
+          const basic = sheet?.basicFilter;
+          const sheetId = sheet?.properties?.sheetId;
+          const currentRange = basic?.range;
+          if (sheetId == null || !basic || !currentRange) continue;
+
+          const currentEndColumnIndex = currentRange.endColumnIndex ?? 0;
+          const nextEndColumnIndex = Math.max(
+            currentEndColumnIndex,
+            target.minEndColumnIndex,
+          );
+          const nextRange: sheets_v4.Schema$GridRange = {
+            ...currentRange,
+            sheetId,
+            endColumnIndex: nextEndColumnIndex,
+          };
+          // Manteniamo il filtro "aperto" in basso così include automaticamente
+          // le nuove righe appendate in futuro.
+          delete nextRange.endRowIndex;
+
+          const hasSameColumnCoverage = nextEndColumnIndex === currentEndColumnIndex;
+          const isAlreadyOpenRows = currentRange.endRowIndex == null;
+          if (hasSameColumnCoverage && isAlreadyOpenRows) continue;
+
+          requests.push({
+            setBasicFilter: {
+              filter: {
+                range: nextRange,
+                criteria: basic.criteria,
+                filterSpecs: basic.filterSpecs,
+                sortSpecs: basic.sortSpecs,
+              },
+            },
+          });
+        }
+
+        if (requests.length > 0) {
+          await withGoogleSheetsRateLimit(async () =>
+            sheets.spreadsheets.batchUpdate({
+              spreadsheetId,
+              requestBody: { requests },
+            }),
+          );
+        }
+      } catch (error) {
+        log.warn(
+          { err: error, spreadsheetId },
+          "Impossibile aggiornare il range del filtro base; append completato comunque",
+        );
+      }
+    }
   }
 }

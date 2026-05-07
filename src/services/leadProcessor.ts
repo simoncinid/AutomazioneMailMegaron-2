@@ -133,12 +133,12 @@ function uidFromEmail(email: ParsedInboundEmail): string {
  *     poco prima nello stesso ciclo), la mail viene saltata interamente — niente
  *     duplicati neanche tra `no-id-trovato` / tab lead.
  *  4. Routing:
- *     - Nessun ID -> tab `no-id-trovato`  (A:H = data, ora, mittente, corpo, nome, cognome, email, tel)
+ *     - Nessun ID -> tab `no-id-trovato`  (A:I = data, ora, mittente, corpo, nome, cognome, email, tel, stato)
  *     - Un ID     -> lookup zona in gestim_listings:
  *           * nessuna zona/annuncio -> `no-id-trovato` con prefisso "[ID …: nessuna zona/annuncio]"
  *           * zona in DB -> mapping `MAPPING_ZONE_MATCH` (default `contains`);
  *             se il routing non si risolve, la mail va in `no-id-trovato` (fallback sheet disabilitato)
- *     Riga lead A:G = email, ID, data assegnazione, telefono, zona, nome, cognome.
+ *     Riga lead A:H = email, ID, data assegnazione, telefono, zona, nome, cognome, stato.
  *  5. Dopo OGNI riga inserita (lead/no-id) la cache cooldown viene
  *     aggiornata in memoria, in modo che la prossima mail con la stessa email
  *     dello stesso ciclo venga skippata.
@@ -242,7 +242,7 @@ export async function processInboundEmail(
     deps.assignmentCooldown?.recordAssignment({ email: leadEmail, phone }, processedAt);
     log.info(
       { uid: uidLabel, sheet: deps.env.NO_ID_FOUND_SHEET_TITLE },
-      "[sheets] no-id-trovato A:H = data, ora, mittente, corpo, nome, cognome, email, tel",
+      "[sheets] no-id-trovato A:I = data, ora, mittente, corpo, nome, cognome, email, tel, stato",
     );
     return;
   }
@@ -276,7 +276,7 @@ export async function processInboundEmail(
       deps.assignmentCooldown?.recordAssignment({ email: leadEmail, phone }, processedAt);
       log.info(
         { uid: uidLabel, listingId, sheet: deps.env.NO_ID_FOUND_SHEET_TITLE },
-        "[sheets] ID senza zona in gestim → no-id-trovato (A:H)",
+        "[sheets] ID senza zona in gestim → no-id-trovato (A:I)",
       );
       return;
     }
@@ -394,7 +394,7 @@ export async function processInboundEmail(
         originalMessageId: email.messageId,
       });
     }
-    log.info({ uid: uidLabel, sheet: target.sheetTitle }, "[sheets] riga lead A:G (ok)");
+    log.info({ uid: uidLabel, sheet: target.sheetTitle }, "[sheets] riga lead A:H (ok)");
   } catch (e) {
     log.error(
       { err: e, uid: uidLabel, sheet: target.sheetTitle },
