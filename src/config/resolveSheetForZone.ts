@@ -13,6 +13,11 @@ function normalizeKey(value: string | null | undefined): string {
     .replace(/\s+/g, " ");
 }
 
+function isUnassignedZone(zone: string | null | undefined): boolean {
+  const z = normalizeKey(zone);
+  return z === "nessuno" || z === "nessuna" || z === "nessuna zona" || z === "no zona";
+}
+
 function pickSheetByZoneCityProvince(
   zone: string,
   city: string | null | undefined,
@@ -182,6 +187,23 @@ export function resolveSheetForZone(
       resolutionSource: "disambiguation",
       disambiguationHint: `zone="${z}" city="${(context?.city ?? "").trim()}" province="${(context?.province ?? "").trim()}" -> sheet="${disambiguatedSheet}"`,
     };
+  }
+
+  if (isUnassignedZone(z)) {
+    const city = (context?.city ?? "").trim();
+    if (city) {
+      for (const rule of rules) {
+        if (matchesZone(city, rule)) {
+          return {
+            spreadsheetId: rule.spreadsheetId,
+            sheetTitle: rule.sheetTitle,
+            matchedRule: rule,
+            fallback: false,
+            resolutionSource: "mapping_rule",
+          };
+        }
+      }
+    }
   }
 
   for (const rule of rules) {
