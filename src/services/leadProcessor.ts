@@ -1,5 +1,7 @@
 import type { AppEnv } from "../config/loadEnv.js";
 import { resolveSheetForZone } from "../config/resolveSheetForZone.js";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { dirname, join } from "node:path";
 import type {
   GestimListingRow,
   LeadRowPayload,
@@ -20,9 +22,31 @@ import {
 import { extractExternalListingIds } from "./idExtractor.js";
 
 const log = logger.child({ module: "leadProcessor" });
+const PISA_ROUND_ROBIN_STATE_PATH = join(
+  process.cwd(),
+  ".state",
+  "pisa-round-robin.json",
+);
+const PISA_AGENT_SHEETS = [
+  "DAVIDE",
+  "ELISABETTA",
+  "EROS",
+  "FAUSTO",
+  "GIUSEPPE",
+  "LUIS",
+  "MATTIA",
+  "PATRIZIA",
+  "REBECCA",
+  "SAMUELE",
+  "STEFANIA",
+  "TOMMASO",
+  "VALENTINA",
+] as const;
 
 /** Stessa soglia del test Python `_body_preview_for_sheet` per la colonna "corpo". */
 const MAX_BODY_PREVIEW_CHARS = 15_000;
+
+type SheetTarget = { spreadsheetId: string; sheetTitle: string };
 
 export interface LeadProcessorDeps {
   env: AppEnv;
@@ -124,25 +148,187 @@ function uidFromEmail(email: ParsedInboundEmail): string {
   return match ? match[1]! : email.messageId;
 }
 
-/**
- * Pipeline allineata a `test_imap_aruba.py` (con cooldown globale):
- *  1. Estrae i 5 campi via OpenAI (con fallback regex per ID, email lead, telefono).
- *  2. Stampa su STDOUT i 4 campi (nome/cognome/email/id_annuncio) per la mail in corso.
- *  3. Cooldown 6 mesi sull'email lead (cache globale: tutti i tab lead + diagnostici).
- *     Se l'email è già stata vista negli ultimi 6 mesi (anche da una riga inserita
- *     poco prima nello stesso ciclo), la mail viene saltata interamente — niente
- *     duplicati neanche tra `no-id-trovato` / tab lead.
- *  4. Routing:
- *     - Nessun ID -> tab `no-id-trovato`  (A:I = data, ora, mittente, corpo, nome, cognome, email, tel, stato)
- *     - Un ID     -> lookup zona in gestim_listings:
- *           * nessuna zona/annuncio -> `no-id-trovato` con prefisso "[ID …: nessuna zona/annuncio]"
- *           * zona in DB -> mapping `MAPPING_ZONE_MATCH` (default `contains`);
- *             se il routing non si risolve, la mail va in `no-id-trovato` (fallback sheet disabilitato)
- *     Riga lead A:H = email, ID, data assegnazione, telefono, zona, nome, cognome, stato.
- *  5. Dopo OGNI riga inserita (lead/no-id) la cache cooldown viene
- *     aggiornata in memoria, in modo che la prossima mail con la stessa email
- *     dello stesso ciclo venga skippata.
- */
+function normalizeSheetKey(value: string): string {
+  return value.trim().toLowerCase();
+}
+
+function isAgencySheet(sheetTitle: string): boolean {
+  const k = normalizeSheetKey(sheetTitle);
+  return k === "ag" || k.startsWith("ag-");
+}
+
+function isAgPisaSheet(sheetTitle: string): boolean {
+  return normalizeSheetKey(sheetTitle) === "ag-pisa";
+}
+
+async function pickPisaAgentSheet(): Promise<{
+  sheetTitle: string;
+  strategy: "round_robin" | "random_fallback";
+}> {
+  const candidates = [...PISA_AGENT_SHEETS];
+  const modulo = candidates.length;
+  if (modulo === 0) {
+    throw new Error("Nessun agente Pisa configurato per il routing AG-PISA");
+  }
+
+  let nextIndex = 0;
+  try {
+    const raw = await readFile(PISA_ROUND_ROBIN_STATE_PATH, "utf8");
+    const parsed = JSON.parse(raw) as { nextIndex?: unknown };
+    if (typeof parsed.nextIndex === "number" && Number.isFinite(parsed.nextIndex)) {
+      nextIndex = Math.max(0, Math.trunc(parsed.nextIndex));
+    }
+  } catch {
+    // Primo avvio o file corrotto/mancante: si riparte da indice 0.
+  }
+
+  const index = nextIndex % modulo;
+  const selected = candidates[index]!;
+  const nextState = {
+    nextIndex: (index + 1) % modulo,
+  };
+
+  try {
+    await mkdir(dirname(PISA_ROUND_ROBIN_STATE_PATH), { recursive: true });
+    await writeFile(PISA_ROUND_ROBIN_STATE_PATH, JSON.stringify(nextState), "utf8");
+    return { sheetTitle: selected, strategy: "round_robin" };
+  } catch {
+    const fallbackIndex = Math.floor(Math.random() * modulo);
+    return { sheetTitle: candidates[fallbackIndex]!, strategy: "random_fallback" };
+  }
+}
+
+function pickRandomAgentTarget(env: AppEnv): SheetTarget | null {
+  const seen = new Map<string, SheetTarget>();
+  for (const rule of env.zoneSheetRules) {
+    if (isAgencySheet(rule.sheetTitle)) continue;
+    const key = `${rule.spreadsheetId}::${rule.sheetTitle}`;
+    if (!seen.has(key)) {
+      seen.set(key, { spreadsheetId: rule.spreadsheetId, sheetTitle: rule.sheetTitle });
+    }
+  }
+
+  const candidates = [...seen.values()];
+  if (candidates.length === 0) {
+    if (!isAgencySheet(env.DEFAULT_SHEET_TITLE)) {
+      return {
+        spreadsheetId: env.defaultSpreadsheetIdResolved,
+        sheetTitle: env.DEFAULT_SHEET_TITLE,
+      };
+    }
+    return null;
+  }
+
+  const index = Math.floor(Math.random() * candidates.length);
+  return candidates[index] ?? null;
+}
+
+async function maybeHandleExistingContact(
+  deps: LeadProcessorDeps,
+  args: {
+    uidLabel: string;
+    leadEmail: string;
+    phone: string;
+    selectedListingId: string;
+    assignmentDate: string;
+    nome: string;
+    cognome: string;
+    processedAt: Date;
+    emailSubject: string;
+    emailMessageId?: string;
+  },
+): Promise<boolean> {
+  if (!deps.assignmentCooldown || (!args.leadEmail && !args.phone)) return false;
+
+  const decision = await deps.assignmentCooldown.evaluateRecurrence(
+    { email: args.leadEmail, phone: args.phone },
+    args.processedAt,
+  );
+
+  if (decision.action === "skip") {
+    log.info(
+      {
+        uid: args.uidLabel,
+        matchedOn: decision.existing?.matchedOn,
+        matchedValue: decision.existing?.matchedValue,
+        status: decision.existing?.snapshot.statusRaw,
+      },
+      "[contatto-multiplo] skip entro 6 mesi",
+    );
+    return true;
+  }
+
+  if (decision.action !== "reactivate" || !decision.existing) return false;
+
+  const row = await deps.assignmentCooldown.reactivateExistingRow(decision, {
+    identity: { email: args.leadEmail, phone: args.phone },
+    listingId: args.selectedListingId,
+    assignmentDate: args.assignmentDate,
+    phone: args.phone,
+    zone: "",
+    nome: args.nome,
+    cognome: args.cognome,
+    leadEmail: args.leadEmail,
+    processedAt: args.processedAt,
+  });
+
+  if (args.leadEmail) {
+    await deps.leadAutoReply?.sendReplyForLeadAssignment({
+      leadEmail: args.leadEmail,
+      leadPhone: args.phone,
+      sheetTitle: row.sheetTitle,
+      originalSubject: args.emailSubject,
+      originalMessageId: args.emailMessageId,
+    });
+  }
+
+  log.info(
+    {
+      uid: args.uidLabel,
+      sheet: row.sheetTitle,
+      row: row.rowNumber,
+      reason: decision.reason,
+    },
+    "[contatto-multiplo] riattivato: stato -> Da Chiamare",
+  );
+  return true;
+}
+
+async function insertLeadRow(
+  deps: LeadProcessorDeps,
+  payload: LeadRowPayload,
+  processedAt: Date,
+  originalSubject: string,
+  originalMessageId: string | undefined,
+): Promise<void> {
+  await emitLeadRow(deps, payload);
+  deps.assignmentCooldown?.recordAssignment(
+    { email: payload.leadEmail, phone: payload.phone },
+    processedAt,
+    {
+      statusRaw: "Da Chiamare",
+      snapshot: {
+        leadEmail: payload.leadEmail,
+        listingId: payload.listingId,
+        phone: payload.phone,
+        zone: payload.zone,
+        nome: payload.nome,
+        cognome: payload.cognome,
+      },
+    },
+  );
+
+  if (payload.leadEmail) {
+    await deps.leadAutoReply?.sendReplyForLeadAssignment({
+      leadEmail: payload.leadEmail,
+      leadPhone: payload.phone,
+      sheetTitle: payload.sheetTitle,
+      originalSubject,
+      originalMessageId,
+    });
+  }
+}
+
 export async function processInboundEmail(
   email: ParsedInboundEmail,
   deps: LeadProcessorDeps,
@@ -156,7 +342,9 @@ export async function processInboundEmail(
     cognome: "",
     idAnnuncio: "",
     email: "",
+    risposta: false,
   };
+
   try {
     aiResult = await extractLeadDataWithAi(email, deps.env);
   } catch (e) {
@@ -171,11 +359,6 @@ export async function processInboundEmail(
     idAnnuncio: aiResult.idAnnuncio,
   });
 
-  const fallbackIds = extractExternalListingIds(email.textBody, email.htmlBody, {
-    extraRegexStrings: deps.extraIdPatterns,
-  });
-  const selectedListingId = aiResult.idAnnuncio || fallbackIds[0] || "";
-
   const blockedSubstrings = parseBlockedSubstrings(deps.env);
   const aiEmailBlocked = blockedSubstrings.some((s) =>
     aiResult.email.toLowerCase().includes(s.toLowerCase()),
@@ -189,67 +372,95 @@ export async function processInboundEmail(
   const nome = aiResult.nome;
   const cognome = aiResult.cognome;
 
-  const assignmentDate = formatAssignmentDate(processedAt);
-  const { data: dataMail, ora: oraMail } = splitDataOraRome(email.receivedAt);
-  const mittente = email.from || "(sconosciuto)";
-  const corpoMail = bodyPreviewForSheet(email);
-
   if (!leadEmail && !phone) {
     log.info(
-      { uid: uidLabel, listingId: selectedListingId || "", from: mittente },
+      { uid: uidLabel, from: email.from || "(sconosciuto)" },
       "[sheets] skip mail: nessun contatto utile (email e telefono assenti)",
     );
     return;
   }
 
-  // Cooldown GLOBALE prima di qualsiasi routing: la cache include tab lead + diagnostici
-  // ed è aggiornata anche dalle righe inserite nei messaggi precedenti dello stesso ciclo.
-  if ((leadEmail || phone) && deps.assignmentCooldown) {
-    const decision = await deps.assignmentCooldown.shouldSkip(
-      { email: leadEmail, phone },
-      processedAt,
+  if (aiResult.risposta) {
+    log.info(
+      { uid: uidLabel, leadEmail, phone },
+      "[ai] mail classificata come risposta/chiamata ricevuta: skip totale",
     );
-    if (decision.shouldSkip) {
-      log.info(
-        {
-          uid: uidLabel,
-          leadEmail,
-          phone,
-          lastAssignedAt: decision.lastAssignedAt?.toISOString(),
-          blockedUntil: decision.blockedUntil?.toISOString(),
-          matchedOn: decision.matchedOn,
-          matchedValue: decision.matchedValue,
-        },
-        "[sheets] skip mail: cooldown 6 mesi globale (nessuna riga inserita)",
+    return;
+  }
+
+  const fallbackIds = extractExternalListingIds(email.textBody, email.htmlBody, {
+    extraRegexStrings: deps.extraIdPatterns,
+  });
+  const selectedListingId = aiResult.idAnnuncio || fallbackIds[0] || "";
+
+  const assignmentDate = formatAssignmentDate(processedAt);
+  const { data: dataMail, ora: oraMail } = splitDataOraRome(email.receivedAt);
+  const mittente = email.from || "(sconosciuto)";
+  const corpoMail = bodyPreviewForSheet(email);
+
+  const handledByRecurrence = await maybeHandleExistingContact(deps, {
+    uidLabel,
+    leadEmail,
+    phone,
+    selectedListingId,
+    assignmentDate,
+    nome,
+    cognome,
+    processedAt,
+    emailSubject: email.subject,
+    emailMessageId: email.messageId,
+  });
+  if (handledByRecurrence) return;
+
+  if (!selectedListingId) {
+    const randomTarget = pickRandomAgentTarget(deps.env);
+    if (!randomTarget) {
+      await emitNoIdRow(deps, {
+        dataMail,
+        oraMail,
+        mittente,
+        corpoMail: `[NO-ID e nessun foglio agente disponibile]\n${corpoMail}`,
+        nome,
+        cognome,
+        leadEmail,
+        phone,
+        spreadsheetId: deps.env.defaultSpreadsheetIdResolved,
+        sheetTitle: deps.env.NO_ID_FOUND_SHEET_TITLE,
+      });
+      log.warn(
+        { uid: uidLabel, sheet: deps.env.NO_ID_FOUND_SHEET_TITLE },
+        "[routing] no-ID senza target agente: fallback su no-id-trovato",
       );
       return;
     }
-  }
 
-  if (!selectedListingId) {
-    await emitNoIdRow(deps, {
-      dataMail,
-      oraMail,
-      mittente,
-      corpoMail,
-      nome,
-      cognome,
-      leadEmail,
-      phone,
-      spreadsheetId: deps.env.defaultSpreadsheetIdResolved,
-      sheetTitle: deps.env.NO_ID_FOUND_SHEET_TITLE,
-    });
-    deps.assignmentCooldown?.recordAssignment({ email: leadEmail, phone }, processedAt);
+    await insertLeadRow(
+      deps,
+      {
+        leadEmail,
+        listingId: "NO-ID",
+        assignmentDate,
+        phone,
+        zone: "NO-ID",
+        nome,
+        cognome,
+        spreadsheetId: randomTarget.spreadsheetId,
+        sheetTitle: randomTarget.sheetTitle,
+      },
+      processedAt,
+      email.subject,
+      email.messageId,
+    );
     log.info(
-      { uid: uidLabel, sheet: deps.env.NO_ID_FOUND_SHEET_TITLE },
-      "[sheets] no-id-trovato A:I = data, ora, mittente, corpo, nome, cognome, email, tel, stato",
+      { uid: uidLabel, sheet: randomTarget.sheetTitle },
+      "[routing] no-ID: assegnazione random su foglio agente",
     );
     return;
   }
 
   const listingId = selectedListingId;
   let zone = "";
-  let target: { spreadsheetId: string; sheetTitle: string } | null = null;
+  let target: SheetTarget | null = null;
   let routingLog = "fallback_default";
 
   try {
@@ -273,10 +484,9 @@ export async function processInboundEmail(
         spreadsheetId: deps.env.defaultSpreadsheetIdResolved,
         sheetTitle: deps.env.NO_ID_FOUND_SHEET_TITLE,
       });
-      deps.assignmentCooldown?.recordAssignment({ email: leadEmail, phone }, processedAt);
       log.info(
         { uid: uidLabel, listingId, sheet: deps.env.NO_ID_FOUND_SHEET_TITLE },
-        "[sheets] ID senza zona in gestim → no-id-trovato (A:I)",
+        "[sheets] ID senza zona in gestim -> no-id-trovato (A:I)",
       );
       return;
     }
@@ -305,7 +515,6 @@ export async function processInboundEmail(
         spreadsheetId: deps.env.defaultSpreadsheetIdResolved,
         sheetTitle: deps.env.NO_ID_FOUND_SHEET_TITLE,
       });
-      deps.assignmentCooldown?.recordAssignment({ email: leadEmail, phone }, processedAt);
       log.warn(
         {
           uid: uidLabel,
@@ -321,6 +530,19 @@ export async function processInboundEmail(
     }
 
     target = { spreadsheetId: resolved.spreadsheetId, sheetTitle: resolved.sheetTitle };
+    if (isAgPisaSheet(target.sheetTitle)) {
+      const reassigned = await pickPisaAgentSheet();
+      const originalSheet = target.sheetTitle;
+      target = {
+        ...target,
+        sheetTitle: reassigned.sheetTitle,
+      };
+      log.info(
+        { uid: uidLabel, listingId, fromSheet: originalSheet, toSheet: target.sheetTitle, strategy: reassigned.strategy },
+        "[routing] AG-PISA riassegnata agente Pisa",
+      );
+    }
+
     if (resolved.resolutionSource === "disambiguation") {
       log.info(
         {
@@ -329,7 +551,7 @@ export async function processInboundEmail(
           zone,
           city: listing.city ?? "",
           province: listing.province ?? "",
-          selectedSheet: resolved.sheetTitle,
+          selectedSheet: target.sheetTitle,
           disambiguation: resolved.disambiguationHint ?? "",
         },
         "[routing] disambiguazione zona tramite city/province",
@@ -352,7 +574,6 @@ export async function processInboundEmail(
       spreadsheetId: deps.env.defaultSpreadsheetIdResolved,
       sheetTitle: deps.env.NO_ID_FOUND_SHEET_TITLE,
     });
-    deps.assignmentCooldown?.recordAssignment({ email: leadEmail, phone }, processedAt);
     log.error(
       { err: e, uid: uidLabel, listingId, sheet: deps.env.NO_ID_FOUND_SHEET_TITLE },
       "[db] lookup/routing fallito: lead inviato a no-id-trovato",
@@ -370,30 +591,27 @@ export async function processInboundEmail(
 
   log.info(
     { uid: uidLabel, routingLog, zone, listingId, sheet: target.sheetTitle },
-    "[sheets] zona → tab",
+    "[sheets] zona -> tab",
   );
 
   try {
-    await emitLeadRow(deps, {
-      leadEmail,
-      listingId,
-      assignmentDate,
-      phone,
-      zone,
-      nome,
-      cognome,
-      spreadsheetId: target.spreadsheetId,
-      sheetTitle: target.sheetTitle,
-    });
-    deps.assignmentCooldown?.recordAssignment({ email: leadEmail, phone }, processedAt);
-    if (leadEmail) {
-      await deps.leadAutoReply?.sendReplyForLeadAssignment({
+    await insertLeadRow(
+      deps,
+      {
         leadEmail,
+        listingId,
+        assignmentDate,
+        phone,
+        zone,
+        nome,
+        cognome,
+        spreadsheetId: target.spreadsheetId,
         sheetTitle: target.sheetTitle,
-        originalSubject: email.subject,
-        originalMessageId: email.messageId,
-      });
-    }
+      },
+      processedAt,
+      email.subject,
+      email.messageId,
+    );
     log.info({ uid: uidLabel, sheet: target.sheetTitle }, "[sheets] riga lead A:H (ok)");
   } catch (e) {
     log.error(

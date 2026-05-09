@@ -6,6 +6,7 @@ import { logger } from "../logging/logger.js";
 const log = logger.child({ module: "leadAutoReply" });
 
 interface ReplyContact {
+  fullName?: string;
   phone?: string;
   email: string;
   address?: string;
@@ -13,6 +14,7 @@ interface ReplyContact {
 
 interface ReplyPayload {
   leadEmail: string;
+  leadPhone?: string;
   sheetTitle: string;
   originalSubject: string;
   originalMessageId?: string;
@@ -41,37 +43,38 @@ function parseAgentContacts(raw: string): Map<string, ReplyContact> {
 
   for (const [sheet, value] of Object.entries(parsed as Record<string, unknown>)) {
     if (!value || typeof value !== "object") continue;
+    const fullName = String((value as Record<string, unknown>).fullName ?? "").trim();
     const phone = String((value as Record<string, unknown>).phone ?? "").trim();
     const email = String((value as Record<string, unknown>).email ?? "").trim().toLowerCase();
     if (!email) continue;
-    out.set(normalizeKey(sheet), { phone: phone || undefined, email });
+    out.set(normalizeKey(sheet), { fullName: fullName || undefined, phone: phone || undefined, email });
   }
   return out;
 }
 
 const DEFAULT_PERSON_CONTACTS: Record<string, ReplyContact> = {
-  rebecca: { phone: "3407280036", email: "rebecca.romiti@megaronimmobiliare.it" },
-  patrizia: { phone: "3888030328", email: "patrizia.forte@megaronimmobiliare.it" },
-  fausto: { phone: "3664674898", email: "fausto.nassi@megaronimmobiliare.it" },
-  elisabetta: { phone: "3756116954", email: "elisabetta.tinucci@megaronimmobiliare.it" },
-  attilio: { phone: "3478180313", email: "attiliochinello@megaronimmobiliare.it" },
-  luis: { phone: "3270190216", email: "luis.cela@megaronimmobiliare.it" },
-  matteo: { phone: "3355369662", email: "matteo.angelini@megaronimmobiliare.it" },
-  viviana: { phone: "3200447626", email: "viviana.dagati@megaronimmobiliare.it" },
-  massimiliano: { phone: "3772500544", email: "massimiliano.mencacci@megaronimmobiliare.it" },
-  guido: { phone: "3803746906", email: "guido.radicchi@megaronimmobiliare.it" },
-  eros: { phone: "3283787523", email: "eros.nieri@megaronimmobiliare.it" },
-  alfredo: { phone: "3311231722", email: "alfredo.bertucci@megaronimmobiliare.it" },
-  fernando: { phone: "3311231721", email: "fernando.satti@megaronimmobiliare.it" },
-  mary: { phone: "3279396775", email: "maryluz.sarvabui@megaronimmobiliare.it" },
-  davide: { phone: "3476756493", email: "davide.pedala@megaronimmobiliare.it" },
-  samuele: { phone: "3534667306", email: "samuele.logli@megaronimmobiliare.it" },
-  giuseppe: { phone: "3341708218", email: "giuseppe.mililli@megaronimmobiliare.it" },
-  tommaso: { phone: "3287555205", email: "tommaso.pasquini@megaronimmobiliare.it" },
-  mattia: { phone: "3534667302", email: "mattia.pellegrini@megaronimmobiliare.it" },
-  stefania: { phone: "3804137182", email: "stefania.lupo@megaronimmobiliare.it" },
-  valentina: { phone: "3395063633", email: "valentina.foa@megaronimmobiliare.it" },
-  massimo: { phone: "3341488711", email: "massimo.nieri@megaronimmobiliare.it" },
+  rebecca: { fullName: "Rebecca Romiti", phone: "3407280036", email: "rebecca.romiti@megaronimmobiliare.it" },
+  patrizia: { fullName: "Patrizia Forte", phone: "3888030328", email: "patrizia.forte@megaronimmobiliare.it" },
+  fausto: { fullName: "Fausto Nassi", phone: "3664674898", email: "fausto.nassi@megaronimmobiliare.it" },
+  elisabetta: { fullName: "Elisabetta Tinucci", phone: "3756116954", email: "elisabetta.tinucci@megaronimmobiliare.it" },
+  attilio: { fullName: "Attilio Chinello", phone: "3478180313", email: "attiliochinello@megaronimmobiliare.it" },
+  luis: { fullName: "Luis Cela", phone: "3270190216", email: "luis.cela@megaronimmobiliare.it" },
+  matteo: { fullName: "Matteo Angelini", phone: "3355369662", email: "matteo.angelini@megaronimmobiliare.it" },
+  viviana: { fullName: "Viviana Dagati", phone: "3200447626", email: "viviana.dagati@megaronimmobiliare.it" },
+  massimiliano: { fullName: "Massimiliano Mencacci", phone: "3772500544", email: "massimiliano.mencacci@megaronimmobiliare.it" },
+  guido: { fullName: "Guido Radicchi", phone: "3803746906", email: "guido.radicchi@megaronimmobiliare.it" },
+  eros: { fullName: "Eros Nieri", phone: "3283787523", email: "eros.nieri@megaronimmobiliare.it" },
+  alfredo: { fullName: "Alfredo Bertucci", phone: "3311231722", email: "alfredo.bertucci@megaronimmobiliare.it" },
+  fernando: { fullName: "Fernando Satti", phone: "3311231721", email: "fernando.satti@megaronimmobiliare.it" },
+  mary: { fullName: "Maryluz Sarvabui", phone: "3279396775", email: "maryluz.sarvabui@megaronimmobiliare.it" },
+  davide: { fullName: "Davide Pedala", phone: "3476756493", email: "davide.pedala@megaronimmobiliare.it" },
+  samuele: { fullName: "Samuele Logli", phone: "3534667306", email: "samuele.logli@megaronimmobiliare.it" },
+  giuseppe: { fullName: "Giuseppe Mililli", phone: "3341708218", email: "giuseppe.mililli@megaronimmobiliare.it" },
+  tommaso: { fullName: "Tommaso Pasquini", phone: "3287555205", email: "tommaso.pasquini@megaronimmobiliare.it" },
+  mattia: { fullName: "Mattia Pellegrini", phone: "3534667302", email: "mattia.pellegrini@megaronimmobiliare.it" },
+  stefania: { fullName: "Stefania Lupo", phone: "3804137182", email: "stefania.lupo@megaronimmobiliare.it" },
+  valentina: { fullName: "Valentina Foa", phone: "3395063633", email: "valentina.foa@megaronimmobiliare.it" },
+  massimo: { fullName: "Massimo Nieri", phone: "3341488711", email: "massimo.nieri@megaronimmobiliare.it" },
 };
 
 const AGENCY_PISA_CONTACT: ReplyContact = {
@@ -130,6 +133,16 @@ export class LeadAutoReplyService {
     }
   }
 
+  private deriveFullName(contact: ReplyContact, sheetTitle: string): string {
+    if (contact.fullName?.trim()) return contact.fullName.trim();
+    const normalized = normalizeKey(sheetTitle);
+    return normalized
+      .split(/[\s_-]+/)
+      .filter(Boolean)
+      .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+      .join(" ");
+  }
+
   async sendReplyForLeadAssignment(payload: ReplyPayload): Promise<void> {
     if (!payload.leadEmail.trim()) return;
 
@@ -147,6 +160,8 @@ export class LeadAutoReplyService {
 
     const cleanSubject = payload.originalSubject.trim() || "Richiesta informazioni immobile";
     const subject = `Re: ${cleanSubject}`;
+    const agentName = this.deriveFullName(contact, payload.sheetTitle);
+    const customerPhone = payload.leadPhone?.trim() || "indicato nella richiesta";
     const text = sheetIsAgency
       ? [
           "Grazie per averci contattato.",
@@ -159,9 +174,13 @@ export class LeadAutoReplyService {
         ].join("\n")
       : [
           "Grazie per averci contattato.",
-          contact.phone
-            ? `La tua richiesta e' stata presa in carico da un agente. Puoi contattarlo al numero ${contact.phone} e alla mail ${contact.email}.`
-            : `La tua richiesta e' stata presa in carico da un agente. Puoi contattarlo alla mail ${contact.email}.`,
+          `La tua richiesta e' stata presa in carico dall'agente ${agentName} che la contattera' al numero ${customerPhone}.`,
+          "",
+          agentName,
+          contact.phone ?? "",
+          contact.email,
+          "",
+          "LOGO - FOOTER",
         ].join("\n");
 
     const forcedRecipient = this.env.LEAD_REPLY_FORCE_TO.trim().toLowerCase();

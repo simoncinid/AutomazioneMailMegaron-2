@@ -7,18 +7,39 @@ import { formatSheetRange } from "../sheets/sheetRange.js";
 const log = logger.child({ module: "leadAssignmentCooldown" });
 const COOLDOWN_MONTHS = 6;
 
-/**
- * "lead"        => riga A:G  (A = email, C = data assegnazione, D = telefono)
- * "diagnostic"  => riga A:H  (A = data, G = email lead, H = telefono)
- *
- * Indica al loader come scoprire `(contatto, data)` su ciascun tab.
- */
-type TargetKind = "lead" | "diagnostic";
-
 interface SheetTarget {
   spreadsheetId: string;
   sheetTitle: string;
-  kind: TargetKind;
+}
+
+type NormalizedStatus =
+  | "da_chiamare"
+  | "appuntamento_fissato"
+  | "non_risponde"
+  | "chiamato"
+  | "unknown";
+
+interface LeadRowRef {
+  spreadsheetId: string;
+  sheetTitle: string;
+  rowNumber: number;
+}
+
+interface LeadSnapshot {
+  leadEmail: string;
+  listingId: string;
+  phone: string;
+  zone: string;
+  nome: string;
+  cognome: string;
+  statusRaw: string;
+}
+
+interface StoredAssignment {
+  assignedAt: Date;
+  status: NormalizedStatus;
+  rowRef: LeadRowRef | null;
+  snapshot: LeadSnapshot;
 }
 
 export interface LeadCooldownDecision {
@@ -29,18 +50,43 @@ export interface LeadCooldownDecision {
   matchedValue?: string;
 }
 
+export interface LeadRecurrenceDecision {
+  action: "none" | "skip" | "reactivate";
+  reason?:
+    | "status_da_chiamare"
+    | "status_appuntamento_fissato"
+    | "status_non_risponde"
+    | "status_chiamato"
+    | "status_unknown";
+  existing?: {
+    assignedAt: Date;
+    status: NormalizedStatus;
+    rowRef: LeadRowRef | null;
+    snapshot: LeadSnapshot;
+    matchedOn: "email" | "phone";
+    matchedValue: string;
+  };
+}
+
+export interface ReactivationPayload {
+  identity: { email?: string; phone?: string };
+  listingId: string;
+  assignmentDate: string;
+  phone: string;
+  zone: string;
+  nome: string;
+  cognome: string;
+  leadEmail: string;
+  processedAt: Date;
+}
+
 /**
- * Cooldown 6 mesi per contatto lead (email o telefono), calcolato globalmente su:
- *  - tab lead (tutte le destinazioni del mapping zona)
- *  - tab diagnostico `no-id-trovato`
- *
- * Lo stato viene caricato 1 volta dai Google Sheets e poi aggiornato in memoria
- * tramite `recordAssignment` man mano che il worker scrive righe nel ciclo:
- * così due mail uguali nello stesso run non finiscono in due righe duplicate.
+ * Carica e mantiene in memoria gli ultimi contatti lead per email/telefono
+ * sui tab agenti, per gestire duplicati/riattivazioni nel range 6 mesi.
  */
 export class LeadAssignmentCooldown {
   private readonly targets: SheetTarget[];
-  private readonly lastAssignmentByIdentity = new Map<string, Date>();
+  private readonly lastAssignmentByIdentity = new Map<string, StoredAssignment>();
   private loadPromise: Promise<void> | null = null;
   private loaded = false;
 
@@ -52,44 +98,191 @@ export class LeadAssignmentCooldown {
     identity: { email?: string; phone?: string },
     now: Date,
   ): Promise<LeadCooldownDecision> {
-    const keys = buildIdentityKeys(identity);
-    if (keys.length === 0) return { shouldSkip: false };
+    const decision = await this.evaluateRecurrence(identity, now);
+    if (decision.action !== "skip") return { shouldSkip: false };
 
-    await this.ensureLoaded();
-
-    let best: { key: string; date: Date; matchedOn: "email" | "phone"; value: string } | null = null;
-    for (const k of keys) {
-      const date = this.lastAssignmentByIdentity.get(k.key);
-      if (!date) continue;
-      if (!best || date.getTime() > best.date.getTime()) {
-        best = { key: k.key, date, matchedOn: k.type, value: k.normalizedValue };
-      }
-    }
-    if (!best) return { shouldSkip: false };
-
-    const blockedUntil = addMonths(best.date, COOLDOWN_MONTHS);
-    if (now < blockedUntil) {
-      return {
-        shouldSkip: true,
-        lastAssignedAt: best.date,
-        blockedUntil,
-        matchedOn: best.matchedOn,
-        matchedValue: best.value,
-      };
-    }
     return {
-      shouldSkip: false,
-      lastAssignedAt: best.date,
-      blockedUntil,
-      matchedOn: best.matchedOn,
-      matchedValue: best.value,
+      shouldSkip: true,
+      lastAssignedAt: decision.existing?.assignedAt,
+      blockedUntil: decision.existing?.assignedAt
+        ? addMonths(decision.existing.assignedAt, COOLDOWN_MONTHS)
+        : undefined,
+      matchedOn: decision.existing?.matchedOn,
+      matchedValue: decision.existing?.matchedValue,
     };
   }
 
-  recordAssignment(identity: { email?: string; phone?: string }, assignedAt: Date): void {
+  async evaluateRecurrence(
+    identity: { email?: string; phone?: string },
+    now: Date,
+  ): Promise<LeadRecurrenceDecision> {
     const keys = buildIdentityKeys(identity);
+    if (keys.length === 0) return { action: "none" };
+
+    await this.ensureLoaded();
+
+    let best:
+      | {
+          assignedAt: Date;
+          status: NormalizedStatus;
+          rowRef: LeadRowRef | null;
+          snapshot: LeadSnapshot;
+          matchedOn: "email" | "phone";
+          matchedValue: string;
+        }
+      | null = null;
+
+    for (const key of keys) {
+      const record = this.lastAssignmentByIdentity.get(key.key);
+      if (!record) continue;
+      if (!best || record.assignedAt.getTime() > best.assignedAt.getTime()) {
+        best = {
+          assignedAt: record.assignedAt,
+          status: record.status,
+          rowRef: record.rowRef,
+          snapshot: record.snapshot,
+          matchedOn: key.type,
+          matchedValue: key.normalizedValue,
+        };
+      }
+    }
+
+    if (!best) return { action: "none" };
+
+    const blockedUntil = addMonths(best.assignedAt, COOLDOWN_MONTHS);
+    if (now >= blockedUntil) {
+      return { action: "none" };
+    }
+
+    if (best.status === "da_chiamare") {
+      return {
+        action: "skip",
+        reason: "status_da_chiamare",
+        existing: best,
+      };
+    }
+    if (best.status === "appuntamento_fissato") {
+      return {
+        action: "skip",
+        reason: "status_appuntamento_fissato",
+        existing: best,
+      };
+    }
+    if (best.status === "non_risponde") {
+      return {
+        action: "reactivate",
+        reason: "status_non_risponde",
+        existing: best,
+      };
+    }
+    if (best.status === "chiamato") {
+      return {
+        action: "reactivate",
+        reason: "status_chiamato",
+        existing: best,
+      };
+    }
+
+    return {
+      action: "skip",
+      reason: "status_unknown",
+      existing: best,
+    };
+  }
+
+  async reactivateExistingRow(
+    decision: LeadRecurrenceDecision,
+    payload: ReactivationPayload,
+  ): Promise<{ spreadsheetId: string; sheetTitle: string; rowNumber: number }> {
+    if (decision.action !== "reactivate" || !decision.existing) {
+      throw new Error("Decisione non valida: atteso action=reactivate con record esistente");
+    }
+
+    const rowRef = decision.existing.rowRef;
+    if (!rowRef) {
+      throw new Error("Impossibile riattivare: riferimento riga non disponibile");
+    }
+
+    const prev = decision.existing.snapshot;
+    const leadEmail = payload.leadEmail || prev.leadEmail;
+    const nextValues = [
+      leadEmail,
+      payload.listingId || prev.listingId,
+      payload.assignmentDate,
+      payload.phone || prev.phone,
+      payload.zone || prev.zone,
+      payload.nome || prev.nome,
+      payload.cognome || prev.cognome,
+      "Da Chiamare",
+    ];
+
+    const sheets = await getSheetsClient();
+    const range = formatSheetRange(rowRef.sheetTitle, `A${rowRef.rowNumber}:H${rowRef.rowNumber}`);
+
+    await withGoogleSheetsRateLimit(async () =>
+      sheets.spreadsheets.values.update({
+        spreadsheetId: rowRef.spreadsheetId,
+        range,
+        valueInputOption: "USER_ENTERED",
+        requestBody: { values: [nextValues] },
+      }),
+    );
+
+    this.recordAssignment(
+      { email: leadEmail, phone: payload.phone || prev.phone },
+      payload.processedAt,
+      {
+        statusRaw: "Da Chiamare",
+        rowRef,
+        snapshot: {
+          leadEmail,
+          listingId: String(nextValues[1] ?? ""),
+          phone: String(nextValues[3] ?? ""),
+          zone: String(nextValues[4] ?? ""),
+          nome: String(nextValues[5] ?? ""),
+          cognome: String(nextValues[6] ?? ""),
+          statusRaw: "Da Chiamare",
+        },
+      },
+    );
+
+    return rowRef;
+  }
+
+  recordAssignment(
+    identity: { email?: string; phone?: string },
+    assignedAt: Date,
+    options?: {
+      statusRaw?: string;
+      rowRef?: LeadRowRef | null;
+      snapshot?: Partial<LeadSnapshot>;
+    },
+  ): void {
+    const keys = buildIdentityKeys(identity);
+    if (keys.length === 0) return;
+
+    const statusRaw = (options?.statusRaw ?? "Da Chiamare").trim();
+    const status = normalizeStatus(statusRaw);
+    const snapshot: LeadSnapshot = {
+      leadEmail: options?.snapshot?.leadEmail ?? (identity.email ?? ""),
+      listingId: options?.snapshot?.listingId ?? "",
+      phone: options?.snapshot?.phone ?? (identity.phone ?? ""),
+      zone: options?.snapshot?.zone ?? "",
+      nome: options?.snapshot?.nome ?? "",
+      cognome: options?.snapshot?.cognome ?? "",
+      statusRaw,
+    };
+
     for (const k of keys) {
-      upsertLatest(this.lastAssignmentByIdentity, k.key, assignedAt);
+      const current = this.lastAssignmentByIdentity.get(k.key);
+      if (!current || assignedAt.getTime() > current.assignedAt.getTime()) {
+        this.lastAssignmentByIdentity.set(k.key, {
+          assignedAt,
+          status,
+          rowRef: options?.rowRef ?? null,
+          snapshot,
+        });
+      }
     }
   }
 
@@ -104,12 +297,10 @@ export class LeadAssignmentCooldown {
 
   private async loadFromSheets(): Promise<void> {
     const sheets = await getSheetsClient();
-    let leadTargets = 0;
-    let diagnosticTargets = 0;
+    let loadedSheets = 0;
 
     for (const target of this.targets) {
-      const rangeSuffix = target.kind === "lead" ? "A:D" : "A:H";
-      const range = formatSheetRange(target.sheetTitle, rangeSuffix);
+      const range = formatSheetRange(target.sheetTitle, "A:H");
       try {
         const res = await withGoogleSheetsRateLimit(async () =>
           sheets.spreadsheets.values.get({
@@ -119,91 +310,84 @@ export class LeadAssignmentCooldown {
             dateTimeRenderOption: "SERIAL_NUMBER",
           }),
         );
+
         const rows = res.data.values ?? [];
-        for (const row of rows) {
-          let emailCell: unknown = "";
-          let phoneCell: unknown = "";
-          let dateCell: unknown;
-          if (target.kind === "lead") {
-            emailCell = row[0];
-            dateCell = row[2];
-            phoneCell = row[3];
-          } else {
-            // Layout diagnostico: A=data, G=email, H=telefono.
-            dateCell = row[0];
-            emailCell = row[6];
-            phoneCell = row[7];
-          }
-          const assignedAt = parseSheetDateCell(dateCell);
+        for (let i = 0; i < rows.length; i += 1) {
+          const row = rows[i] ?? [];
+          const assignedAt = parseSheetDateCell(row[2]);
           if (!assignedAt) continue;
 
-          const keys = buildIdentityKeys({
-            email: cellToString(emailCell),
-            phone: cellToString(phoneCell),
-          });
+          const leadEmail = cellToString(row[0]);
+          const phone = cellToString(row[3]);
+          const keys = buildIdentityKeys({ email: leadEmail, phone });
           if (keys.length === 0) continue;
+
+          const statusRaw = cellToString(row[7]).trim() || "Da Chiamare";
+          const record: StoredAssignment = {
+            assignedAt,
+            status: normalizeStatus(statusRaw),
+            rowRef: {
+              spreadsheetId: target.spreadsheetId,
+              sheetTitle: target.sheetTitle,
+              rowNumber: i + 1,
+            },
+            snapshot: {
+              leadEmail,
+              listingId: cellToString(row[1]),
+              phone,
+              zone: cellToString(row[4]),
+              nome: cellToString(row[5]),
+              cognome: cellToString(row[6]),
+              statusRaw,
+            },
+          };
+
           for (const k of keys) {
-            upsertLatest(this.lastAssignmentByIdentity, k.key, assignedAt);
+            const current = this.lastAssignmentByIdentity.get(k.key);
+            if (!current || record.assignedAt.getTime() > current.assignedAt.getTime()) {
+              this.lastAssignmentByIdentity.set(k.key, record);
+            }
           }
         }
-        if (target.kind === "lead") leadTargets += 1;
-        else diagnosticTargets += 1;
+        loadedSheets += 1;
       } catch (error) {
         log.warn(
           {
             err: error,
             spreadsheetId: target.spreadsheetId,
             sheetTitle: target.sheetTitle,
-            kind: target.kind,
           },
-          "Impossibile leggere tab per cooldown lead: continuo con gli altri",
+          "Impossibile leggere tab per gestione contatti multipli: continuo con gli altri",
         );
       }
     }
 
     log.info(
       {
-        leadTargets,
-        diagnosticTargets,
+        loadedSheets,
         trackedContacts: this.lastAssignmentByIdentity.size,
       },
-      "Cooldown lead caricato (ricerca globale: lead A:D + diagnostici A:H)",
+      "Gestione contatti multipli caricata (tab lead A:H)",
     );
   }
 }
 
-/**
- * Tutti i tab che contengono contatti lead da considerare per il cooldown:
- *  - tutte le destinazioni del mapping zona                                   -> layout "lead"
- *  - NO_ID_FOUND_SHEET_TITLE                                                 -> layout "diagnostic"
- */
 function buildTrackedTargets(env: AppEnv): SheetTarget[] {
   const out = new Map<string, SheetTarget>();
-  const push = (
-    spreadsheetId: string | undefined,
-    sheetTitle: string | undefined,
-    kind: TargetKind,
-  ): void => {
+  const push = (spreadsheetId: string | undefined, sheetTitle: string | undefined): void => {
     const sid = (spreadsheetId ?? "").trim();
     const st = (sheetTitle ?? "").trim();
     if (!sid || !st) return;
-    out.set(`${sid}::${st}`, { spreadsheetId: sid, sheetTitle: st, kind });
+    out.set(`${sid}::${st}`, { spreadsheetId: sid, sheetTitle: st });
   };
 
   for (const rule of env.zoneSheetRules) {
-    push(rule.spreadsheetId, rule.sheetTitle, "lead");
+    push(rule.spreadsheetId, rule.sheetTitle);
   }
 
-  push(env.defaultSpreadsheetIdResolved, env.NO_ID_FOUND_SHEET_TITLE, "diagnostic");
+  push(env.defaultSpreadsheetIdResolved, env.DEFAULT_SHEET_TITLE);
 
   return [...out.values()];
-}
-
-function upsertLatest(store: Map<string, Date>, email: string, date: Date): void {
-  const current = store.get(email);
-  if (!current || date.getTime() > current.getTime()) {
-    store.set(email, date);
-  }
 }
 
 function normalizeEmail(email: string): string {
@@ -221,6 +405,27 @@ function cellToString(value: unknown): string {
   if (typeof value === "string") return value;
   if (typeof value === "number" && Number.isFinite(value)) return String(value);
   return "";
+}
+
+function normalizeStatus(rawStatus: string): NormalizedStatus {
+  const s = rawStatus
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\s+/g, " ");
+
+  if (s === "da chiamare") return "da_chiamare";
+  if (s === "non risponde") return "non_risponde";
+  if (s === "chiamato") return "chiamato";
+  if (
+    s === "appuntamento fissato" ||
+    s === "fissato appuntamento" ||
+    (s.includes("appuntamento") && s.includes("fissat"))
+  ) {
+    return "appuntamento_fissato";
+  }
+  return "unknown";
 }
 
 function buildIdentityKeys(identity: {

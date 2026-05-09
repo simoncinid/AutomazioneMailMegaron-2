@@ -13,13 +13,14 @@ const aiLeadSchema = z.object({
   cognome: z.string().default(""),
   id_annuncio: z.string().default(""),
   email: z.string().default(""),
+  risposta: z.boolean().default(false),
 });
 
 const SYSTEM_PROMPT = [
   "Sei un estrattore dati da email immobiliari.",
   "Devi rispondere solo con JSON valido (nessun testo extra).",
-  "Output obbligatorio: {\"nome\":\"\",\"numero_telefono\":\"\",\"cognome\":\"\",\"id_annuncio\":\"\",\"email\":\"\"}.",
-  "Regole estrazione ID annuncio:",
+  "Output obbligatorio: {\"nome\":\"\",\"numero_telefono\":\"\",\"cognome\":\"\",\"id_annuncio\":\"\",\"email\":\"\",\"risposta\":}.",
+  "Regola `risposta`: true solo se la mail e' chiaramente riferita ad una chiamata ricevuta (es. riferimento esplicito a una telefonata appena avvenuta) e che è stata risposta (nel corpo mail trovi 'Risposta' e la durata della telefonata). Altrimenti trovi ìNon rispostaì o simili e quindi è false.",  "Regole estrazione ID annuncio:",
   "0) `id_annuncio` deve contenere al massimo un solo ID (mai una lista).",
   "1) Cerca vicino a etichette come: \"Messaggio ricevuto per l’annuncio:\", \"Ref.\", \"Rif.\", \"Codice dell'annuncio:\", \"ID annuncio\".",
   "2) Esempi frequenti: trovatoimmobiliare -> \"Messaggio ricevuto per l’annuncio: <ID>\"; idealista/casa.it -> \"Ref. <ID>\".",
@@ -40,6 +41,7 @@ export interface AiLeadExtraction {
   cognome: string;
   idAnnuncio: string;
   email: string;
+  risposta: boolean;
 }
 
 function truncate(value: string, maxChars: number): string {
@@ -233,6 +235,7 @@ export async function extractLeadDataWithAi(
       cognome: normalizeName(parsed.cognome),
       idAnnuncio: normalizeListingId(parsed.id_annuncio),
       email: normalizeEmail(parsed.email),
+      risposta: Boolean(parsed.risposta),
     };
   } finally {
     clearTimeout(timeout);
