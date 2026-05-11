@@ -143,7 +143,6 @@ export class GoogleSheetsWriter {
     for (const [key, entries] of this.bufferedRows) {
       if (entries.length === 0) continue;
       const [spreadsheetId, sheetTitle, kind] = key.split("::") as [string, string, RowKind];
-      const range = formatSheetRange(sheetTitle, RANGE_BY_KIND[kind]);
       const touchedKey = `${spreadsheetId}::${sheetTitle}`;
       const currentTouched = touched.get(touchedKey);
       const minEndColumnIndex = END_COLUMN_INDEX_BY_KIND[kind];
@@ -155,6 +154,18 @@ export class GoogleSheetsWriter {
       } else {
         touched.set(touchedKey, { spreadsheetId, sheetTitle, minEndColumnIndex });
       }
+
+      if (kind === "lead") {
+        await this.writeLeadRowsWithFixedColumns(
+          sheets,
+          spreadsheetId,
+          sheetTitle,
+          entries.map((e) => e.values),
+        );
+        continue;
+      }
+
+      const range = formatSheetRange(sheetTitle, RANGE_BY_KIND[kind]);
       await withGoogleSheetsRateLimit(async () =>
         sheets.spreadsheets.values.append({
           spreadsheetId,
@@ -186,6 +197,74 @@ export class GoogleSheetsWriter {
     const arr = this.bufferedRows.get(key) ?? [];
     arr.push({ kind, values });
     this.bufferedRows.set(key, arr);
+  }
+
+  private async writeLeadRowsWithFixedColumns(
+    sheets: sheets_v4.Sheets,
+    spreadsheetId: string,
+    sheetTitle: string,
+    rows: (string | number)[][],
+  ): Promise<void> {
+    const readRange = formatSheetRange(sheetTitle, "A:J");
+    const readRes = await withGoogleSheetsRateLimit(async () =>
+      sheets.spreadsheets.values.get({
+        spreadsheetId,
+        range: readRange,
+      }),
+    );
+    const existingRows = readRes.data.values?.length ?? 0;
+    const nextRow = Math.max(2, existingRows + 1);
+    const endRow = nextRow + rows.length - 1;
+    await this.ensureRowCapacity(sheets, spreadsheetId, sheetTitle, endRow);
+    const writeRange = formatSheetRange(sheetTitle, `A${nextRow}:J${endRow}`);
+
+    await withGoogleSheetsRateLimit(async () =>
+      sheets.spreadsheets.values.update({
+        spreadsheetId,
+        range: writeRange,
+        valueInputOption: "USER_ENTERED",
+        requestBody: { values: rows },
+      }),
+    );
+  }
+
+  private async ensureRowCapacity(
+    sheets: sheets_v4.Sheets,
+    spreadsheetId: string,
+    sheetTitle: string,
+    requiredRowCount: number,
+  ): Promise<void> {
+    const meta = await withGoogleSheetsRateLimit(async () =>
+      sheets.spreadsheets.get({
+        spreadsheetId,
+        fields: "sheets(properties(sheetId,title,gridProperties(rowCount)))",
+      }),
+    );
+    const target = (meta.data.sheets ?? []).find((s) => s.properties?.title === sheetTitle);
+    const sheetId = target?.properties?.sheetId;
+    const rowCount = target?.properties?.gridProperties?.rowCount ?? 0;
+    if (sheetId == null) {
+      throw new Error(`Foglio non trovato: ${sheetTitle}`);
+    }
+    if (rowCount >= requiredRowCount) return;
+
+    const rowsToAppend = requiredRowCount - rowCount;
+    await withGoogleSheetsRateLimit(async () =>
+      sheets.spreadsheets.batchUpdate({
+        spreadsheetId,
+        requestBody: {
+          requests: [
+            {
+              appendDimension: {
+                sheetId,
+                dimension: "ROWS",
+                length: rowsToAppend,
+              },
+            },
+          ],
+        },
+      }),
+    );
   }
 
   private async syncBasicFilterRange(
