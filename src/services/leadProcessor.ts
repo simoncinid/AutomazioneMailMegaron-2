@@ -616,7 +616,7 @@ export async function processInboundEmail(
       email.subject,
       email.messageId,
     );
-    log.info({ uid: uidLabel, sheet: target.sheetTitle }, "[sheets] riga lead A:L (ok)");
+    log.info({ uid: uidLabel, sheet: target.sheetTitle }, "[sheets] riga lead A:J (ok)");
   } catch (e) {
     log.error(
       { err: e, uid: uidLabel, sheet: target.sheetTitle },

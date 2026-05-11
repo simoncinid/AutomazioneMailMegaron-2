@@ -12,7 +12,7 @@ export { formatSheetRange } from "./sheetRange.js";
 
 /**
  * Due tipi di riga gestiti, allineati al test Python `test_imap_aruba.py`:
- *  - "lead"     => A:L  (email, ID, data, telefono, zona, nome, cognome, stato, I, J, K, provincia)
+ *  - "lead"     => A:J  (email, ID, data, telefono, zona, nome, cognome, stato, I, provincia)
  *  - "no-id"    => A:I  (data, ora, mittente, corpo, nome, cognome, email, telefono, stato)
  */
 export const LEAD_SHEET_COLUMNS = [
@@ -25,8 +25,6 @@ export const LEAD_SHEET_COLUMNS = [
   "Cognome",
   "Stato",
   "Extra I",
-  "Extra J",
-  "Extra K",
   "Provincia",
 ] as const;
 
@@ -56,7 +54,7 @@ interface TouchedSheet {
 }
 
 const RANGE_BY_KIND: Record<RowKind, string> = {
-  lead: "A:L",
+  lead: "A:J",
   "no-id": "A:I",
 };
 
@@ -93,8 +91,6 @@ function rowFromLead(p: LeadRowPayload): (string | number)[] {
     p.nome,
     p.cognome,
     DEFAULT_STATO,
-    "",
-    "",
     "",
     province,
   ];
