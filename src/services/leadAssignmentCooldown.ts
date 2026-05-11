@@ -378,14 +378,14 @@ function buildTrackedTargets(env: AppEnv): SheetTarget[] {
     const sid = (spreadsheetId ?? "").trim();
     const st = (sheetTitle ?? "").trim();
     if (!sid || !st) return;
+    // Non usare tab di supporto/configurazione per il cooldown.
+    if (st.toLowerCase() === env.MAPPING_SHEET_NAME.trim().toLowerCase()) return;
     out.set(`${sid}::${st}`, { spreadsheetId: sid, sheetTitle: st });
   };
 
   for (const rule of env.zoneSheetRules) {
     push(rule.spreadsheetId, rule.sheetTitle);
   }
-
-  push(env.defaultSpreadsheetIdResolved, env.DEFAULT_SHEET_TITLE);
 
   return [...out.values()];
 }
