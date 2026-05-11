@@ -74,6 +74,7 @@ const DEFAULT_PERSON_CONTACTS: Record<string, ReplyContact> = {
   mattia: { fullName: "Mattia Pellegrini", phone: "3534667302", email: "mattia.pellegrini@megaronimmobiliare.it" },
   stefania: { fullName: "Stefania Lupo", phone: "3804137182", email: "stefania.lupo@megaronimmobiliare.it" },
   valentina: { fullName: "Valentina Foa", phone: "3395063633", email: "valentina.foa@megaronimmobiliare.it" },
+  marco: { fullName: "Marco Rossi", phone: "3703124895", email: "marco.rossi@megaronimmobiliare.ot" },
   massimo: { fullName: "Massimo Nieri", phone: "3341488711", email: "massimo.nieri@megaronimmobiliare.it" },
 };
 

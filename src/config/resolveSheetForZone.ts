@@ -82,7 +82,7 @@ function pickSheetByZoneCityProvince(
       if (cityIn("pontedera")) return "AG-PONTEDERA";
       return null;
     case "porta a mare":
-      if (cityIn("pisa")) return "VALENTINA";
+      if (cityIn("pisa")) return "MARCO";
       if (cityIn("livorno")) return "GUIDO";
       return null;
     case "quattro strade":

@@ -32,13 +32,15 @@ export interface ParsedInboundEmail {
   htmlBody?: string;
 }
 
-/** Riga da appendere nel foglio lead (8 colonne operative A:H). */
+/** Riga da appendere nel foglio lead (12 colonne operative A:L, con provincia in L). */
 export interface LeadRowPayload {
   leadEmail: string;
   listingId: string;
   assignmentDate: string;
   phone: string;
   zone: string;
+  /** Provincia annuncio (scritta in colonna L dei fogli lead). */
+  province?: string;
   nome: string;
   cognome: string;
   spreadsheetId: string;

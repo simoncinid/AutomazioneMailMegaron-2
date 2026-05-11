@@ -442,6 +442,7 @@ export async function processInboundEmail(
         assignmentDate,
         phone,
         zone: "NO-ID",
+        province: "",
         nome,
         cognome,
         spreadsheetId: randomTarget.spreadsheetId,
@@ -460,6 +461,7 @@ export async function processInboundEmail(
 
   const listingId = selectedListingId;
   let zone = "";
+  let leadProvince = "";
   let target: SheetTarget | null = null;
   let routingLog = "fallback_default";
 
@@ -494,6 +496,7 @@ export async function processInboundEmail(
     zone = listing.zone.trim();
     const listingCity = listing.city?.trim() ?? "";
     const listingProvince = listing.province?.trim() ?? "";
+    leadProvince = listingProvince;
     const resolved = resolveSheetForZone(
       zone,
       deps.env.zoneSheetRules,
@@ -603,6 +606,7 @@ export async function processInboundEmail(
         assignmentDate,
         phone,
         zone,
+        province: leadProvince,
         nome,
         cognome,
         spreadsheetId: target.spreadsheetId,
@@ -612,7 +616,7 @@ export async function processInboundEmail(
       email.subject,
       email.messageId,
     );
-    log.info({ uid: uidLabel, sheet: target.sheetTitle }, "[sheets] riga lead A:H (ok)");
+    log.info({ uid: uidLabel, sheet: target.sheetTitle }, "[sheets] riga lead A:L (ok)");
   } catch (e) {
     log.error(
       { err: e, uid: uidLabel, sheet: target.sheetTitle },
