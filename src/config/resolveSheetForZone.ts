@@ -30,6 +30,13 @@ function pickSheetByZoneCityProvince(
   const cityIn = (...candidates: string[]) => candidates.some((x) => c === normalizeKey(x));
   const provinceIn = (...candidates: string[]) => candidates.some((x) => p === normalizeKey(x));
 
+  // Evita che varianti "San Romano (...)" finiscano nel cluster AG-PISA:
+  // per il territorio Pisa/Pontedera devono andare su AG-PONTEDERA.
+  // Manteniamo esclusa Garfagnana, che ha routing dedicato.
+  if ((z === "san romano" || z.includes("san romano")) && !z.includes("garfagnana")) {
+    return "AG-PONTEDERA";
+  }
+
   switch (z) {
     case "capoluogo":
       if (cityIn("calci")) return "GIUSEPPE";

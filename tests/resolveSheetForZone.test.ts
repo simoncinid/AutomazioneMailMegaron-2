@@ -150,6 +150,32 @@ describe("resolveSheetForZone", () => {
     expect(r.sheetTitle).toBe("AG-PONTEDERA");
     expect(r.fallback).toBe(false);
   });
+
+  it("forza SAN ROMANO su AG-PONTEDERA anche con varianti", () => {
+    const sanRomanoRules: ZoneSheetRule[] = [
+      {
+        pattern: "Montopoli in Val d'Arno",
+        match: "contains",
+        spreadsheetId: "sid",
+        sheetTitle: "AG-PISA",
+      },
+      {
+        pattern: "San Romano",
+        match: "contains",
+        spreadsheetId: "sid",
+        sheetTitle: "AG-PONTEDERA",
+      },
+    ];
+
+    const r = resolveSheetForZone(
+      "San Romano (Montopoli in Val d'Arno)",
+      sanRomanoRules,
+      "sid",
+      "DefaultTab",
+    );
+    expect(r.sheetTitle).toBe("AG-PONTEDERA");
+    expect(r.fallback).toBe(false);
+  });
 });
 
 describe("matchesZone", () => {
