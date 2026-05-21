@@ -1,9 +1,13 @@
 import nodemailer from "nodemailer";
+import { resolve, dirname } from "node:path";
 import type { Transporter } from "nodemailer";
+import { fileURLToPath } from "node:url";
 import type { AppEnv } from "../config/loadEnv.js";
 import { logger } from "../logging/logger.js";
 
 const log = logger.child({ module: "leadAutoReply" });
+const LOGO_CID = "megaron-logo";
+const LOGO_PATH = resolve(dirname(fileURLToPath(import.meta.url)), "../public/logo.png");
 
 interface ReplyContact {
   fullName?: string;
@@ -30,6 +34,25 @@ function maybeReplyMessageId(value: string | undefined): string | undefined {
   if (!trimmed) return undefined;
   if (!trimmed.includes("@")) return undefined;
   return trimmed;
+}
+
+function escapeHtml(value: string): string {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
+}
+
+function plainTextToHtml(text: string): string {
+  return text
+    .split("\n")
+    .map((line) => {
+      if (!line.trim()) return '<p style="margin: 0 0 12px 0;">&nbsp;</p>';
+      return `<p style="margin: 0 0 12px 0;">${escapeHtml(line)}</p>`;
+    })
+    .join("");
 }
 
 function parseAgentContacts(raw: string): Map<string, ReplyContact> {
@@ -180,9 +203,15 @@ export class LeadAutoReplyService {
           agentName,
           contact.phone ?? "",
           contact.email,
-          "",
-          "LOGO - FOOTER",
         ].join("\n");
+    const html = !sheetIsAgency
+      ? [
+          '<div style="font-family: Arial, sans-serif; font-size: 14px; color: #111827;">',
+          plainTextToHtml(text),
+          `<img src="cid:${LOGO_CID}" alt="Megaron Immobiliare" style="display: block; width: 120px; height: auto; margin-top: 8px;" />`,
+          "</div>",
+        ].join("")
+      : undefined;
 
     const forcedRecipient = this.env.LEAD_REPLY_FORCE_TO.trim().toLowerCase();
     const recipient = forcedRecipient || payload.leadEmail.trim().toLowerCase();
@@ -192,6 +221,16 @@ export class LeadAutoReplyService {
       to: recipient,
       subject,
       text,
+      html,
+      attachments: html
+        ? [
+            {
+              filename: "logo.png",
+              path: LOGO_PATH,
+              cid: LOGO_CID,
+            },
+          ]
+        : undefined,
       inReplyTo: replyToMessageId,
       references: replyToMessageId ? [replyToMessageId] : undefined,
     });
