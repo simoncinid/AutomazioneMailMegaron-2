@@ -188,4 +188,26 @@ describe("matchesZone", () => {
     };
     expect(matchesZone("PRATI", rule)).toBe(true);
   });
+
+  it("equals gestisce apostrofi tipografici", () => {
+    const rule: ZoneSheetRule = {
+      pattern: "Sant'Ermete",
+      match: "equals",
+      spreadsheetId: "x",
+      sheetTitle: "L",
+    };
+    expect(matchesZone("Sant’Ermete", rule)).toBe(true);
+    expect(matchesZone("SantʼErmete", rule)).toBe(true);
+  });
+
+  it("contains gestisce apostrofi tipografici", () => {
+    const rule: ZoneSheetRule = {
+      pattern: "Sant'Ermete",
+      match: "contains",
+      spreadsheetId: "x",
+      sheetTitle: "L",
+    };
+    expect(matchesZone("Zona Sant’Ermete lato sud", rule)).toBe(true);
+    expect(matchesZone("Zona SantʼErmete lato sud", rule)).toBe(true);
+  });
 });

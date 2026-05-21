@@ -9,7 +9,7 @@ function normalizeKey(value: string | null | undefined): string {
   return (value ?? "")
     .trim()
     .toLowerCase()
-    .replace(/[’`´]/g, "'")
+    .replace(/[’‘‛`´ʼʹʻ＇]/g, "'")
     .replace(/\s+/g, " ");
 }
 
@@ -239,16 +239,16 @@ export function resolveSheetForZone(
 }
 
 export function matchesZone(zone: string, rule: ZoneSheetRule): boolean {
-  const z = zone.trim();
-  const p = rule.pattern;
+  const z = normalizeKey(zone);
+  const p = normalizeKey(rule.pattern);
   switch (rule.match) {
     case "equals":
-      return z.toLowerCase() === p.toLowerCase();
+      return z === p;
     case "contains":
-      return z.toLowerCase().includes(p.toLowerCase());
+      return z.includes(p);
     case "regex": {
-      const re = new RegExp(p, "i");
-      return re.test(z);
+      const re = new RegExp(rule.pattern, "i");
+      return re.test(zone.trim());
     }
     default:
       return false;
