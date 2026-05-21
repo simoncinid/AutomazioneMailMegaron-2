@@ -2,12 +2,23 @@ import nodemailer from "nodemailer";
 import { resolve, dirname } from "node:path";
 import type { Transporter } from "nodemailer";
 import { fileURLToPath } from "node:url";
+import { existsSync } from "node:fs";
 import type { AppEnv } from "../config/loadEnv.js";
 import { logger } from "../logging/logger.js";
 
 const log = logger.child({ module: "leadAutoReply" });
 const LOGO_CID = "megaron-logo";
-const LOGO_PATH = resolve(dirname(fileURLToPath(import.meta.url)), "../public/logo.png");
+
+function resolveLogoPath(): string | undefined {
+  const currentDir = dirname(fileURLToPath(import.meta.url));
+  const candidates = [
+    resolve(currentDir, "../public/logo.png"),
+    resolve(process.cwd(), "dist/public/logo.png"),
+    resolve(process.cwd(), "src/public/logo.png"),
+    resolve(process.cwd(), "public/logo.png"),
+  ];
+  return candidates.find((candidate) => existsSync(candidate));
+}
 
 interface ReplyContact {
   fullName?: string;
@@ -186,6 +197,7 @@ export class LeadAutoReplyService {
     const subject = `Re: ${cleanSubject}`;
     const agentName = this.deriveFullName(contact, payload.sheetTitle);
     const customerPhone = payload.leadPhone?.trim() || "indicato nella richiesta";
+    const logoPath = !sheetIsAgency ? resolveLogoPath() : undefined;
     const text = sheetIsAgency
       ? [
           "Grazie per averci contattato.",
@@ -208,10 +220,15 @@ export class LeadAutoReplyService {
       ? [
           '<div style="font-family: Arial, sans-serif; font-size: 14px; color: #111827;">',
           plainTextToHtml(text),
-          `<img src="cid:${LOGO_CID}" alt="Megaron Immobiliare" style="display: block; width: 120px; height: auto; margin-top: 8px;" />`,
+          logoPath
+            ? `<img src="cid:${LOGO_CID}" alt="Megaron Immobiliare" style="display: block; width: 120px; height: auto; margin-top: 8px;" />`
+            : "",
           "</div>",
         ].join("")
       : undefined;
+    if (!sheetIsAgency && !logoPath) {
+      log.warn({ sheet: payload.sheetTitle }, "Logo mail non trovato: invio senza logo inline");
+    }
 
     const forcedRecipient = this.env.LEAD_REPLY_FORCE_TO.trim().toLowerCase();
     const recipient = forcedRecipient || payload.leadEmail.trim().toLowerCase();
@@ -222,11 +239,11 @@ export class LeadAutoReplyService {
       subject,
       text,
       html,
-      attachments: html
+      attachments: html && logoPath
         ? [
             {
               filename: "logo.png",
-              path: LOGO_PATH,
+              path: logoPath,
               cid: LOGO_CID,
             },
           ]
