@@ -197,7 +197,7 @@ export class LeadAutoReplyService {
     const cleanSubject = payload.originalSubject.trim() || "Richiesta informazioni immobile";
     const subject = `Re: ${cleanSubject}`;
     const agentName = this.deriveFullName(contact, payload.sheetTitle);
-    const customerPhone = payload.leadPhone?.trim() || "indicato nella richiesta";
+    const customerPhone = payload.leadPhone?.trim();
     const logoPath = !sheetIsAgency ? resolveLogoPath() : undefined;
     const text = sheetIsAgency
       ? [
@@ -211,7 +211,10 @@ export class LeadAutoReplyService {
         ].join("\n")
       : [
           "Grazie per averci contattato.",
-          `La tua richiesta e' stata presa in carico dall'agente ${agentName} che la contattera' al numero ${customerPhone}.`,
+          customerPhone
+            ? `La tua richiesta e' stata presa in carico dal consulente ${agentName} che la contattera' al numero ${customerPhone}.`
+            : `La tua richiesta e' stata presa in carico dal consulente ${agentName}.`,
+          "Se desidera puo' contattarlo in orario di ufficio, di seguito i contatti:",
           "",
           agentName,
           contact.phone ?? "",
