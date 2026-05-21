@@ -110,6 +110,7 @@ const DEFAULT_PERSON_CONTACTS: Record<string, ReplyContact> = {
   valentina: { fullName: "Valentina Foa", phone: "3395063633", email: "valentina.foa@megaronimmobiliare.it" },
   marco: { fullName: "Marco Rossi", phone: "3703124895", email: "marco.rossi@megaronimmobiliare.ot" },
   massimo: { fullName: "Massimo Nieri", phone: "3341488711", email: "massimo.nieri@megaronimmobiliare.it" },
+  marta: { fullName: "Marta Genovesi", phone: "3333506005", email: "marta.genovesi@megaronimmobiliare.it" },
 };
 
 const AGENCY_PISA_CONTACT: ReplyContact = {
@@ -221,7 +222,7 @@ export class LeadAutoReplyService {
           '<div style="font-family: Arial, sans-serif; font-size: 14px; color: #111827;">',
           plainTextToHtml(text),
           logoPath
-            ? `<img src="cid:${LOGO_CID}" alt="Megaron Immobiliare" style="display: block; width: 120px; height: auto; margin-top: 8px;" />`
+            ? `<img src="cid:${LOGO_CID}" alt="Megaron Immobiliare" style="display: block; width: 60px; height: auto; margin-top: 8px;" />`
             : "",
           "</div>",
         ].join("")

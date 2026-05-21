@@ -105,7 +105,11 @@ function pickSheetByZoneCityProvince(
       if (cityIn("lucca")) return "AG-LUCCA";
       return null;
     case "san marco":
-      if (cityIn("pisa")) return "AG-PISA";
+      if (cityIn("pisa")) return "MARTA";
+      if (cityIn("lucca")) return "AG-LUCCA";
+      return null;
+    case "san giusto":
+      if (cityIn("pisa")) return "MARTA";
       if (cityIn("lucca")) return "AG-LUCCA";
       return null;
     case "sant'anna":
