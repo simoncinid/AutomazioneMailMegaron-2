@@ -313,7 +313,7 @@ export class LeadAutoReplyService {
       log.warn({ sheet: payload.sheetTitle }, "Logo mail non trovato: invio senza logo inline");
     }
 
-    const forcedRecipient = this.env.LEAD_REPLY_FORCE_TO.trim().toLowerCase();
+    const forcedRecipient = this.env.LEAD_REPLY_FORCE_TO?.trim().toLowerCase() ?? "";
     const recipient = forcedRecipient || payload.leadEmail.trim().toLowerCase();
     const replyToMessageId = maybeReplyMessageId(payload.originalMessageId);
     await this.transporter.sendMail({

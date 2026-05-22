@@ -665,8 +665,8 @@ export const rawEnvSchema = z.object({
   SMTP_PASSWORD: z.string().min(1, "SMTP_PASSWORD obbligatorio"),
   SMTP_FROM: z.string().email("SMTP_FROM deve essere una email valida"),
 
-  /** Finche' siamo in test, invia tutte le risposte qui invece che al lead reale. */
-  LEAD_REPLY_FORCE_TO: z.string().email().default("simoncinidiego10@gmail.com"),
+  /** Se valorizzato, forza l'invio delle auto-risposte a questa casella (debug). */
+  LEAD_REPLY_FORCE_TO: z.union([z.string().email(), z.literal("")]).default(""),
   /** Contatto agenzia usato per tab AG / AG-* (override opzionale dei default hardcoded). */
   AGENCY_REPLY_PHONE: z.string().optional(),
   AGENCY_REPLY_EMAIL: z.string().email().optional(),
