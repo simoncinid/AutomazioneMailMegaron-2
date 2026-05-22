@@ -113,6 +113,76 @@ const DEFAULT_PERSON_CONTACTS: Record<string, ReplyContact> = {
   marta: { fullName: "Marta Genovesi", phone: "3333506005", email: "marta.genovesi@megaronimmobiliare.it" },
 };
 
+type AgencyZone = "pisa" | "pontedera" | "livorno" | "lucca" | "viareggio";
+
+const AGENCY_ADDRESS_BY_ZONE: Partial<Record<AgencyZone, string>> = {
+  pisa: "Pisa (PI) via Carlo Cattaneo n.59",
+  pontedera: "Pontedera (PI) via Vittorio Veneto n.170",
+  livorno: "Livorno (LI) via Montebello n.2",
+  lucca: "Lucca (LU) via del Brennero n.454",
+};
+
+const AGENCY_ZONE_BY_SHEET: Partial<Record<string, AgencyZone>> = {
+  ag: "pisa",
+  "ag-pontedera": "pontedera",
+  "ag-livorno": "livorno",
+  "ag-pisa": "pisa",
+  "ag-lucca": "lucca",
+  "ag-viareggio": "viareggio",
+};
+
+const POOL_CODES_BY_ZONE: Record<AgencyZone, string[]> = {
+  pontedera: ["rebecca", "patrizia", "fausto", "elisabetta", "luis"],
+  livorno: ["matteo", "viviana", "massimiliano", "guido", "eros"],
+  lucca: ["alfredo", "mary"],
+  pisa: ["massimo", "davide", "eros", "samuele", "giuseppe", "tommaso", "rebecca", "mattia", "stefania", "valentina", "marta"],
+  viareggio: [],
+};
+
+const AGENT_OWNER_ZONE_BY_CODE: Partial<Record<string, AgencyZone>> = {
+  rebecca: "pontedera",
+  patrizia: "pontedera",
+  fausto: "pontedera",
+  elisabetta: "pontedera",
+  luis: "pontedera",
+  matteo: "livorno",
+  viviana: "livorno",
+  massimiliano: "livorno",
+  guido: "livorno",
+  eros: "livorno",
+  alfredo: "lucca",
+  mary: "lucca",
+  massimo: "pisa",
+  davide: "pisa",
+  samuele: "pisa",
+  giuseppe: "pisa",
+  tommaso: "pisa",
+  mattia: "pisa",
+  stefania: "pisa",
+  valentina: "pisa",
+  marta: "pisa",
+};
+
+function buildAgentZoneByCode(): Map<string, AgencyZone> {
+  const zones = new Map<string, AgencyZone>();
+
+  for (const [zone, codes] of Object.entries(POOL_CODES_BY_ZONE) as Array<[AgencyZone, string[]]>) {
+    for (const code of codes) {
+      const normalized = normalizeKey(code);
+      if (!zones.has(normalized)) zones.set(normalized, zone);
+    }
+  }
+
+  for (const [code, zone] of Object.entries(AGENT_OWNER_ZONE_BY_CODE)) {
+    if (!zone) continue;
+    zones.set(normalizeKey(code), zone);
+  }
+
+  return zones;
+}
+
+const AGENT_ZONE_BY_CODE = buildAgentZoneByCode();
+
 const AGENCY_PISA_CONTACT: ReplyContact = {
   phone: "050.500227",
   email: "pisa@megaronimmobiliare.it",
@@ -137,6 +207,11 @@ const AGENCY_CONTACTS_BY_SHEET: Record<string, ReplyContact> = {
 
 function isAgencySheet(sheetTitle: string): boolean {
   return sheetTitle === "ag" || sheetTitle.startsWith("ag-");
+}
+
+function resolveZoneForSheet(sheetTitle: string, sheetIsAgency: boolean): AgencyZone | undefined {
+  if (sheetIsAgency) return AGENCY_ZONE_BY_SHEET[sheetTitle];
+  return AGENT_ZONE_BY_CODE.get(sheetTitle);
 }
 
 export class LeadAutoReplyService {
@@ -198,15 +273,18 @@ export class LeadAutoReplyService {
     const subject = `Re: ${cleanSubject}`;
     const agentName = this.deriveFullName(contact, payload.sheetTitle);
     const customerPhone = payload.leadPhone?.trim();
-    const logoPath = !sheetIsAgency ? resolveLogoPath() : undefined;
+    const logoPath = resolveLogoPath();
+    const zone = resolveZoneForSheet(normalizedSheet, sheetIsAgency);
+    const footerAddress = zone ? AGENCY_ADDRESS_BY_ZONE[zone] : undefined;
+    const agencyAddress = footerAddress ?? contact.address;
     const text = sheetIsAgency
       ? [
           "Grazie per averci contattato.",
           contact.phone
             ? `Per informazioni puoi contattare l'agenzia al numero ${contact.phone} e alla mail ${contact.email}.`
             : `Per informazioni puoi contattare l'agenzia alla mail ${contact.email}.`,
-          contact.address
-            ? `L'agenzia si trova in ${contact.address}.`
+          agencyAddress
+            ? `L'agenzia si trova in ${agencyAddress}.`
             : "",
         ].join("\n")
       : [
@@ -220,17 +298,18 @@ export class LeadAutoReplyService {
           contact.phone ?? "",
           contact.email,
         ].join("\n");
-    const html = !sheetIsAgency
-      ? [
-          '<div style="font-family: Arial, sans-serif; font-size: 14px; color: #111827;">',
-          plainTextToHtml(text),
-          logoPath
-            ? `<img src="cid:${LOGO_CID}" alt="Megaron Immobiliare" style="display: block; width: 60px; height: auto; margin-top: 8px;" />`
-            : "",
-          "</div>",
-        ].join("")
-      : undefined;
-    if (!sheetIsAgency && !logoPath) {
+    const html = [
+      '<div style="font-family: Arial, sans-serif; font-size: 14px; color: #111827;">',
+      plainTextToHtml(text),
+      logoPath
+        ? `<img src="cid:${LOGO_CID}" alt="Megaron Immobiliare" style="display: block; width: 60px; height: auto; margin-top: 8px;" />`
+        : "",
+      footerAddress
+        ? `<p style="margin: 8px 0 0 0; font-size: 12px; color: #374151;">${escapeHtml(footerAddress)}</p>`
+        : "",
+      "</div>",
+    ].join("");
+    if (!logoPath) {
       log.warn({ sheet: payload.sheetTitle }, "Logo mail non trovato: invio senza logo inline");
     }
 
