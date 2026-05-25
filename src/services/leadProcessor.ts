@@ -22,25 +22,29 @@ import {
 import { extractExternalListingIds } from "./idExtractor.js";
 
 const log = logger.child({ module: "leadProcessor" });
-const PISA_ROUND_ROBIN_STATE_PATH = join(
+const DEFAULT_PISA_ROUND_ROBIN_STATE_PATH = join(process.cwd(), ".state", "pisa-round-robin.json");
+const DEFAULT_VIAREGGIO_ROUND_ROBIN_STATE_PATH = join(
   process.cwd(),
   ".state",
-  "pisa-round-robin.json",
+  "viareggio-round-robin.json",
 );
 const PISA_AGENT_SHEETS = [
+  "MASSIMO",
   "DAVIDE",
-  "ELISABETTA",
   "EROS",
-  "FAUSTO",
-  "GIUSEPPE",
-  "LUIS",
-  "MATTIA",
-  "PATRIZIA",
-  "REBECCA",
   "SAMUELE",
-  "STEFANIA",
+  "GIUSEPPE",
   "TOMMASO",
+  "REBECCA",
+  "MATTIA",
+  "STEFANIA",
   "VALENTINA",
+  "MARTA",
+] as const;
+const VIAREGGIO_AGENT_SHEETS = [
+  "ALFREDO",
+  "FERNANDO",
+  "MARY",
 ] as const;
 
 /** Stessa soglia del test Python `_body_preview_for_sheet` per la colonna "corpo". */
@@ -161,19 +165,31 @@ function isAgPisaSheet(sheetTitle: string): boolean {
   return normalizeSheetKey(sheetTitle) === "ag-pisa";
 }
 
-async function pickPisaAgentSheet(): Promise<{
+function isAgViareggioSheet(sheetTitle: string): boolean {
+  return normalizeSheetKey(sheetTitle) === "ag-viareggio";
+}
+
+function getRoundRobinStatePath(envName: string, defaultPath: string): string {
+  return process.env[envName]?.trim() || defaultPath;
+}
+
+async function pickAgentSheetFromRoundRobin(
+  candidates: readonly string[],
+  statePath: string,
+  emptyPoolError: string,
+): Promise<{
   sheetTitle: string;
   strategy: "round_robin" | "random_fallback";
 }> {
-  const candidates = [...PISA_AGENT_SHEETS];
-  const modulo = candidates.length;
+  const pool = [...candidates];
+  const modulo = pool.length;
   if (modulo === 0) {
-    throw new Error("Nessun agente Pisa configurato per il routing AG-PISA");
+    throw new Error(emptyPoolError);
   }
 
   let nextIndex = 0;
   try {
-    const raw = await readFile(PISA_ROUND_ROBIN_STATE_PATH, "utf8");
+    const raw = await readFile(statePath, "utf8");
     const parsed = JSON.parse(raw) as { nextIndex?: unknown };
     if (typeof parsed.nextIndex === "number" && Number.isFinite(parsed.nextIndex)) {
       nextIndex = Math.max(0, Math.trunc(parsed.nextIndex));
@@ -183,19 +199,44 @@ async function pickPisaAgentSheet(): Promise<{
   }
 
   const index = nextIndex % modulo;
-  const selected = candidates[index]!;
+  const selected = pool[index]!;
   const nextState = {
     nextIndex: (index + 1) % modulo,
   };
 
   try {
-    await mkdir(dirname(PISA_ROUND_ROBIN_STATE_PATH), { recursive: true });
-    await writeFile(PISA_ROUND_ROBIN_STATE_PATH, JSON.stringify(nextState), "utf8");
+    await mkdir(dirname(statePath), { recursive: true });
+    await writeFile(statePath, JSON.stringify(nextState), "utf8");
     return { sheetTitle: selected, strategy: "round_robin" };
   } catch {
     const fallbackIndex = Math.floor(Math.random() * modulo);
-    return { sheetTitle: candidates[fallbackIndex]!, strategy: "random_fallback" };
+    return { sheetTitle: pool[fallbackIndex]!, strategy: "random_fallback" };
   }
+}
+
+async function pickPisaAgentSheet(): Promise<{
+  sheetTitle: string;
+  strategy: "round_robin" | "random_fallback";
+}> {
+  return pickAgentSheetFromRoundRobin(
+    PISA_AGENT_SHEETS,
+    getRoundRobinStatePath("PISA_ROUND_ROBIN_STATE_PATH", DEFAULT_PISA_ROUND_ROBIN_STATE_PATH),
+    "Nessun agente Pisa configurato per il routing AG-PISA",
+  );
+}
+
+async function pickViareggioAgentSheet(): Promise<{
+  sheetTitle: string;
+  strategy: "round_robin" | "random_fallback";
+}> {
+  return pickAgentSheetFromRoundRobin(
+    VIAREGGIO_AGENT_SHEETS,
+    getRoundRobinStatePath(
+      "VIAREGGIO_ROUND_ROBIN_STATE_PATH",
+      DEFAULT_VIAREGGIO_ROUND_ROBIN_STATE_PATH,
+    ),
+    "Nessun agente Lucca configurato per il routing AG-VIAREGGIO",
+  );
 }
 
 function pickRandomAgentTarget(env: AppEnv): SheetTarget | null {
@@ -543,6 +584,18 @@ export async function processInboundEmail(
       log.info(
         { uid: uidLabel, listingId, fromSheet: originalSheet, toSheet: target.sheetTitle, strategy: reassigned.strategy },
         "[routing] AG-PISA riassegnata agente Pisa",
+      );
+    }
+    if (isAgViareggioSheet(target.sheetTitle)) {
+      const reassigned = await pickViareggioAgentSheet();
+      const originalSheet = target.sheetTitle;
+      target = {
+        ...target,
+        sheetTitle: reassigned.sheetTitle,
+      };
+      log.info(
+        { uid: uidLabel, listingId, fromSheet: originalSheet, toSheet: target.sheetTitle, strategy: reassigned.strategy },
+        "[routing] AG-VIAREGGIO riassegnata agente Lucca",
       );
     }
 

@@ -100,7 +100,7 @@ const DEFAULT_PERSON_CONTACTS: Record<string, ReplyContact> = {
   eros: { fullName: "Eros Nieri", phone: "3283787523", email: "eros.nieri@megaronimmobiliare.it" },
   alfredo: { fullName: "Alfredo Bertucci", phone: "3311231722", email: "alfredo.bertucci@megaronimmobiliare.it" },
   fernando: { fullName: "Fernando Satti", phone: "3311231721", email: "fernando.satti@megaronimmobiliare.it" },
-  mary: { fullName: "Maryluz Sarvabui", phone: "3279396775", email: "maryluz.sarvabui@megaronimmobiliare.it" },
+  mary: { fullName: "Mary Sarvabui", phone: "3279396775", email: "maryluz.sarvabui@megaronimmobiliare.it" },
   davide: { fullName: "Davide Pedalà", phone: "3476756493", email: "davide.pedala@megaronimmobiliare.it" },
   samuele: { fullName: "Samuele Logli", phone: "3534667306", email: "samuele.logli@megaronimmobiliare.it" },
   giuseppe: { fullName: "Giuseppe Mililli", phone: "3341708218", email: "giuseppe.mililli@megaronimmobiliare.it" },
@@ -134,7 +134,7 @@ const AGENCY_ZONE_BY_SHEET: Partial<Record<string, AgencyZone>> = {
 const POOL_CODES_BY_ZONE: Record<AgencyZone, string[]> = {
   pontedera: ["rebecca", "patrizia", "fausto", "elisabetta", "luis"],
   livorno: ["matteo", "viviana", "massimiliano", "guido", "eros"],
-  lucca: ["alfredo", "mary"],
+  lucca: ["alfredo", "fernando", "mary"],
   pisa: ["massimo", "davide", "eros", "samuele", "giuseppe", "tommaso", "rebecca", "mattia", "stefania", "valentina", "marta"],
   viareggio: [],
 };
@@ -151,6 +151,7 @@ const AGENT_OWNER_ZONE_BY_CODE: Partial<Record<string, AgencyZone>> = {
   guido: "livorno",
   eros: "livorno",
   alfredo: "lucca",
+  fernando: "lucca",
   mary: "lucca",
   massimo: "pisa",
   davide: "pisa",
