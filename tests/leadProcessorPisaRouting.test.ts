@@ -51,6 +51,13 @@ function buildEnv(): AppEnv {
         spreadsheetId: "spreadsheet-id",
         sheetTitle: "AG-VIAREGGIO",
       },
+      {
+        name: "san_marco_lucca",
+        pattern: "SAN MARCO",
+        match: "contains",
+        spreadsheetId: "spreadsheet-id",
+        sheetTitle: "AG-LUCCA",
+      },
     ],
   } as AppEnv;
 }
@@ -152,6 +159,49 @@ describe("processInboundEmail AG-PISA routing", () => {
       await processInboundEmail(
         {
           messageId: `message-viareggio-${i}`,
+          from: "portal@example.com",
+          subject: id,
+          receivedAt: new Date("2026-05-25T10:00:00Z"),
+          textBody: `Lead per ${id}`,
+        },
+        { env, listings, sheets },
+        new Date("2026-05-25T10:00:00Z"),
+      );
+    }
+
+    expect(appended.map((row) => row.sheetTitle)).toEqual([
+      "ALFREDO",
+      "FERNANDO",
+      "MARY",
+      "ALFREDO",
+      "FERNANDO",
+      "MARY",
+    ]);
+  });
+
+  it("assegna AG-LUCCA solo agli agenti del pool Lucca", async () => {
+    const { processInboundEmail } = await import("../src/services/leadProcessor.js");
+    const appended: LeadRowPayload[] = [];
+    const sheets = {
+      appendLead: vi.fn(async (payload: LeadRowPayload) => {
+        appended.push(payload);
+      }),
+    } as unknown as GoogleSheetsWriter;
+    const listings = {
+      findLatestByExternalListingId: vi.fn(async (id: string) => ({
+        ...buildListing(id),
+        city: "Lucca",
+        province: "Lucca",
+        zone: "SAN MARCO",
+      })),
+    } as unknown as ListingRepository;
+
+    const env = buildEnv();
+    for (let i = 0; i < 6; i += 1) {
+      const id = `lucca-${i}`;
+      await processInboundEmail(
+        {
+          messageId: `message-lucca-${i}`,
           from: "portal@example.com",
           subject: id,
           receivedAt: new Date("2026-05-25T10:00:00Z"),

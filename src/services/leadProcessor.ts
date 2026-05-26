@@ -23,7 +23,7 @@ import { extractExternalListingIds } from "./idExtractor.js";
 
 const log = logger.child({ module: "leadProcessor" });
 const DEFAULT_PISA_ROUND_ROBIN_STATE_PATH = join(process.cwd(), ".state", "pisa-round-robin.json");
-const DEFAULT_VIAREGGIO_ROUND_ROBIN_STATE_PATH = join(
+const DEFAULT_LUCCA_VIAREGGIO_ROUND_ROBIN_STATE_PATH = join(
   process.cwd(),
   ".state",
   "viareggio-round-robin.json",
@@ -41,7 +41,7 @@ const PISA_AGENT_SHEETS = [
   "VALENTINA",
   "MARTA",
 ] as const;
-const VIAREGGIO_AGENT_SHEETS = [
+const LUCCA_VIAREGGIO_AGENT_SHEETS = [
   "ALFREDO",
   "FERNANDO",
   "MARY",
@@ -169,6 +169,10 @@ function isAgViareggioSheet(sheetTitle: string): boolean {
   return normalizeSheetKey(sheetTitle) === "ag-viareggio";
 }
 
+function isAgLuccaSheet(sheetTitle: string): boolean {
+  return normalizeSheetKey(sheetTitle) === "ag-lucca";
+}
+
 function getRoundRobinStatePath(envName: string, defaultPath: string): string {
   return process.env[envName]?.trim() || defaultPath;
 }
@@ -225,17 +229,17 @@ async function pickPisaAgentSheet(): Promise<{
   );
 }
 
-async function pickViareggioAgentSheet(): Promise<{
+async function pickLuccaViareggioAgentSheet(): Promise<{
   sheetTitle: string;
   strategy: "round_robin" | "random_fallback";
 }> {
   return pickAgentSheetFromRoundRobin(
-    VIAREGGIO_AGENT_SHEETS,
+    LUCCA_VIAREGGIO_AGENT_SHEETS,
     getRoundRobinStatePath(
       "VIAREGGIO_ROUND_ROBIN_STATE_PATH",
-      DEFAULT_VIAREGGIO_ROUND_ROBIN_STATE_PATH,
+      DEFAULT_LUCCA_VIAREGGIO_ROUND_ROBIN_STATE_PATH,
     ),
-    "Nessun agente Lucca configurato per il routing AG-VIAREGGIO",
+    "Nessun agente Lucca/Viareggio configurato per il routing AG-LUCCA/AG-VIAREGGIO",
   );
 }
 
@@ -586,8 +590,8 @@ export async function processInboundEmail(
         "[routing] AG-PISA riassegnata agente Pisa",
       );
     }
-    if (isAgViareggioSheet(target.sheetTitle)) {
-      const reassigned = await pickViareggioAgentSheet();
+    if (isAgLuccaSheet(target.sheetTitle) || isAgViareggioSheet(target.sheetTitle)) {
+      const reassigned = await pickLuccaViareggioAgentSheet();
       const originalSheet = target.sheetTitle;
       target = {
         ...target,
@@ -595,7 +599,7 @@ export async function processInboundEmail(
       };
       log.info(
         { uid: uidLabel, listingId, fromSheet: originalSheet, toSheet: target.sheetTitle, strategy: reassigned.strategy },
-        "[routing] AG-VIAREGGIO riassegnata agente Lucca",
+        "[routing] AG-LUCCA/AG-VIAREGGIO riassegnata pool Lucca+Viareggio",
       );
     }
 
