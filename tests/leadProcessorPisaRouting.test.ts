@@ -45,6 +45,13 @@ function buildEnv(): AppEnv {
         sheetTitle: "AG-PISA",
       },
       {
+        name: "capannoli",
+        pattern: "Capannoli",
+        match: "contains",
+        spreadsheetId: "spreadsheet-id",
+        sheetTitle: "AG-PISA",
+      },
+      {
         name: "darsena",
         pattern: "Darsena",
         match: "contains",
@@ -64,12 +71,13 @@ function buildEnv(): AppEnv {
 
 function buildListing(id: string): GestimListingRow {
   const isViareggio = id.startsWith("viareggio");
+  const isCapannoli = id.startsWith("capannoli");
   return {
     externalListingId: id,
     title: null,
-    city: isViareggio ? "Viareggio" : "Pisa",
+    city: isViareggio ? "Viareggio" : isCapannoli ? "Capannoli" : "Pisa",
     province: isViareggio ? "Lucca" : "Pisa",
-    zone: isViareggio ? "Darsena" : id.startsWith("passi") ? "I PASSI" : "CALAMBRONE",
+    zone: isViareggio ? "Darsena" : isCapannoli ? "Capannoli" : id.startsWith("passi") ? "I PASSI" : "CALAMBRONE",
     address: null,
     price: null,
     propertyType: null,
@@ -139,7 +147,6 @@ describe("processInboundEmail AG-PISA routing", () => {
     expect(appended.map((row) => row.sheetTitle)).not.toContain("ELISABETTA");
     expect(appended.map((row) => row.sheetTitle)).not.toContain("FAUSTO");
     expect(appended.map((row) => row.sheetTitle)).not.toContain("LUIS");
-    expect(appended.map((row) => row.sheetTitle)).not.toContain("PATRIZIA");
   });
 
   it("assegna AG-VIAREGGIO solo agli agenti del pool Lucca", async () => {
@@ -172,12 +179,45 @@ describe("processInboundEmail AG-PISA routing", () => {
 
     expect(appended.map((row) => row.sheetTitle)).toEqual([
       "ALFREDO",
-      "FERNANDO",
       "MARY",
       "ALFREDO",
-      "FERNANDO",
+      "MARY",
+      "ALFREDO",
       "MARY",
     ]);
+  });
+
+  it("assegna randomicamente le zone ex Patrizia sul pool Pisa", async () => {
+    const randomSpy = vi.spyOn(Math, "random").mockReturnValue(0.2);
+    const { processInboundEmail } = await import("../src/services/leadProcessor.js");
+    const appended: LeadRowPayload[] = [];
+    const sheets = {
+      appendLead: vi.fn(async (payload: LeadRowPayload) => {
+        appended.push(payload);
+      }),
+    } as unknown as GoogleSheetsWriter;
+    const listings = {
+      findLatestByExternalListingId: vi.fn(async (id: string) => buildListing(id)),
+    } as unknown as ListingRepository;
+
+    try {
+      await processInboundEmail(
+        {
+          messageId: "message-capannoli-0",
+          from: "portal@example.com",
+          subject: "capannoli-0",
+          receivedAt: new Date("2026-05-25T10:00:00Z"),
+          textBody: "Lead per capannoli-0",
+        },
+        { env: buildEnv(), listings, sheets },
+        new Date("2026-05-25T10:00:00Z"),
+      );
+    } finally {
+      randomSpy.mockRestore();
+    }
+
+    expect(appended).toHaveLength(1);
+    expect(appended[0]?.sheetTitle).toBe("EROS");
   });
 
   it("assegna AG-LUCCA solo agli agenti del pool Lucca", async () => {
@@ -215,10 +255,10 @@ describe("processInboundEmail AG-PISA routing", () => {
 
     expect(appended.map((row) => row.sheetTitle)).toEqual([
       "ALFREDO",
-      "FERNANDO",
       "MARY",
       "ALFREDO",
-      "FERNANDO",
+      "MARY",
+      "ALFREDO",
       "MARY",
     ]);
   });

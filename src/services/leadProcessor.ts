@@ -54,15 +54,12 @@ const PISA_AGENT_SHEETS = [
 ] as const;
 const LUCCA_VIAREGGIO_AGENT_SHEETS = [
   "ALFREDO",
-  "FERNANDO",
   "MARY",
 ] as const;
 const PONTEDERA_AGENT_SHEETS = [
   "REBECCA",
-  "PATRIZIA",
   "FAUSTO",
   "ELISABETTA",
-  "ATTILIO",
   "LUIS",
 ] as const;
 const LIVORNO_AGENT_SHEETS = [
@@ -72,6 +69,13 @@ const LIVORNO_AGENT_SHEETS = [
   "GUIDO",
   "EROS",
 ] as const;
+const PISA_RANDOM_POOL_ZONE_KEYS = new Set([
+  "capannoli",
+  "san pietro belvedere",
+  "santo pietro belvedere",
+  "solaia",
+]);
+type AgentSelectionStrategy = "round_robin" | "random_fallback" | "random_pool";
 
 /** Stessa soglia del test Python `_body_preview_for_sheet` per la colonna "corpo". */
 const MAX_BODY_PREVIEW_CHARS = 15_000;
@@ -217,7 +221,7 @@ async function pickAgentSheetFromRoundRobin(
   emptyPoolError: string,
 ): Promise<{
   sheetTitle: string;
-  strategy: "round_robin" | "random_fallback";
+  strategy: AgentSelectionStrategy;
 }> {
   const pool = [...candidates];
   const modulo = pool.length;
@@ -254,7 +258,7 @@ async function pickAgentSheetFromRoundRobin(
 
 async function pickPisaAgentSheet(): Promise<{
   sheetTitle: string;
-  strategy: "round_robin" | "random_fallback";
+  strategy: AgentSelectionStrategy;
 }> {
   return pickAgentSheetFromRoundRobin(
     PISA_AGENT_SHEETS,
@@ -265,7 +269,7 @@ async function pickPisaAgentSheet(): Promise<{
 
 async function pickLuccaViareggioAgentSheet(): Promise<{
   sheetTitle: string;
-  strategy: "round_robin" | "random_fallback";
+  strategy: AgentSelectionStrategy;
 }> {
   return pickAgentSheetFromRoundRobin(
     LUCCA_VIAREGGIO_AGENT_SHEETS,
@@ -279,7 +283,7 @@ async function pickLuccaViareggioAgentSheet(): Promise<{
 
 async function pickPontederaAgentSheet(): Promise<{
   sheetTitle: string;
-  strategy: "round_robin" | "random_fallback";
+  strategy: AgentSelectionStrategy;
 }> {
   return pickAgentSheetFromRoundRobin(
     PONTEDERA_AGENT_SHEETS,
@@ -293,13 +297,24 @@ async function pickPontederaAgentSheet(): Promise<{
 
 async function pickLivornoAgentSheet(): Promise<{
   sheetTitle: string;
-  strategy: "round_robin" | "random_fallback";
+  strategy: AgentSelectionStrategy;
 }> {
   return pickAgentSheetFromRoundRobin(
     LIVORNO_AGENT_SHEETS,
     getRoundRobinStatePath("LIVORNO_ROUND_ROBIN_STATE_PATH", DEFAULT_LIVORNO_ROUND_ROBIN_STATE_PATH),
     "Nessun agente Livorno configurato per il routing AG-LIVORNO",
   );
+}
+
+function pickRandomPisaAgentSheetFromPool(): {
+  sheetTitle: string;
+  strategy: AgentSelectionStrategy;
+} {
+  const index = Math.floor(Math.random() * PISA_AGENT_SHEETS.length);
+  return {
+    sheetTitle: PISA_AGENT_SHEETS[index]!,
+    strategy: "random_pool",
+  };
 }
 
 function pickRandomAgentTarget(env: AppEnv): SheetTarget | null {
@@ -638,7 +653,9 @@ export async function processInboundEmail(
 
     target = { spreadsheetId: resolved.spreadsheetId, sheetTitle: resolved.sheetTitle };
     if (isAgPisaSheet(target.sheetTitle)) {
-      const reassigned = await pickPisaAgentSheet();
+      const reassigned = PISA_RANDOM_POOL_ZONE_KEYS.has(zone.trim().toLowerCase())
+        ? pickRandomPisaAgentSheetFromPool()
+        : await pickPisaAgentSheet();
       const originalSheet = target.sheetTitle;
       target = {
         ...target,
