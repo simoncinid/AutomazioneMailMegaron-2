@@ -49,6 +49,7 @@ const PISA_AGENT_SHEETS = [
   "MATTIA",
   "STEFANIA",
   "VALENTINA",
+  "MARCO",
   "MARTA",
 ] as const;
 const LUCCA_VIAREGGIO_AGENT_SHEETS = [
@@ -61,6 +62,7 @@ const PONTEDERA_AGENT_SHEETS = [
   "PATRIZIA",
   "FAUSTO",
   "ELISABETTA",
+  "ATTILIO",
   "LUIS",
 ] as const;
 const LIVORNO_AGENT_SHEETS = [

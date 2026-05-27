@@ -108,7 +108,7 @@ const DEFAULT_PERSON_CONTACTS: Record<string, ReplyContact> = {
   mattia: { fullName: "Mattia Pellegrini", phone: "3534667302", email: "mattia.pellegrini@megaronimmobiliare.it" },
   stefania: { fullName: "Stefania Lupo", phone: "3804137182", email: "stefania.lupo@megaronimmobiliare.it" },
   valentina: { fullName: "Valentina Foà", phone: "3395063633", email: "valentina.foa@megaronimmobiliare.it" },
-  marco: { fullName: "Marco Rossi", phone: "3703124895", email: "marco.rossi@megaronimmobiliare.ot" },
+  marco: { fullName: "Marco Rossi", phone: "3703124895", email: "marco.rossi@megaronimmobiliare.it" },
   massimo: { fullName: "Massimo Nieri", phone: "3341488711", email: "massimo.nieri@megaronimmobiliare.it" },
   marta: { fullName: "Marta Genovesi", phone: "3333506005", email: "marta.genovesi@megaronimmobiliare.it" },
 };
@@ -132,10 +132,10 @@ const AGENCY_ZONE_BY_SHEET: Partial<Record<string, AgencyZone>> = {
 };
 
 const POOL_CODES_BY_ZONE: Record<AgencyZone, string[]> = {
-  pontedera: ["rebecca", "patrizia", "fausto", "elisabetta", "luis"],
+  pontedera: ["rebecca", "patrizia", "fausto", "elisabetta", "attilio", "luis"],
   livorno: ["matteo", "viviana", "massimiliano", "guido", "eros"],
   lucca: ["alfredo", "fernando", "mary"],
-  pisa: ["massimo", "davide", "eros", "samuele", "giuseppe", "tommaso", "rebecca", "mattia", "stefania", "valentina", "marta"],
+  pisa: ["massimo", "davide", "eros", "samuele", "giuseppe", "tommaso", "rebecca", "mattia", "stefania", "valentina", "marco", "marta"],
   viareggio: [],
 };
 
@@ -144,6 +144,7 @@ const AGENT_OWNER_ZONE_BY_CODE: Partial<Record<string, AgencyZone>> = {
   patrizia: "pontedera",
   fausto: "pontedera",
   elisabetta: "pontedera",
+  attilio: "pontedera",
   luis: "pontedera",
   matteo: "livorno",
   viviana: "livorno",
@@ -161,6 +162,7 @@ const AGENT_OWNER_ZONE_BY_CODE: Partial<Record<string, AgencyZone>> = {
   mattia: "pisa",
   stefania: "pisa",
   valentina: "pisa",
+  marco: "pisa",
   marta: "pisa",
 };
 
