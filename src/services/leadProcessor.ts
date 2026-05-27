@@ -28,6 +28,16 @@ const DEFAULT_LUCCA_VIAREGGIO_ROUND_ROBIN_STATE_PATH = join(
   ".state",
   "viareggio-round-robin.json",
 );
+const DEFAULT_PONTEDERA_ROUND_ROBIN_STATE_PATH = join(
+  process.cwd(),
+  ".state",
+  "pontedera-round-robin.json",
+);
+const DEFAULT_LIVORNO_ROUND_ROBIN_STATE_PATH = join(
+  process.cwd(),
+  ".state",
+  "livorno-round-robin.json",
+);
 const PISA_AGENT_SHEETS = [
   "MASSIMO",
   "DAVIDE",
@@ -45,6 +55,20 @@ const LUCCA_VIAREGGIO_AGENT_SHEETS = [
   "ALFREDO",
   "FERNANDO",
   "MARY",
+] as const;
+const PONTEDERA_AGENT_SHEETS = [
+  "REBECCA",
+  "PATRIZIA",
+  "FAUSTO",
+  "ELISABETTA",
+  "LUIS",
+] as const;
+const LIVORNO_AGENT_SHEETS = [
+  "MATTEO",
+  "VIVIANA",
+  "MASSIMILIANO",
+  "GUIDO",
+  "EROS",
 ] as const;
 
 /** Stessa soglia del test Python `_body_preview_for_sheet` per la colonna "corpo". */
@@ -173,6 +197,14 @@ function isAgLuccaSheet(sheetTitle: string): boolean {
   return normalizeSheetKey(sheetTitle) === "ag-lucca";
 }
 
+function isAgPontederaSheet(sheetTitle: string): boolean {
+  return normalizeSheetKey(sheetTitle) === "ag-pontedera";
+}
+
+function isAgLivornoSheet(sheetTitle: string): boolean {
+  return normalizeSheetKey(sheetTitle) === "ag-livorno";
+}
+
 function getRoundRobinStatePath(envName: string, defaultPath: string): string {
   return process.env[envName]?.trim() || defaultPath;
 }
@@ -240,6 +272,31 @@ async function pickLuccaViareggioAgentSheet(): Promise<{
       DEFAULT_LUCCA_VIAREGGIO_ROUND_ROBIN_STATE_PATH,
     ),
     "Nessun agente Lucca/Viareggio configurato per il routing AG-LUCCA/AG-VIAREGGIO",
+  );
+}
+
+async function pickPontederaAgentSheet(): Promise<{
+  sheetTitle: string;
+  strategy: "round_robin" | "random_fallback";
+}> {
+  return pickAgentSheetFromRoundRobin(
+    PONTEDERA_AGENT_SHEETS,
+    getRoundRobinStatePath(
+      "PONTEDERA_ROUND_ROBIN_STATE_PATH",
+      DEFAULT_PONTEDERA_ROUND_ROBIN_STATE_PATH,
+    ),
+    "Nessun agente Pontedera configurato per il routing AG-PONTEDERA",
+  );
+}
+
+async function pickLivornoAgentSheet(): Promise<{
+  sheetTitle: string;
+  strategy: "round_robin" | "random_fallback";
+}> {
+  return pickAgentSheetFromRoundRobin(
+    LIVORNO_AGENT_SHEETS,
+    getRoundRobinStatePath("LIVORNO_ROUND_ROBIN_STATE_PATH", DEFAULT_LIVORNO_ROUND_ROBIN_STATE_PATH),
+    "Nessun agente Livorno configurato per il routing AG-LIVORNO",
   );
 }
 
@@ -600,6 +657,30 @@ export async function processInboundEmail(
       log.info(
         { uid: uidLabel, listingId, fromSheet: originalSheet, toSheet: target.sheetTitle, strategy: reassigned.strategy },
         "[routing] AG-LUCCA/AG-VIAREGGIO riassegnata pool Lucca+Viareggio",
+      );
+    }
+    if (isAgPontederaSheet(target.sheetTitle)) {
+      const reassigned = await pickPontederaAgentSheet();
+      const originalSheet = target.sheetTitle;
+      target = {
+        ...target,
+        sheetTitle: reassigned.sheetTitle,
+      };
+      log.info(
+        { uid: uidLabel, listingId, fromSheet: originalSheet, toSheet: target.sheetTitle, strategy: reassigned.strategy },
+        "[routing] AG-PONTEDERA riassegnata pool Pontedera",
+      );
+    }
+    if (isAgLivornoSheet(target.sheetTitle)) {
+      const reassigned = await pickLivornoAgentSheet();
+      const originalSheet = target.sheetTitle;
+      target = {
+        ...target,
+        sheetTitle: reassigned.sheetTitle,
+      };
+      log.info(
+        { uid: uidLabel, listingId, fromSheet: originalSheet, toSheet: target.sheetTitle, strategy: reassigned.strategy },
+        "[routing] AG-LIVORNO riassegnata pool Livorno",
       );
     }
 
