@@ -112,8 +112,8 @@ function stripCssLikeResidue(s: string): string {
 
 /**
  * Unisce text/plain e testo da HTML: evita di mandare due volte lo stesso contenuto (risparmio token).
- * Esposta perché viene riutilizzata anche per la colonna "corpo" sui fogli diagnostici (`no-id-trovato`,
- * così quanto scritto sul foglio è esattamente ciò che riceve OpenAI.
+ * Esposta perché riutilizzabile anche in altri punti del pipeline che richiedono
+ * una versione normalizzata del contenuto email.
  */
 export function buildCombinedBodyForModel(textBody: string, htmlBody: string): string {
   const t = (textBody ?? "").replace(/\s+/g, " ").trim();

@@ -48,18 +48,23 @@ export interface LeadRowPayload {
 }
 
 /**
- * Riga diagnostica per `no-id-trovato` (9 colonne A:I):
- * data, ora, mittente, corpo, nome, cognome, email_lead, telefono, stato.
+ * Riga per `no-id-trovato` allineata ai tab lead:
+ * A:J come i lead (alcune colonne forzate vuote) + extra diagnostiche K:L (data, ora).
  */
 export interface NoIdRowPayload {
-  dataMail: string;
-  oraMail: string;
-  mittente: string;
-  corpoMail: string;
+  leadEmail: string;
+  listingId: string;
+  assignmentDate: string;
+  phone: string;
+  zone: string;
+  /** Sempre vuota per no-id-trovato, mantenuta per allineamento colonne. */
+  province?: string;
   nome: string;
   cognome: string;
-  leadEmail: string;
-  phone: string;
+  dataMail: string;
+  oraMail: string;
+  /** Non usato in output tabellare (mantenuto per compatibilità chiamanti). */
+  corpoMail: string;
   spreadsheetId: string;
   sheetTitle: string;
 }

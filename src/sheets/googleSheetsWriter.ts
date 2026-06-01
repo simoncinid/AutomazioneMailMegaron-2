@@ -13,7 +13,7 @@ export { formatSheetRange } from "./sheetRange.js";
 /**
  * Due tipi di riga gestiti, allineati al test Python `test_imap_aruba.py`:
  *  - "lead"     => A:J  (email, ID, data, telefono, zona, nome, cognome, stato, I, provincia)
- *  - "no-id"    => A:I  (data, ora, mittente, corpo, nome, cognome, email, telefono, stato)
+ *  - "no-id"    => A:L  (A:J come lead + K:L data, ora)
  */
 export const LEAD_SHEET_COLUMNS = [
   "Email",
@@ -29,15 +29,18 @@ export const LEAD_SHEET_COLUMNS = [
 ] as const;
 
 export const NO_ID_SHEET_COLUMNS = [
-  "Data",
-  "Ora",
-  "Mittente",
-  "Corpo mail",
-  "Nome",
-  "Cognome",
-  "Email",
-  "Telefono",
-  "Stato",
+  "EMAIL",
+  "ID ANNUNCIO",
+  "DATA ASSEGNAZIONE",
+  "NUMERO TELEFONO",
+  "ZONA",
+  "NOME",
+  "COGNOME",
+  "Stato Contatto",
+  "Ultimo Update Stato",
+  "provincia",
+  "data",
+  "ora",
 ] as const;
 
 type RowKind = "lead" | "no-id";
@@ -55,7 +58,7 @@ interface TouchedSheet {
 
 const RANGE_BY_KIND: Record<RowKind, string> = {
   lead: "A:J",
-  "no-id": "A:I",
+  "no-id": "A:L",
 };
 
 const END_COLUMN_INDEX_BY_KIND: Record<RowKind, number> = {
@@ -98,15 +101,18 @@ function rowFromLead(p: LeadRowPayload): (string | number)[] {
 
 function rowFromNoId(p: NoIdRowPayload): (string | number)[] {
   return [
+    "",
+    p.listingId,
+    p.assignmentDate,
+    p.phone,
+    "",
+    p.nome,
+    "",
+    DEFAULT_STATO,
+    "",
+    "",
     p.dataMail,
     p.oraMail,
-    p.mittente,
-    p.corpoMail,
-    p.nome,
-    p.cognome,
-    p.leadEmail,
-    p.phone,
-    DEFAULT_STATO,
   ];
 }
 

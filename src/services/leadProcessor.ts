@@ -15,7 +15,6 @@ import type { LeadAssignmentCooldown } from "./leadAssignmentCooldown.js";
 import type { LeadAutoReplyService } from "./leadAutoReply.js";
 import { extractFirstBodyEmail, extractFirstPhone, isLikelyLeadEmail } from "./contactExtractor.js";
 import {
-  buildCombinedBodyForModel,
   extractLeadDataWithAi,
   type AiLeadExtraction,
 } from "./leadAiExtractor.js";
@@ -76,9 +75,6 @@ const PISA_RANDOM_POOL_ZONE_KEYS = new Set([
   "solaia",
 ]);
 type AgentSelectionStrategy = "round_robin" | "random_fallback" | "random_pool";
-
-/** Stessa soglia del test Python `_body_preview_for_sheet` per la colonna "corpo". */
-const MAX_BODY_PREVIEW_CHARS = 15_000;
 
 type SheetTarget = { spreadsheetId: string; sheetTitle: string };
 
@@ -161,18 +157,6 @@ function splitDataOraRome(value: Date): { data: string; ora: string } {
     data: `${dateP.day}/${dateP.month}/${dateP.year}`,
     ora: `${timeP.hour}:${timeP.minute}:${timeP.second}`,
   };
-}
-
-/**
- * Stesso testo passato ad OpenAI (text + HTML pulito + CSS rimosso): scriviamo
- * sui fogli diagnostici esattamente quello che il modello legge.
- */
-function bodyPreviewForSheet(email: ParsedInboundEmail): string {
-  const body = buildCombinedBodyForModel(email.textBody ?? "", email.htmlBody ?? "");
-  if (body.length > MAX_BODY_PREVIEW_CHARS) {
-    return `${body.slice(0, MAX_BODY_PREVIEW_CHARS)}\n...[TRONCATO]`;
-  }
-  return body;
 }
 
 /** Estrae un'etichetta UID amichevole per i log STDOUT (`imap-uid-12345` -> `12345`). */
@@ -514,8 +498,7 @@ export async function processInboundEmail(
 
   const assignmentDate = formatAssignmentDate(processedAt);
   const { data: dataMail, ora: oraMail } = splitDataOraRome(email.receivedAt);
-  const mittente = email.from || "(sconosciuto)";
-  const corpoMail = bodyPreviewForSheet(email);
+  const noIdMarker = selectedListingId || "NO-ID";
 
   const handledByRecurrence = await maybeHandleExistingContact(deps, {
     uidLabel,
@@ -535,14 +518,17 @@ export async function processInboundEmail(
     const randomTarget = pickRandomAgentTarget(deps.env);
     if (!randomTarget) {
       await emitNoIdRow(deps, {
-        dataMail,
-        oraMail,
-        mittente,
-        corpoMail: `[NO-ID e nessun foglio agente disponibile]\n${corpoMail}`,
+        leadEmail,
+        listingId: "NO-ID",
+        assignmentDate,
+        phone,
+        zone: "NO-ID",
+        province: "",
         nome,
         cognome,
-        leadEmail,
-        phone,
+        dataMail,
+        oraMail,
+        corpoMail: noIdMarker,
         spreadsheetId: deps.env.defaultSpreadsheetIdResolved,
         sheetTitle: deps.env.NO_ID_FOUND_SHEET_TITLE,
       });
@@ -592,22 +578,24 @@ export async function processInboundEmail(
     }
 
     if (!listing || !listing.zone || !listing.zone.trim()) {
-      const corpoNoGestim = `[ID ${listingId}: nessuna zona/annuncio in gestim_listings]\n${corpoMail}`;
       await emitNoIdRow(deps, {
-        dataMail,
-        oraMail,
-        mittente,
-        corpoMail: corpoNoGestim,
+        leadEmail,
+        listingId,
+        assignmentDate,
+        phone,
+        zone: "NO-ZONA",
+        province: listing?.province?.trim() ?? "",
         nome,
         cognome,
-        leadEmail,
-        phone,
+        dataMail,
+        oraMail,
+        corpoMail: listingId,
         spreadsheetId: deps.env.defaultSpreadsheetIdResolved,
         sheetTitle: deps.env.NO_ID_FOUND_SHEET_TITLE,
       });
       log.info(
         { uid: uidLabel, listingId, sheet: deps.env.NO_ID_FOUND_SHEET_TITLE },
-        "[sheets] ID senza zona in gestim -> no-id-trovato (A:I)",
+        "[sheets] ID senza zona in gestim -> no-id-trovato (A:L)",
       );
       return;
     }
@@ -624,16 +612,18 @@ export async function processInboundEmail(
       { city: listing.city, province: listing.province ?? null },
     );
     if (resolved.fallback) {
-      const corpoNoRouting = `[ID ${listingId}: routing non risolto per zona="${zone}" city="${listingCity}" province="${listingProvince}"]\n${corpoMail}`;
       await emitNoIdRow(deps, {
-        dataMail,
-        oraMail,
-        mittente,
-        corpoMail: corpoNoRouting,
+        leadEmail,
+        listingId,
+        assignmentDate,
+        phone,
+        zone,
+        province: listingProvince,
         nome,
         cognome,
-        leadEmail,
-        phone,
+        dataMail,
+        oraMail,
+        corpoMail: listingId,
         spreadsheetId: deps.env.defaultSpreadsheetIdResolved,
         sheetTitle: deps.env.NO_ID_FOUND_SHEET_TITLE,
       });
@@ -721,16 +711,18 @@ export async function processInboundEmail(
       ? `zone_unmapped_used_default(${zone})`
       : `zone_mapped:${resolved.matchedRule?.name ?? resolved.matchedRule?.pattern ?? "rule"}`;
   } catch (e) {
-    const corpoNoRoutingError = `[ID ${listingId}: errore lookup/routing (${e instanceof Error ? e.message : String(e)})]\n${corpoMail}`;
     await emitNoIdRow(deps, {
-      dataMail,
-      oraMail,
-      mittente,
-      corpoMail: corpoNoRoutingError,
+      leadEmail,
+      listingId,
+      assignmentDate,
+      phone,
+      zone: zone || "NO-ROUTING",
+      province: leadProvince,
       nome,
       cognome,
-      leadEmail,
-      phone,
+      dataMail,
+      oraMail,
+      corpoMail: listingId,
       spreadsheetId: deps.env.defaultSpreadsheetIdResolved,
       sheetTitle: deps.env.NO_ID_FOUND_SHEET_TITLE,
     });

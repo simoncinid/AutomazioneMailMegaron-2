@@ -5,7 +5,7 @@ import "dotenv/config";
  *
  * - Finestra configurabile in ore (`IMAP_LOOKBACK_HOURS`, default 1).
  * - Per ogni mail: estrae i campi via OpenAI, scrive su Google Sheets (lead A:J,
- *   diagnostiche A:I), aggiorna il cooldown 6 mesi sui tab lead.
+ *   diagnostiche no-id A:L), aggiorna il cooldown 6 mesi sui tab lead.
  * - Logging: STDOUT contiene SOLO il blocco "campi OpenAI" per ciascuna mail
  *   (nome / cognome / email / id_annuncio); tutto il resto (setup, decisioni di
  *   routing, errori) finisce su STDERR via pino.
