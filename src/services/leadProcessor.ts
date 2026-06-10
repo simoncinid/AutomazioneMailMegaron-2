@@ -66,7 +66,6 @@ const LIVORNO_AGENT_SHEETS = [
   "VIVIANA",
   "MASSIMILIANO",
   "GUIDO",
-  "EROS",
 ] as const;
 const PISA_RANDOM_POOL_ZONE_KEYS = new Set([
   "capannoli",

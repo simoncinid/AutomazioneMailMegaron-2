@@ -65,6 +65,13 @@ function buildEnv(): AppEnv {
         spreadsheetId: "spreadsheet-id",
         sheetTitle: "AG-LUCCA",
       },
+      {
+        name: "montebello",
+        pattern: "MONTEBELLO",
+        match: "contains",
+        spreadsheetId: "spreadsheet-id",
+        sheetTitle: "AG-LIVORNO",
+      },
     ],
   } as AppEnv;
 }
@@ -72,12 +79,13 @@ function buildEnv(): AppEnv {
 function buildListing(id: string): GestimListingRow {
   const isViareggio = id.startsWith("viareggio");
   const isCapannoli = id.startsWith("capannoli");
+  const isLivorno = id.startsWith("livorno");
   return {
     externalListingId: id,
     title: null,
-    city: isViareggio ? "Viareggio" : isCapannoli ? "Capannoli" : "Pisa",
-    province: isViareggio ? "Lucca" : "Pisa",
-    zone: isViareggio ? "Darsena" : isCapannoli ? "Capannoli" : id.startsWith("passi") ? "I PASSI" : "CALAMBRONE",
+    city: isViareggio ? "Viareggio" : isCapannoli ? "Capannoli" : isLivorno ? "Livorno" : "Pisa",
+    province: isViareggio ? "Lucca" : isLivorno ? "Livorno" : "Pisa",
+    zone: isViareggio ? "Darsena" : isCapannoli ? "Capannoli" : isLivorno ? "MONTEBELLO" : id.startsWith("passi") ? "I PASSI" : "CALAMBRONE",
     address: null,
     price: null,
     propertyType: null,
@@ -94,11 +102,13 @@ describe("processInboundEmail AG-PISA routing", () => {
     testStateDir = await mkdtemp(join(tmpdir(), "pisa-round-robin-"));
     process.env.PISA_ROUND_ROBIN_STATE_PATH = join(testStateDir, "pisa-state.json");
     process.env.VIAREGGIO_ROUND_ROBIN_STATE_PATH = join(testStateDir, "viareggio-state.json");
+    process.env.LIVORNO_ROUND_ROBIN_STATE_PATH = join(testStateDir, "livorno-state.json");
   });
 
   afterEach(async () => {
     delete process.env.PISA_ROUND_ROBIN_STATE_PATH;
     delete process.env.VIAREGGIO_ROUND_ROBIN_STATE_PATH;
+    delete process.env.LIVORNO_ROUND_ROBIN_STATE_PATH;
     await rm(testStateDir, { force: true, recursive: true });
   });
 
@@ -185,6 +195,47 @@ describe("processInboundEmail AG-PISA routing", () => {
       "ALFREDO",
       "MARY",
     ]);
+  });
+
+  it("assegna AG-LIVORNO senza EROS nel pool Livorno", async () => {
+    const { processInboundEmail } = await import("../src/services/leadProcessor.js");
+    const appended: LeadRowPayload[] = [];
+    const sheets = {
+      appendLead: vi.fn(async (payload: LeadRowPayload) => {
+        appended.push(payload);
+      }),
+    } as unknown as GoogleSheetsWriter;
+    const listings = {
+      findLatestByExternalListingId: vi.fn(async (id: string) => buildListing(id)),
+    } as unknown as ListingRepository;
+
+    const env = buildEnv();
+    for (let i = 0; i < 8; i += 1) {
+      const id = `livorno-${i}`;
+      await processInboundEmail(
+        {
+          messageId: `message-livorno-${i}`,
+          from: "portal@example.com",
+          subject: id,
+          receivedAt: new Date("2026-05-25T10:00:00Z"),
+          textBody: `Lead per ${id}`,
+        },
+        { env, listings, sheets },
+        new Date("2026-05-25T10:00:00Z"),
+      );
+    }
+
+    expect(appended.map((row) => row.sheetTitle)).toEqual([
+      "MATTEO",
+      "VIVIANA",
+      "MASSIMILIANO",
+      "GUIDO",
+      "MATTEO",
+      "VIVIANA",
+      "MASSIMILIANO",
+      "GUIDO",
+    ]);
+    expect(appended.map((row) => row.sheetTitle)).not.toContain("EROS");
   });
 
   it("assegna randomicamente le zone ex Patrizia sul pool Pisa", async () => {

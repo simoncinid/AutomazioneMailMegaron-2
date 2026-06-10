@@ -133,7 +133,7 @@ const AGENCY_ZONE_BY_SHEET: Partial<Record<string, AgencyZone>> = {
 
 const POOL_CODES_BY_ZONE: Record<AgencyZone, string[]> = {
   pontedera: ["rebecca", "patrizia", "fausto", "elisabetta", "attilio", "luis"],
-  livorno: ["matteo", "viviana", "massimiliano", "guido", "eros"],
+  livorno: ["matteo", "viviana", "massimiliano", "guido"],
   lucca: ["alfredo", "fernando", "mary"],
   pisa: ["massimo", "davide", "eros", "samuele", "giuseppe", "tommaso", "rebecca", "mattia", "stefania", "valentina", "marco", "marta"],
   viareggio: [],
@@ -150,7 +150,7 @@ const AGENT_OWNER_ZONE_BY_CODE: Partial<Record<string, AgencyZone>> = {
   viviana: "livorno",
   massimiliano: "livorno",
   guido: "livorno",
-  eros: "livorno",
+  eros: "pisa",
   alfredo: "lucca",
   fernando: "lucca",
   mary: "lucca",
