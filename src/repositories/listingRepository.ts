@@ -18,6 +18,27 @@ export interface ListingRepository {
 
 const log = logger.child({ module: "listingRepository" });
 
+function normalizeExternalListingIdKey(id: string): string {
+  return id.trim().toLowerCase();
+}
+
+/** Associa ogni ID richiesto (case originale) al risultato trovato in DB. */
+export function indexListingsByRequestedIds(
+  requestedIds: string[],
+  rows: GestimListingRow[],
+): Map<string, GestimListingRow> {
+  const out = new Map<string, GestimListingRow>();
+  const byNormalizedKey = new Map<string, GestimListingRow>();
+  for (const row of rows) {
+    byNormalizedKey.set(normalizeExternalListingIdKey(row.externalListingId), row);
+  }
+  for (const requestedId of requestedIds) {
+    const row = byNormalizedKey.get(normalizeExternalListingIdKey(requestedId));
+    if (row) out.set(requestedId, row);
+  }
+  return out;
+}
+
 function isTlsCertificateError(err: unknown): boolean {
   if (!(err instanceof Error)) return false;
   const e = err as NodeJS.ErrnoException;
@@ -196,12 +217,14 @@ export class PostgresListingRepository implements ListingRepository {
     externalListingIds: string[],
   ): Promise<Map<string, GestimListingRow>> {
     const unique = [...new Set(externalListingIds)];
-    const out = new Map<string, GestimListingRow>();
-    if (unique.length === 0) return out;
+    if (unique.length === 0) return new Map();
 
+    const lookupKeys = [
+      ...new Set(unique.map((id) => normalizeExternalListingIdKey(id))),
+    ];
     const provinceSelectExpr = await this.resolveProvinceSelectExpression();
     const q = `
-      SELECT DISTINCT ON (id_annuncio_gestim)
+      SELECT DISTINCT ON (lower(id_annuncio_gestim))
         id_annuncio_gestim AS "externalListingId",
         title,
         city,
@@ -216,16 +239,13 @@ export class PostgresListingRepository implements ListingRepository {
         bathrooms,
         updated_at AS "updatedAt"
       FROM gestim_listings
-      WHERE id_annuncio_gestim = ANY($1::text[])
-      ORDER BY id_annuncio_gestim, updated_at DESC NULLS LAST
+      WHERE lower(id_annuncio_gestim) = ANY($1::text[])
+      ORDER BY lower(id_annuncio_gestim), updated_at DESC NULLS LAST
     `;
-    const r = await this.queryWithTlsFallback(q, [unique]);
+    const r = await this.queryWithTlsFallback(q, [lookupKeys]);
 
-    for (const row of r.rows as Record<string, unknown>[]) {
-      const mapped = mapPgRowToGestim(row);
-      out.set(mapped.externalListingId, mapped);
-    }
-    return out;
+    const rows = (r.rows as Record<string, unknown>[]).map(mapPgRowToGestim);
+    return indexListingsByRequestedIds(unique, rows);
   }
 
   async end(): Promise<void> {
