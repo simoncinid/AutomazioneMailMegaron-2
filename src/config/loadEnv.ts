@@ -489,6 +489,7 @@ const HARD_CODED_ZONE_SHEET_MAPPING: Array<[string, string]> = [
   ["TRAMONTE", "AG-LUCCA"],
   ["VECOLI", "AG-LUCCA"],
   ["VICINO MURA", "AG-LUCCA"],
+  ["Pieve a Elici", "AG-LUCCA"],
   ["VICOPELAGO", "AG-LUCCA"],
   ["Altopascio", "AG-LUCCA"],
   ["Bagni di Lucca", "AG-LUCCA"],
