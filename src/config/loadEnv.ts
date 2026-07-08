@@ -140,6 +140,7 @@ const HARD_CODED_ZONE_SHEET_MAPPING: Array<[string, string]> = [
   ["Vicchio", "FAUSTO"],
   ["Volpaia", "FAUSTO"],
   ["Fauglia", "AG-LIVORNO"],
+  ["Parrana San Martino", "AG-LIVORNO"],
   ["Guardistallo", "AG-PISA"],
   ["Lajatico", "AG-PONTEDERA"],
   ["Lorenzana", "AG-PISA"],
