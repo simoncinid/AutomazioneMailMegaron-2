@@ -1,7 +1,6 @@
 import type { AppEnv } from "../config/loadEnv.js";
 import { logger } from "../logging/logger.js";
-import { withGoogleSheetsRateLimit } from "../sheets/googleSheetsRateLimiter.js";
-import { getSheetsClient } from "../sheets/sheetsClient.js";
+import { withGoogleSheetsOperation } from "../sheets/googleSheetsOperation.js";
 import { formatSheetRange } from "../sheets/sheetRange.js";
 
 const log = logger.child({ module: "leadAssignmentCooldown" });
@@ -216,16 +215,21 @@ export class LeadAssignmentCooldown {
       "Da Chiamare",
     ];
 
-    const sheets = await getSheetsClient();
     const range = formatSheetRange(rowRef.sheetTitle, `A${rowRef.rowNumber}:H${rowRef.rowNumber}`);
 
-    await withGoogleSheetsRateLimit(async () =>
+    await withGoogleSheetsOperation((sheets) =>
       sheets.spreadsheets.values.update({
         spreadsheetId: rowRef.spreadsheetId,
         range,
         valueInputOption: "USER_ENTERED",
         requestBody: { values: [nextValues] },
       }),
+      {
+        spreadsheetId: rowRef.spreadsheetId,
+        sheetTitle: rowRef.sheetTitle,
+        range,
+        operation: "values.update.reactivate",
+      },
     );
 
     this.recordAssignment(
@@ -296,19 +300,24 @@ export class LeadAssignmentCooldown {
   }
 
   private async loadFromSheets(): Promise<void> {
-    const sheets = await getSheetsClient();
     let loadedSheets = 0;
 
     for (const target of this.targets) {
       const range = formatSheetRange(target.sheetTitle, "A:H");
       try {
-        const res = await withGoogleSheetsRateLimit(async () =>
+        const res = await withGoogleSheetsOperation((sheets) =>
           sheets.spreadsheets.values.get({
             spreadsheetId: target.spreadsheetId,
             range,
             valueRenderOption: "UNFORMATTED_VALUE",
             dateTimeRenderOption: "SERIAL_NUMBER",
           }),
+          {
+            spreadsheetId: target.spreadsheetId,
+            sheetTitle: target.sheetTitle,
+            range,
+            operation: "values.get.cooldown",
+          },
         );
 
         const rows = res.data.values ?? [];

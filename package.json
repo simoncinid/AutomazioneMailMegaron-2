@@ -5,7 +5,7 @@
   "description": "Servizio mail → lead: estrazione ID Gestim, match annunci, routing Google Sheet per zona.",
   "type": "module",
   "engines": {
-    "node": ">=20"
+    "node": ">=22.0.0 <23.0.0"
   },
   "scripts": {
     "build": "tsc && node scripts/copy-assets.mjs",

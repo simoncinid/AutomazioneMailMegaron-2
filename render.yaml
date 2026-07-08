@@ -5,9 +5,11 @@ services:
   - type: worker
     name: automazione-mail-megaron-worker
     runtime: node
-    buildCommand: npm install && npm run build
+    buildCommand: npm ci && npm run build
     startCommand: npm run start:worker
     envVars:
       - key: NODE_ENV
         value: production
+      - key: NODE_VERSION
+        value: 22.22.0
       # Aggiungi nel dashboard: GRAPH_*, MAILBOX_USER, GOOGLE_SERVICE_ACCOUNT_JSON, MAPPING_*, ecc.

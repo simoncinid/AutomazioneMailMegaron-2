@@ -4,8 +4,7 @@ import type {
 } from "../domain/types.js";
 import { logger } from "../logging/logger.js";
 import type { sheets_v4 } from "googleapis";
-import { getSheetsClient } from "./sheetsClient.js";
-import { withGoogleSheetsRateLimit } from "./googleSheetsRateLimiter.js";
+import { withGoogleSheetsOperation } from "./googleSheetsOperation.js";
 import { formatSheetRange } from "./sheetRange.js";
 
 export { formatSheetRange } from "./sheetRange.js";
@@ -143,7 +142,6 @@ export class GoogleSheetsWriter {
 
   async flush(): Promise<void> {
     if (this.bufferedRows.size === 0) return;
-    const sheets = await getSheetsClient();
     const touched = new Map<string, TouchedSheet>();
 
     for (const [key, entries] of this.bufferedRows) {
@@ -163,16 +161,16 @@ export class GoogleSheetsWriter {
 
       if (kind === "lead") {
         await this.writeLeadRowsWithFixedColumns(
-          sheets,
           spreadsheetId,
           sheetTitle,
           entries.map((e) => e.values),
         );
+        this.bufferedRows.delete(key);
         continue;
       }
 
       const range = formatSheetRange(sheetTitle, RANGE_BY_KIND[kind]);
-      await withGoogleSheetsRateLimit(async () =>
+      await withGoogleSheetsOperation((sheets) =>
         sheets.spreadsheets.values.append({
           spreadsheetId,
           range,
@@ -180,11 +178,13 @@ export class GoogleSheetsWriter {
           insertDataOption: "INSERT_ROWS",
           requestBody: { values: entries.map((e) => e.values) },
         }),
+        { spreadsheetId, sheetTitle, range, operation: "values.append" },
       );
+      this.bufferedRows.delete(key);
     }
 
     if (touched.size > 0) {
-      await this.syncBasicFilterRange(sheets, [...touched.values()]);
+      await this.syncBasicFilterRange([...touched.values()]);
     }
     this.clear();
   }
@@ -206,45 +206,46 @@ export class GoogleSheetsWriter {
   }
 
   private async writeLeadRowsWithFixedColumns(
-    sheets: sheets_v4.Sheets,
     spreadsheetId: string,
     sheetTitle: string,
     rows: (string | number)[][],
   ): Promise<void> {
     const readRange = formatSheetRange(sheetTitle, "A:J");
-    const readRes = await withGoogleSheetsRateLimit(async () =>
+    const readRes = await withGoogleSheetsOperation((sheets) =>
       sheets.spreadsheets.values.get({
         spreadsheetId,
         range: readRange,
       }),
+      { spreadsheetId, sheetTitle, range: readRange, operation: "values.get" },
     );
     const existingRows = readRes.data.values?.length ?? 0;
     const nextRow = Math.max(2, existingRows + 1);
     const endRow = nextRow + rows.length - 1;
-    await this.ensureRowCapacity(sheets, spreadsheetId, sheetTitle, endRow);
+    await this.ensureRowCapacity(spreadsheetId, sheetTitle, endRow);
     const writeRange = formatSheetRange(sheetTitle, `A${nextRow}:J${endRow}`);
 
-    await withGoogleSheetsRateLimit(async () =>
+    await withGoogleSheetsOperation((sheets) =>
       sheets.spreadsheets.values.update({
         spreadsheetId,
         range: writeRange,
         valueInputOption: "USER_ENTERED",
         requestBody: { values: rows },
       }),
+      { spreadsheetId, sheetTitle, range: writeRange, operation: "values.update" },
     );
   }
 
   private async ensureRowCapacity(
-    sheets: sheets_v4.Sheets,
     spreadsheetId: string,
     sheetTitle: string,
     requiredRowCount: number,
   ): Promise<void> {
-    const meta = await withGoogleSheetsRateLimit(async () =>
+    const meta = await withGoogleSheetsOperation((sheets) =>
       sheets.spreadsheets.get({
         spreadsheetId,
         fields: "sheets(properties(sheetId,title,gridProperties(rowCount)))",
       }),
+      { spreadsheetId, sheetTitle, operation: "spreadsheets.get" },
     );
     const target = (meta.data.sheets ?? []).find((s) => s.properties?.title === sheetTitle);
     const sheetId = target?.properties?.sheetId;
@@ -255,7 +256,7 @@ export class GoogleSheetsWriter {
     if (rowCount >= requiredRowCount) return;
 
     const rowsToAppend = requiredRowCount - rowCount;
-    await withGoogleSheetsRateLimit(async () =>
+    await withGoogleSheetsOperation((sheets) =>
       sheets.spreadsheets.batchUpdate({
         spreadsheetId,
         requestBody: {
@@ -270,13 +271,11 @@ export class GoogleSheetsWriter {
           ],
         },
       }),
+      { spreadsheetId, sheetTitle, operation: "spreadsheets.batchUpdate" },
     );
   }
 
-  private async syncBasicFilterRange(
-    sheets: sheets_v4.Sheets,
-    touchedSheets: TouchedSheet[],
-  ): Promise<void> {
+  private async syncBasicFilterRange(touchedSheets: TouchedSheet[]): Promise<void> {
     const bySpreadsheet = new Map<string, TouchedSheet[]>();
     for (const target of touchedSheets) {
       const arr = bySpreadsheet.get(target.spreadsheetId) ?? [];
@@ -286,11 +285,12 @@ export class GoogleSheetsWriter {
 
     for (const [spreadsheetId, targets] of bySpreadsheet) {
       try {
-        const meta = await withGoogleSheetsRateLimit(async () =>
+        const meta = await withGoogleSheetsOperation((sheets) =>
           sheets.spreadsheets.get({
             spreadsheetId,
             fields: "sheets(properties(sheetId,title),basicFilter)",
           }),
+          { spreadsheetId, operation: "spreadsheets.get.basicFilter" },
         );
         const allSheets = meta.data.sheets ?? [];
         const byTitle = new Map<string, sheets_v4.Schema$Sheet>();
@@ -338,11 +338,12 @@ export class GoogleSheetsWriter {
         }
 
         if (requests.length > 0) {
-          await withGoogleSheetsRateLimit(async () =>
+          await withGoogleSheetsOperation((sheets) =>
             sheets.spreadsheets.batchUpdate({
               spreadsheetId,
               requestBody: { requests },
             }),
+            { spreadsheetId, operation: "spreadsheets.batchUpdate.basicFilter" },
           );
         }
       } catch (error) {

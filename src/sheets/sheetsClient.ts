@@ -26,3 +26,7 @@ export async function getSheetsClient(): Promise<sheets_v4.Sheets> {
   cached = google.sheets({ version: "v4", auth });
   return cached;
 }
+
+export function resetSheetsClient(): void {
+  cached = null;
+}
