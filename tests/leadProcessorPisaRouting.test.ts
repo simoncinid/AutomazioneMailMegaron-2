@@ -72,6 +72,20 @@ function buildEnv(): AppEnv {
         spreadsheetId: "spreadsheet-id",
         sheetTitle: "AG-LIVORNO",
       },
+      {
+        name: "barbaricina",
+        pattern: "BARBARICINA",
+        match: "contains",
+        spreadsheetId: "spreadsheet-id",
+        sheetTitle: "LUIGI",
+      },
+      {
+        name: "venezia_pontino",
+        pattern: "VENEZIA - PONTINO",
+        match: "contains",
+        spreadsheetId: "spreadsheet-id",
+        sheetTitle: "LISA",
+      },
     ],
   } as AppEnv;
 }
@@ -85,7 +99,19 @@ function buildListing(id: string): GestimListingRow {
     title: null,
     city: isViareggio ? "Viareggio" : isCapannoli ? "Capannoli" : isLivorno ? "Livorno" : "Pisa",
     province: isViareggio ? "Lucca" : isLivorno ? "Livorno" : "Pisa",
-    zone: isViareggio ? "Darsena" : isCapannoli ? "Capannoli" : isLivorno ? "MONTEBELLO" : id.startsWith("passi") ? "I PASSI" : "CALAMBRONE",
+    zone: isViareggio
+      ? "Darsena"
+      : isCapannoli
+        ? "Capannoli"
+        : id.startsWith("livorno-lisa")
+          ? "VENEZIA - PONTINO"
+          : isLivorno
+            ? "MONTEBELLO"
+            : id.startsWith("luigi")
+              ? "BARBARICINA"
+              : id.startsWith("passi")
+                ? "I PASSI"
+                : "CALAMBRONE",
     address: null,
     price: null,
     propertyType: null,
@@ -236,6 +262,44 @@ describe("processInboundEmail AG-PISA routing", () => {
       "GUIDO",
     ]);
     expect(appended.map((row) => row.sheetTitle)).not.toContain("EROS");
+  });
+
+  it("mantiene LUIGI e LISA come assegnazioni dirette fuori dai pool AG", async () => {
+    const { processInboundEmail } = await import("../src/services/leadProcessor.js");
+    const appended: LeadRowPayload[] = [];
+    const sheets = {
+      appendLead: vi.fn(async (payload: LeadRowPayload) => {
+        appended.push(payload);
+      }),
+    } as unknown as GoogleSheetsWriter;
+    const listings = {
+      findLatestByExternalListingId: vi.fn(async (id: string) => buildListing(id)),
+    } as unknown as ListingRepository;
+
+    await processInboundEmail(
+      {
+        messageId: "message-luigi-0",
+        from: "portal@example.com",
+        subject: "luigi-0",
+        receivedAt: new Date("2026-05-25T10:00:00Z"),
+        textBody: "Lead per luigi-0",
+      },
+      { env: buildEnv(), listings, sheets },
+      new Date("2026-05-25T10:00:00Z"),
+    );
+    await processInboundEmail(
+      {
+        messageId: "message-livorno-lisa-0",
+        from: "portal@example.com",
+        subject: "livorno-lisa-0",
+        receivedAt: new Date("2026-05-25T10:00:00Z"),
+        textBody: "Lead per livorno-lisa-0",
+      },
+      { env: buildEnv(), listings, sheets },
+      new Date("2026-05-25T10:00:00Z"),
+    );
+
+    expect(appended.map((row) => row.sheetTitle)).toEqual(["LUIGI", "LISA"]);
   });
 
   it("assegna randomicamente le zone ex Patrizia sul pool Pisa", async () => {

@@ -5,16 +5,16 @@ import { logger } from "../logging/logger.js";
 import { loadZoneMappingFromSheet } from "../sheets/loadZoneMappingFromSheet.js";
 
 const HARD_CODED_ZONE_SHEET_MAPPING: Array<[string, string]> = [
-  ["BARBARICINA", "AG-PISA"],
+  ["BARBARICINA", "LUIGI"],
   ["BORGHETTO", "EROS"],
   ["CALAMBRONE", "AG-PISA"],
-  ["CEP", "AG-PISA"],
+  ["CEP", "LUIGI"],
   ["CISANELLO", "STEFANIA"],
   ["COLTANO", "REBECCA"],
   ["DON BOSCO", "VALENTINA"],
   ["GAGNO", "AG-PISA"],
   ["I PASSI", "AG-PISA"],
-  ["LA VETTOLA", "AG-PISA"],
+  ["LA VETTOLA", "LUIGI"],
   ["MARINA DI PISA", "AG-PISA"],
   ["MONTACCHIELLO", "REBECCA"],
   ["ORATOIO", "AG-PISA"],
@@ -32,8 +32,8 @@ const HARD_CODED_ZONE_SHEET_MAPPING: Array<[string, string]> = [
   ["SAN GIUSTO", "MARTA"],
   ["SAN MARCO", "MARTA"],
   ["SAN MARTINO", "SAMUELE"],
-  ["SAN PIERO A GRADO", "AG-PISA"],
-  ["SAN ROSSORE", "AG-PISA"],
+  ["SAN PIERO A GRADO", "LUIGI"],
+  ["SAN ROSSORE", "LUIGI"],
   ["SANTA MARIA", "MATTIA"],
   ["SANT'ANTONIO", "MARCO"],
   ["SANT'ERMETE", "MASSIMO"],
@@ -597,7 +597,9 @@ const HARD_CODED_ZONE_SHEET_MAPPING: Array<[string, string]> = [
   ["STAGNO", "AG-LIVORNO"],
   ["STAZIONE - PORTA A TERRA", "AG-LIVORNO"],
   ["VALLE BENEDETTA", "AG-LIVORNO"],
-  ["VENEZIA - PONTINO", "AG-LIVORNO"],
+  ["VENEZIA - PONTINO", "LISA"],
+  ["VENEZIA", "LISA"],
+  ["PONTINO", "LISA"],
 ];
 
 const HARD_CODED_ZONE_SHEET_MAPPING_RAW = HARD_CODED_ZONE_SHEET_MAPPING.map(
