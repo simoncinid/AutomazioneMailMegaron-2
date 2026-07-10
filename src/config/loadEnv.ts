@@ -62,7 +62,7 @@ const HARD_CODED_ZONE_SHEET_MAPPING: Array<[string, string]> = [
   ["Montecchio", "REBECCA"],
   ["Oltrarno", "REBECCA"],
   ["Pardossi", "REBECCA"],
-  ["Capannoli", "AG-PISA"],
+  ["Capannoli", "AG-PONTEDERA"],
   ["San Pietro Belvedere", "AG-PISA"],
   ["Santo Pietro Belvedere", "AG-PISA"],
   ["Solaia", "AG-PISA"],
