@@ -81,11 +81,13 @@ function pickSheetByZoneCityProvince(
       if (provinceIn("livorno")) return "AG-LIVORNO";
       return null;
     case "montecchio":
-      if (cityIn("calcinaia")) return "REBECCA";
+      // FERIE REBECCA: era "REBECCA"
+      if (cityIn("calcinaia")) return "AG-PONTEDERA";
       if (cityIn("peccioli")) return "AG-PONTEDERA";
       return null;
     case "pardossi":
-      if (cityIn("calcinaia")) return "REBECCA";
+      // FERIE REBECCA: era "REBECCA"
+      if (cityIn("calcinaia")) return "AG-PONTEDERA";
       if (cityIn("pontedera")) return "AG-PONTEDERA";
       return null;
     case "porta a mare":

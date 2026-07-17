@@ -44,7 +44,7 @@ const PISA_AGENT_SHEETS = [
   "SAMUELE",
   "GIUSEPPE",
   "TOMMASO",
-  "REBECCA",
+  // "REBECCA", // FERIE REBECCA: ripristinare al rientro
   "MATTIA",
   "STEFANIA",
   "VALENTINA",
@@ -56,7 +56,7 @@ const LUCCA_VIAREGGIO_AGENT_SHEETS = [
   "MARY",
 ] as const;
 const PONTEDERA_AGENT_SHEETS = [
-  "REBECCA",
+  // "REBECCA", // FERIE REBECCA: ripristinare al rientro
   "FAUSTO",
   "ELISABETTA",
   "LUIS",

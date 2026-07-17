@@ -10,15 +10,15 @@ const HARD_CODED_ZONE_SHEET_MAPPING: Array<[string, string]> = [
   ["CALAMBRONE", "AG-PISA"],
   ["CEP", "LUIGI"],
   ["CISANELLO", "STEFANIA"],
-  ["COLTANO", "REBECCA"],
+  ["COLTANO", "AG-PONTEDERA"], // FERIE REBECCA: era "REBECCA"
   ["DON BOSCO", "VALENTINA"],
   ["GAGNO", "AG-PISA"],
   ["I PASSI", "AG-PISA"],
   ["LA VETTOLA", "LUIGI"],
   ["MARINA DI PISA", "AG-PISA"],
-  ["MONTACCHIELLO", "REBECCA"],
+  ["MONTACCHIELLO", "AG-PONTEDERA"], // FERIE REBECCA: era "REBECCA"
   ["ORATOIO", "AG-PISA"],
-  ["OSPEDALETTO", "REBECCA"],
+  ["OSPEDALETTO", "AG-PONTEDERA"], // FERIE REBECCA: era "REBECCA"
   ["PIAGGE", "STEFANIA"],
   ["PISANOVA", "VALENTINA"],
   ["PORTA A LUCCA", "GIUSEPPE"],
@@ -57,11 +57,11 @@ const HARD_CODED_ZONE_SHEET_MAPPING: Array<[string, string]> = [
   ["Santa Lucia", "GIUSEPPE"],
   ["Tre Colli", "GIUSEPPE"],
   ["Villa Sant'Andrea", "GIUSEPPE"],
-  ["Calcinaia", "REBECCA"],
-  ["Fornacette", "REBECCA"],
-  ["Montecchio", "REBECCA"],
-  ["Oltrarno", "REBECCA"],
-  ["Pardossi", "REBECCA"],
+  ["Calcinaia", "AG-PONTEDERA"], // FERIE REBECCA: era "REBECCA"
+  ["Fornacette", "AG-PONTEDERA"], // FERIE REBECCA: era "REBECCA"
+  ["Montecchio", "AG-PONTEDERA"], // FERIE REBECCA: era "REBECCA"
+  ["Oltrarno", "AG-PONTEDERA"], // FERIE REBECCA: era "REBECCA"
+  ["Pardossi", "AG-PONTEDERA"], // FERIE REBECCA: era "REBECCA"
   ["Capannoli", "AG-PONTEDERA"],
   ["San Pietro Belvedere", "AG-PISA"],
   ["Santo Pietro Belvedere", "AG-PISA"],
