@@ -58,10 +58,10 @@ const HARD_CODED_ZONE_SHEET_MAPPING: Array<[string, string]> = [
   ["Tre Colli", "AG-PISA"], // FERIE GIUSEPPE: era "GIUSEPPE"
   ["Villa Sant'Andrea", "AG-PISA"], // FERIE GIUSEPPE: era "GIUSEPPE"
   ["Calcinaia", "REBECCA"],
-  ["Fornacette", "AG-PONTEDERA"],
-  ["Montecchio", "AG-PONTEDERA"],
-  ["Oltrarno", "AG-PONTEDERA"],
-  ["Pardossi", "AG-PONTEDERA"],
+  ["Fornacette", "REBECCA"],
+  ["Montecchio", "REBECCA"],
+  ["Oltrarno", "REBECCA"],
+  ["Pardossi", "REBECCA"],
   ["Capannoli", "AG-PONTEDERA"],
   ["San Pietro Belvedere", "AG-PISA"],
   ["Santo Pietro Belvedere", "AG-PISA"],
