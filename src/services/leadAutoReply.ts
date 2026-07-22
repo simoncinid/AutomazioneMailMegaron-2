@@ -132,7 +132,7 @@ const AGENCY_ZONE_BY_SHEET: Partial<Record<string, AgencyZone>> = {
 };
 
 const POOL_CODES_BY_ZONE: Record<AgencyZone, string[]> = {
-  // FERIE REBECCA: ripristinare "rebecca" in pontedera e pisa al rientro
+  // FERIE REBECCA: ripristinare "rebecca" in pontedera e pisa al rientro completo
   // FERIE GIUSEPPE: ripristinare "giuseppe" in pisa al rientro
   pontedera: ["patrizia", "fausto", "elisabetta", "attilio", "luis"],
   livorno: ["matteo", "viviana", "massimiliano", "guido"],
@@ -142,7 +142,7 @@ const POOL_CODES_BY_ZONE: Record<AgencyZone, string[]> = {
 };
 
 const AGENT_OWNER_ZONE_BY_CODE: Partial<Record<string, AgencyZone>> = {
-  // rebecca: "pontedera", // FERIE REBECCA: ripristinare al rientro
+  rebecca: "pontedera",
   patrizia: "pontedera",
   fausto: "pontedera",
   elisabetta: "pontedera",
