@@ -42,7 +42,7 @@ const PISA_AGENT_SHEETS = [
   "DAVIDE",
   "EROS",
   "SAMUELE",
-  "GIUSEPPE",
+  // "GIUSEPPE", // FERIE GIUSEPPE: ripristinare al rientro
   "TOMMASO",
   // "REBECCA", // FERIE REBECCA: ripristinare al rientro
   "MATTIA",

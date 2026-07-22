@@ -39,7 +39,8 @@ function pickSheetByZoneCityProvince(
 
   switch (z) {
     case "capoluogo":
-      if (cityIn("calci")) return "GIUSEPPE";
+      // FERIE GIUSEPPE: era "GIUSEPPE"
+      if (cityIn("calci")) return "AG-PISA";
       if (cityIn("san giuliano terme")) return "DAVIDE";
       if (cityIn("castelfranco di sotto")) return "AG-PONTEDERA";
       if (cityIn("vicopisano")) return "LUIS";
@@ -69,7 +70,8 @@ function pickSheetByZoneCityProvince(
       if (cityIn("san giuliano terme")) return "DAVIDE";
       return null;
     case "la pieve":
-      if (cityIn("calci")) return "GIUSEPPE";
+      // FERIE GIUSEPPE: era "GIUSEPPE"
+      if (cityIn("calci")) return "AG-PISA";
       if (cityIn("chianni")) return "AG-PONTEDERA";
       return null;
     case "lorenzana":
@@ -119,7 +121,8 @@ function pickSheetByZoneCityProvince(
       if (cityIn("cascina")) return "TOMMASO";
       return null;
     case "santa lucia":
-      if (cityIn("calci")) return "GIUSEPPE";
+      // FERIE GIUSEPPE: era "GIUSEPPE"
+      if (cityIn("calci")) return "AG-PISA";
       if (cityIn("pontedera")) return "AG-PONTEDERA";
       return null;
     case "stazione":

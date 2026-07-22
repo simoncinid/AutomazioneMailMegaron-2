@@ -21,11 +21,11 @@ const HARD_CODED_ZONE_SHEET_MAPPING: Array<[string, string]> = [
   ["OSPEDALETTO", "AG-PONTEDERA"], // FERIE REBECCA: era "REBECCA"
   ["PIAGGE", "STEFANIA"],
   ["PISANOVA", "VALENTINA"],
-  ["PORTA A LUCCA", "GIUSEPPE"],
+  ["PORTA A LUCCA", "AG-PISA"], // FERIE GIUSEPPE: era "GIUSEPPE"
   ["PORTA A MARE", "MARCO"],
   ["PORTA FIORENTINA", "MASSIMO"],
   ["PORTA NUOVA", "MATTIA"],
-  ["PRATALE", "GIUSEPPE"],
+  ["PRATALE", "AG-PISA"], // FERIE GIUSEPPE: era "GIUSEPPE"
   ["PUTIGNANO", "AG-PISA"],
   ["RIGLIONE", "AG-PISA"],
   ["SAN FRANCESCO", "EROS"],
@@ -41,22 +41,22 @@ const HARD_CODED_ZONE_SHEET_MAPPING: Array<[string, string]> = [
   ["TIRRENIA", "AG-PISA"],
   ["Bientina", "AG-PONTEDERA"],
   ["Buti", "AG-PONTEDERA"],
-  ["Calci", "GIUSEPPE"],
-  ["Calci Alta", "GIUSEPPE"],
-  ["Calci La Corte", "GIUSEPPE"],
-  ["Capoluogo", "GIUSEPPE"],
-  ["Castel Maggiore", "GIUSEPPE"],
-  ["Il Colle", "GIUSEPPE"],
-  ["La Corte", "GIUSEPPE"],
-  ["La Gabella", "GIUSEPPE"],
-  ["La Pieve", "GIUSEPPE"],
-  ["MonteMagno", "GIUSEPPE"],
-  ["Paduletto", "GIUSEPPE"],
-  ["Rezzano", "GIUSEPPE"],
-  ["San Lorenzo", "GIUSEPPE"],
-  ["Santa Lucia", "GIUSEPPE"],
-  ["Tre Colli", "GIUSEPPE"],
-  ["Villa Sant'Andrea", "GIUSEPPE"],
+  ["Calci", "AG-PISA"], // FERIE GIUSEPPE: era "GIUSEPPE"
+  ["Calci Alta", "AG-PISA"], // FERIE GIUSEPPE: era "GIUSEPPE"
+  ["Calci La Corte", "AG-PISA"], // FERIE GIUSEPPE: era "GIUSEPPE"
+  ["Capoluogo", "AG-PISA"], // FERIE GIUSEPPE: era "GIUSEPPE"
+  ["Castel Maggiore", "AG-PISA"], // FERIE GIUSEPPE: era "GIUSEPPE"
+  ["Il Colle", "AG-PISA"], // FERIE GIUSEPPE: era "GIUSEPPE"
+  ["La Corte", "AG-PISA"], // FERIE GIUSEPPE: era "GIUSEPPE"
+  ["La Gabella", "AG-PISA"], // FERIE GIUSEPPE: era "GIUSEPPE"
+  ["La Pieve", "AG-PISA"], // FERIE GIUSEPPE: era "GIUSEPPE"
+  ["MonteMagno", "AG-PISA"], // FERIE GIUSEPPE: era "GIUSEPPE"
+  ["Paduletto", "AG-PISA"], // FERIE GIUSEPPE: era "GIUSEPPE"
+  ["Rezzano", "AG-PISA"], // FERIE GIUSEPPE: era "GIUSEPPE"
+  ["San Lorenzo", "AG-PISA"], // FERIE GIUSEPPE: era "GIUSEPPE"
+  ["Santa Lucia", "AG-PISA"], // FERIE GIUSEPPE: era "GIUSEPPE"
+  ["Tre Colli", "AG-PISA"], // FERIE GIUSEPPE: era "GIUSEPPE"
+  ["Villa Sant'Andrea", "AG-PISA"], // FERIE GIUSEPPE: era "GIUSEPPE"
   ["Calcinaia", "AG-PONTEDERA"], // FERIE REBECCA: era "REBECCA"
   ["Fornacette", "AG-PONTEDERA"], // FERIE REBECCA: era "REBECCA"
   ["Montecchio", "AG-PONTEDERA"], // FERIE REBECCA: era "REBECCA"
