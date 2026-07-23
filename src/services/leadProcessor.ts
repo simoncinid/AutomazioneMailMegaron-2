@@ -194,6 +194,84 @@ function isAgLivornoSheet(sheetTitle: string): boolean {
   return normalizeSheetKey(sheetTitle) === "ag-livorno";
 }
 
+/** ID annuncio con sotto-stringa "lu" (qualsiasi maiuscole/minuscole) -> territorio Lucca. */
+export function listingIdIndicatesLucca(listingId: string): boolean {
+  const id = listingId.trim();
+  if (!id || id === "NO-ID") return false;
+  return id.toLowerCase().includes("lu");
+}
+
+function resolveAgLuccaTarget(env: AppEnv): SheetTarget {
+  const agLuccaRule = env.zoneSheetRules.find((rule) => isAgLuccaSheet(rule.sheetTitle));
+  return {
+    spreadsheetId: agLuccaRule?.spreadsheetId ?? env.defaultSpreadsheetIdResolved,
+    sheetTitle: "AG-LUCCA",
+  };
+}
+
+function leadZoneFromNoIdPayload(zone: string): string {
+  const z = zone.trim();
+  if (!z || z === "NO-ZONA" || z === "NO-ID" || z === "NO-ROUTING") return "";
+  return z;
+}
+
+interface NoIdRoutingContext {
+  uidLabel: string;
+  processedAt: Date;
+  originalSubject: string;
+  originalMessageId?: string;
+}
+
+/**
+ * Prima di scrivere su no-id-trovato: se l'ID contiene "lu" (case-insensitive),
+ * instrada sul pool AG-LUCCA invece del tab diagnostico.
+ * @returns true se il lead è stato instradato su AG-LUCCA
+ */
+async function routeNoIdFallback(
+  deps: LeadProcessorDeps,
+  payload: NoIdRowPayload,
+  ctx: NoIdRoutingContext,
+): Promise<boolean> {
+  if (!listingIdIndicatesLucca(payload.listingId)) {
+    await emitNoIdRow(deps, payload);
+    return false;
+  }
+
+  let target = resolveAgLuccaTarget(deps.env);
+  const reassigned = await pickLuccaViareggioAgentSheet();
+  target = { ...target, sheetTitle: reassigned.sheetTitle };
+
+  await insertLeadRow(
+    deps,
+    {
+      leadEmail: payload.leadEmail,
+      listingId: payload.listingId,
+      assignmentDate: payload.assignmentDate,
+      phone: payload.phone,
+      zone: leadZoneFromNoIdPayload(payload.zone),
+      province: payload.province ?? "",
+      nome: payload.nome,
+      cognome: payload.cognome,
+      spreadsheetId: target.spreadsheetId,
+      sheetTitle: target.sheetTitle,
+    },
+    ctx.processedAt,
+    ctx.originalSubject,
+    ctx.originalMessageId,
+  );
+
+  log.info(
+    {
+      uid: ctx.uidLabel,
+      listingId: payload.listingId,
+      sheet: target.sheetTitle,
+      strategy: reassigned.strategy,
+    },
+    "[routing] ID con LU: fallback su AG-LUCCA invece di no-id-trovato",
+  );
+  return true;
+}
+
 function getRoundRobinStatePath(envName: string, defaultPath: string): string {
   return process.env[envName]?.trim() || defaultPath;
 }
@@ -577,25 +655,36 @@ export async function processInboundEmail(
     }
 
     if (!listing || !listing.zone || !listing.zone.trim()) {
-      await emitNoIdRow(deps, {
-        leadEmail,
-        listingId,
-        assignmentDate,
-        phone,
-        zone: "NO-ZONA",
-        province: listing?.province?.trim() ?? "",
-        nome,
-        cognome,
-        dataMail,
-        oraMail,
-        corpoMail: listingId,
-        spreadsheetId: deps.env.defaultSpreadsheetIdResolved,
-        sheetTitle: deps.env.NO_ID_FOUND_SHEET_TITLE,
-      });
-      log.info(
-        { uid: uidLabel, listingId, sheet: deps.env.NO_ID_FOUND_SHEET_TITLE },
-        "[sheets] ID senza zona in gestim -> no-id-trovato (A:L)",
+      const routedToLucca = await routeNoIdFallback(
+        deps,
+        {
+          leadEmail,
+          listingId,
+          assignmentDate,
+          phone,
+          zone: "NO-ZONA",
+          province: listing?.province?.trim() ?? "",
+          nome,
+          cognome,
+          dataMail,
+          oraMail,
+          corpoMail: listingId,
+          spreadsheetId: deps.env.defaultSpreadsheetIdResolved,
+          sheetTitle: deps.env.NO_ID_FOUND_SHEET_TITLE,
+        },
+        {
+          uidLabel,
+          processedAt,
+          originalSubject: email.subject,
+          originalMessageId: email.messageId,
+        },
       );
+      if (!routedToLucca) {
+        log.info(
+          { uid: uidLabel, listingId, sheet: deps.env.NO_ID_FOUND_SHEET_TITLE },
+          "[sheets] ID senza zona in gestim -> no-id-trovato (A:L)",
+        );
+      }
       return;
     }
 
@@ -611,32 +700,43 @@ export async function processInboundEmail(
       { city: listing.city, province: listing.province ?? null },
     );
     if (resolved.fallback) {
-      await emitNoIdRow(deps, {
-        leadEmail,
-        listingId,
-        assignmentDate,
-        phone,
-        zone,
-        province: listingProvince,
-        nome,
-        cognome,
-        dataMail,
-        oraMail,
-        corpoMail: listingId,
-        spreadsheetId: deps.env.defaultSpreadsheetIdResolved,
-        sheetTitle: deps.env.NO_ID_FOUND_SHEET_TITLE,
-      });
-      log.warn(
+      const routedToLucca = await routeNoIdFallback(
+        deps,
         {
-          uid: uidLabel,
+          leadEmail,
           listingId,
+          assignmentDate,
+          phone,
           zone,
-          city: listingCity,
           province: listingProvince,
-          sheet: deps.env.NO_ID_FOUND_SHEET_TITLE,
+          nome,
+          cognome,
+          dataMail,
+          oraMail,
+          corpoMail: listingId,
+          spreadsheetId: deps.env.defaultSpreadsheetIdResolved,
+          sheetTitle: deps.env.NO_ID_FOUND_SHEET_TITLE,
         },
-        "[routing] fallback disabilitato: lead inviato a no-id-trovato",
+        {
+          uidLabel,
+          processedAt,
+          originalSubject: email.subject,
+          originalMessageId: email.messageId,
+        },
       );
+      if (!routedToLucca) {
+        log.warn(
+          {
+            uid: uidLabel,
+            listingId,
+            zone,
+            city: listingCity,
+            province: listingProvince,
+            sheet: deps.env.NO_ID_FOUND_SHEET_TITLE,
+          },
+          "[routing] fallback disabilitato: lead inviato a no-id-trovato",
+        );
+      }
       return;
     }
 
@@ -710,25 +810,36 @@ export async function processInboundEmail(
       ? `zone_unmapped_used_default(${zone})`
       : `zone_mapped:${resolved.matchedRule?.name ?? resolved.matchedRule?.pattern ?? "rule"}`;
   } catch (e) {
-    await emitNoIdRow(deps, {
-      leadEmail,
-      listingId,
-      assignmentDate,
-      phone,
-      zone: zone || "NO-ROUTING",
-      province: leadProvince,
-      nome,
-      cognome,
-      dataMail,
-      oraMail,
-      corpoMail: listingId,
-      spreadsheetId: deps.env.defaultSpreadsheetIdResolved,
-      sheetTitle: deps.env.NO_ID_FOUND_SHEET_TITLE,
-    });
-    log.error(
-      { err: e, uid: uidLabel, listingId, sheet: deps.env.NO_ID_FOUND_SHEET_TITLE },
-      "[db] lookup/routing fallito: lead inviato a no-id-trovato",
+    const routedToLucca = await routeNoIdFallback(
+      deps,
+      {
+        leadEmail,
+        listingId,
+        assignmentDate,
+        phone,
+        zone: zone || "NO-ROUTING",
+        province: leadProvince,
+        nome,
+        cognome,
+        dataMail,
+        oraMail,
+        corpoMail: listingId,
+        spreadsheetId: deps.env.defaultSpreadsheetIdResolved,
+        sheetTitle: deps.env.NO_ID_FOUND_SHEET_TITLE,
+      },
+      {
+        uidLabel,
+        processedAt,
+        originalSubject: email.subject,
+        originalMessageId: email.messageId,
+      },
     );
+    if (!routedToLucca) {
+      log.error(
+        { err: e, uid: uidLabel, listingId, sheet: deps.env.NO_ID_FOUND_SHEET_TITLE },
+        "[db] lookup/routing fallito: lead inviato a no-id-trovato",
+      );
+    }
     return;
   }
 

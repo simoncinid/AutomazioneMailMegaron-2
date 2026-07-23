@@ -375,4 +375,103 @@ describe("processInboundEmail AG-PISA routing", () => {
       "MARY",
     ]);
   });
+
+  it("instrada su AG-LUCCA se l'ID contiene LU e manca la zona in gestim", async () => {
+    const { processInboundEmail } = await import("../src/services/leadProcessor.js");
+    const appended: LeadRowPayload[] = [];
+    const noIdRows: unknown[] = [];
+    const sheets = {
+      appendLead: vi.fn(async (payload: LeadRowPayload) => {
+        appended.push(payload);
+      }),
+      appendNoId: vi.fn(async (payload: unknown) => {
+        noIdRows.push(payload);
+      }),
+    } as unknown as GoogleSheetsWriter;
+    const listings = {
+      findLatestByExternalListingId: vi.fn(async () => ({
+        externalListingId: "2022lu034",
+        title: null,
+        city: "Sillano Giuncugnano",
+        province: "Lucca",
+        zone: "",
+        address: null,
+        price: null,
+        propertyType: null,
+        contractType: null,
+        surfaceM2: null,
+        bedrooms: null,
+        bathrooms: null,
+        updatedAt: null,
+      })),
+    } as unknown as ListingRepository;
+
+    await processInboundEmail(
+      {
+        messageId: "message-lu-no-zone",
+        from: "portal@example.com",
+        subject: "2022lu034",
+        receivedAt: new Date("2026-05-25T10:00:00Z"),
+        textBody: "Lead per 2022lu034",
+      },
+      { env: buildEnv(), listings, sheets },
+      new Date("2026-05-25T10:00:00Z"),
+    );
+
+    expect(appended).toHaveLength(1);
+    expect(appended[0]?.listingId).toBe("2022lu034");
+    expect(["ALFREDO", "MARY"]).toContain(appended[0]?.sheetTitle);
+    expect(noIdRows).toHaveLength(0);
+  });
+
+  it("resta su no-id-trovato se l'ID non contiene LU e manca la zona", async () => {
+    const { processInboundEmail } = await import("../src/services/leadProcessor.js");
+    const appended: LeadRowPayload[] = [];
+    const noIdRows: unknown[] = [];
+    const sheets = {
+      appendLead: vi.fn(async (payload: LeadRowPayload) => {
+        appended.push(payload);
+      }),
+      appendNoId: vi.fn(async (payload: unknown) => {
+        noIdRows.push(payload);
+      }),
+    } as unknown as GoogleSheetsWriter;
+    const listings = {
+      findLatestByExternalListingId: vi.fn(async () => ({
+        externalListingId: "2024057",
+        title: null,
+        city: "Sestriere",
+        province: "Torino",
+        zone: "",
+        address: null,
+        price: null,
+        propertyType: null,
+        contractType: null,
+        surfaceM2: null,
+        bedrooms: null,
+        bathrooms: null,
+        updatedAt: null,
+      })),
+    } as unknown as ListingRepository;
+
+    const env = {
+      ...buildEnv(),
+      NO_ID_FOUND_SHEET_TITLE: "no-id-trovato",
+    } as AppEnv;
+
+    await processInboundEmail(
+      {
+        messageId: "message-no-lu-no-zone",
+        from: "portal@example.com",
+        subject: "2024057",
+        receivedAt: new Date("2026-05-25T10:00:00Z"),
+        textBody: "Lead per 2024057",
+      },
+      { env, listings, sheets },
+      new Date("2026-05-25T10:00:00Z"),
+    );
+
+    expect(appended).toHaveLength(0);
+    expect(noIdRows).toHaveLength(1);
+  });
 });
