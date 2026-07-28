@@ -11,7 +11,7 @@ const HARD_CODED_ZONE_SHEET_MAPPING: Array<[string, string]> = [
   ["CEP", "LUIGI"],
   ["CISANELLO", "STEFANIA"],
   ["COLTANO", "REBECCA"],
-  ["DON BOSCO", "VALENTINA"],
+  ["DON BOSCO", "AG-PISA"], // FERIE VALENTINA: era "VALENTINA"
   ["GAGNO", "AG-PISA"],
   ["I PASSI", "AG-PISA"],
   ["LA VETTOLA", "LUIGI"],
@@ -20,12 +20,12 @@ const HARD_CODED_ZONE_SHEET_MAPPING: Array<[string, string]> = [
   ["ORATOIO", "AG-PISA"],
   ["OSPEDALETTO", "REBECCA"],
   ["PIAGGE", "STEFANIA"],
-  ["PISANOVA", "VALENTINA"],
+  ["PISANOVA", "AG-PISA"], // FERIE VALENTINA: era "VALENTINA"
   ["PORTA A LUCCA", "AG-PISA"], // FERIE GIUSEPPE: era "GIUSEPPE"
   ["PORTA A MARE", "MARCO"],
   ["PORTA FIORENTINA", "MASSIMO"],
   ["BORGATA SESTRIERE", "MASSIMO"],
-  ["PORTA NUOVA", "MATTIA"],
+  ["PORTA NUOVA", "AG-PISA"], // FERIE MATTIA: era "MATTIA"
   ["PRATALE", "AG-PISA"], // FERIE GIUSEPPE: era "GIUSEPPE"
   ["PUTIGNANO", "AG-PISA"],
   ["RIGLIONE", "AG-PISA"],
@@ -35,7 +35,7 @@ const HARD_CODED_ZONE_SHEET_MAPPING: Array<[string, string]> = [
   ["SAN MARTINO", "SAMUELE"],
   ["SAN PIERO A GRADO", "LUIGI"],
   ["SAN ROSSORE", "LUIGI"],
-  ["SANTA MARIA", "MATTIA"],
+  ["SANTA MARIA", "AG-PISA"], // FERIE MATTIA: era "MATTIA"
   ["SANT'ANTONIO", "MARCO"],
   ["SANT'ERMETE", "MASSIMO"],
   ["STAZIONE", "SAMUELE"],
@@ -59,10 +59,10 @@ const HARD_CODED_ZONE_SHEET_MAPPING: Array<[string, string]> = [
   ["Tre Colli", "AG-PISA"], // FERIE GIUSEPPE: era "GIUSEPPE"
   ["Villa Sant'Andrea", "AG-PISA"], // FERIE GIUSEPPE: era "GIUSEPPE"
   ["Calcinaia", "REBECCA"],
-  ["Fornacette", "REBECCA"],
-  ["Montecchio", "REBECCA"],
-  ["Oltrarno", "REBECCA"],
-  ["Pardossi", "REBECCA"],
+  ["Fornacette", "AG-PONTEDERA"],
+  ["Montecchio", "AG-PONTEDERA"],
+  ["Oltrarno", "AG-PONTEDERA"],
+  ["Pardossi", "AG-PONTEDERA"],
   ["Capannoli", "AG-PONTEDERA"],
   ["San Pietro Belvedere", "AG-PISA"],
   ["Santo Pietro Belvedere", "AG-PISA"],
