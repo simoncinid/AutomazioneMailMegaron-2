@@ -132,19 +132,19 @@ const AGENCY_ZONE_BY_SHEET: Partial<Record<string, AgencyZone>> = {
 };
 
 const POOL_CODES_BY_ZONE: Record<AgencyZone, string[]> = {
-  // FERIE GIUSEPPE / MATTIA / VALENTINA: ripristinare in pisa al rientro
+  // FERIE: ripristinare al rientro — giuseppe, mattia, valentina, marco, samuele, marta (pisa); fausto (pontedera)
   // rebecca: solo pool pontedera (non pisa)
-  pontedera: ["rebecca", "patrizia", "fausto", "elisabetta", "attilio", "luis"],
+  pontedera: ["rebecca", "patrizia", "elisabetta", "attilio", "luis"],
   livorno: ["matteo", "viviana", "massimiliano", "guido"],
   lucca: ["alfredo", "fernando", "mary"],
-  pisa: ["massimo", "davide", "eros", "samuele", "tommaso", "stefania", "marco", "marta"],
+  pisa: ["massimo", "davide", "eros", "tommaso", "stefania"],
   viareggio: [],
 };
 
 const AGENT_OWNER_ZONE_BY_CODE: Partial<Record<string, AgencyZone>> = {
   rebecca: "pontedera",
   patrizia: "pontedera",
-  fausto: "pontedera",
+  // fausto: "pontedera", // FERIE FAUSTO: ripristinare al rientro
   elisabetta: "pontedera",
   attilio: "pontedera",
   luis: "pontedera",
@@ -158,14 +158,14 @@ const AGENT_OWNER_ZONE_BY_CODE: Partial<Record<string, AgencyZone>> = {
   mary: "lucca",
   massimo: "pisa",
   davide: "pisa",
-  samuele: "pisa",
+  // samuele: "pisa", // FERIE SAMUELE: ripristinare al rientro
   // giuseppe: "pisa", // FERIE GIUSEPPE: ripristinare al rientro
   tommaso: "pisa",
   // mattia: "pisa", // FERIE MATTIA: ripristinare al rientro
   stefania: "pisa",
   // valentina: "pisa", // FERIE VALENTINA: ripristinare al rientro
-  marco: "pisa",
-  marta: "pisa",
+  // marco: "pisa", // FERIE MARCO: ripristinare al rientro
+  // marta: "pisa", // FERIE MARTA: ripristinare al rientro
 };
 
 function buildAgentZoneByCode(): Map<string, AgencyZone> {

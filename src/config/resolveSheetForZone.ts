@@ -57,7 +57,8 @@ function pickSheetByZoneCityProvince(
       return null;
     case "cevoli":
       if (cityIn("vicopisano")) return "LUIS";
-      if (cityIn("casciana terme lari")) return "FAUSTO";
+      // FERIE FAUSTO: era "FAUSTO"
+      if (cityIn("casciana terme lari")) return "AG-PONTEDERA";
       return null;
     case "darsena":
       if (cityIn("livorno")) return "AG-LIVORNO";
@@ -75,7 +76,8 @@ function pickSheetByZoneCityProvince(
       if (cityIn("chianni")) return "AG-PONTEDERA";
       return null;
     case "lorenzana":
-      if (cityIn("crespina lorenzana")) return "FAUSTO";
+      // FERIE FAUSTO: era "FAUSTO"
+      if (cityIn("crespina lorenzana")) return "AG-PONTEDERA";
       if (provinceIn("pisa")) return "AG-PISA";
       return null;
     case "marciana":
@@ -91,11 +93,13 @@ function pickSheetByZoneCityProvince(
       if (cityIn("pontedera")) return "AG-PONTEDERA";
       return null;
     case "porta a mare":
-      if (cityIn("pisa")) return "MARCO";
+      // FERIE MARCO: era "MARCO"
+      if (cityIn("pisa")) return "AG-PISA";
       if (cityIn("livorno")) return "GUIDO";
       return null;
     case "quattro strade":
-      if (cityIn("casciana terme lari")) return "FAUSTO";
+      // FERIE FAUSTO: era "FAUSTO"
+      if (cityIn("casciana terme lari")) return "AG-PONTEDERA";
       if (cityIn("bientina")) return "AG-PONTEDERA";
       return null;
     case "quatro strade":
@@ -107,11 +111,13 @@ function pickSheetByZoneCityProvince(
       if (cityIn("lucca")) return "AG-LUCCA";
       return null;
     case "san marco":
-      if (cityIn("pisa")) return "MARTA";
+      // FERIE MARTA: era "MARTA"
+      if (cityIn("pisa")) return "AG-PISA";
       if (cityIn("lucca")) return "AG-LUCCA";
       return null;
     case "san giusto":
-      if (cityIn("pisa")) return "MARTA";
+      // FERIE MARTA: era "MARTA"
+      if (cityIn("pisa")) return "AG-PISA";
       if (cityIn("lucca")) return "AG-LUCCA";
       return null;
     case "sant'anna":
@@ -125,11 +131,13 @@ function pickSheetByZoneCityProvince(
       return null;
     case "stazione":
       if (cityIn("pontedera")) return "ELISABETTA";
-      if (cityIn("pisa")) return "SAMUELE";
+      // FERIE SAMUELE: era "SAMUELE"
+      if (cityIn("pisa")) return "AG-PISA";
       return null;
     case "usigliano":
       if (cityIn("palaia")) return "AG-PONTEDERA";
-      if (cityIn("casciana terme lari")) return "FAUSTO";
+      // FERIE FAUSTO: era "FAUSTO"
+      if (cityIn("casciana terme lari")) return "AG-PONTEDERA";
       return null;
     default:
       return null;

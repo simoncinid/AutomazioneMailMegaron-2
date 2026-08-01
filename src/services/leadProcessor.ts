@@ -41,15 +41,15 @@ const PISA_AGENT_SHEETS = [
   "MASSIMO",
   "DAVIDE",
   "EROS",
-  "SAMUELE",
+  // "SAMUELE", // FERIE SAMUELE: ripristinare al rientro
   // "GIUSEPPE", // FERIE GIUSEPPE: ripristinare al rientro
   "TOMMASO",
   // "REBECCA", // solo pool Pontedera, non Pisa
   // "MATTIA", // FERIE MATTIA: ripristinare al rientro
   "STEFANIA",
   // "VALENTINA", // FERIE VALENTINA: ripristinare al rientro
-  "MARCO",
-  "MARTA",
+  // "MARCO", // FERIE MARCO: ripristinare al rientro
+  // "MARTA", // FERIE MARTA: ripristinare al rientro
 ] as const;
 const LUCCA_VIAREGGIO_AGENT_SHEETS = [
   "ALFREDO",
@@ -57,7 +57,7 @@ const LUCCA_VIAREGGIO_AGENT_SHEETS = [
 ] as const;
 const PONTEDERA_AGENT_SHEETS = [
   "REBECCA",
-  "FAUSTO",
+  // "FAUSTO", // FERIE FAUSTO: ripristinare al rientro
   "ELISABETTA",
   "LUIS",
 ] as const;
