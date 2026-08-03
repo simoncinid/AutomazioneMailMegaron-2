@@ -77,7 +77,7 @@ function buildEnv(): AppEnv {
         pattern: "BARBARICINA",
         match: "contains",
         spreadsheetId: "spreadsheet-id",
-        sheetTitle: "LUIGI",
+        sheetTitle: "AG-PISA",
       },
       {
         name: "venezia_pontino",
@@ -151,7 +151,7 @@ describe("processInboundEmail AG-PISA routing", () => {
     } as unknown as ListingRepository;
 
     const env = buildEnv();
-    for (let i = 0; i < 5; i += 1) {
+    for (let i = 0; i < 6; i += 1) {
       const id = i % 2 === 0 ? `passi-${i}` : `calambrone-${i}`;
       await processInboundEmail(
         {
@@ -171,6 +171,7 @@ describe("processInboundEmail AG-PISA routing", () => {
       "DAVIDE",
       "EROS",
       "TOMMASO",
+      "MATTIA",
       "STEFANIA",
     ]);
     expect(appended.map((row) => row.sheetTitle)).not.toContain("ELISABETTA");
@@ -257,7 +258,7 @@ describe("processInboundEmail AG-PISA routing", () => {
     expect(appended.map((row) => row.sheetTitle)).not.toContain("EROS");
   });
 
-  it("mantiene LUIGI e LISA come assegnazioni dirette fuori dai pool AG", async () => {
+  it("mantiene LISA come assegnazione diretta e instrada ex-LUIGI su pool Pisa", async () => {
     const { processInboundEmail } = await import("../src/services/leadProcessor.js");
     const appended: LeadRowPayload[] = [];
     const sheets = {
@@ -292,7 +293,7 @@ describe("processInboundEmail AG-PISA routing", () => {
       new Date("2026-05-25T10:00:00Z"),
     );
 
-    expect(appended.map((row) => row.sheetTitle)).toEqual(["LUIGI", "LISA"]);
+    expect(appended.map((row) => row.sheetTitle)).toEqual(["MASSIMO", "LISA"]);
   });
 
   it("assegna randomicamente le zone ex Patrizia sul pool Pisa", async () => {

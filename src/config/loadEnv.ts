@@ -5,16 +5,16 @@ import { logger } from "../logging/logger.js";
 import { loadZoneMappingFromSheet } from "../sheets/loadZoneMappingFromSheet.js";
 
 const HARD_CODED_ZONE_SHEET_MAPPING: Array<[string, string]> = [
-  ["BARBARICINA", "LUIGI"],
+  ["BARBARICINA", "AG-PISA"], // FERIE LUIGI: era "LUIGI"
   ["BORGHETTO", "EROS"],
   ["CALAMBRONE", "AG-PISA"],
-  ["CEP", "LUIGI"],
+  ["CEP", "AG-PISA"], // FERIE LUIGI: era "LUIGI"
   ["CISANELLO", "STEFANIA"],
   ["COLTANO", "REBECCA"],
   ["DON BOSCO", "AG-PISA"], // FERIE VALENTINA: era "VALENTINA"
   ["GAGNO", "AG-PISA"],
   ["I PASSI", "AG-PISA"],
-  ["LA VETTOLA", "LUIGI"],
+  ["LA VETTOLA", "AG-PISA"], // FERIE LUIGI: era "LUIGI"
   ["MARINA DI PISA", "AG-PISA"],
   ["MONTACCHIELLO", "REBECCA"],
   ["ORATOIO", "AG-PISA"],
@@ -25,7 +25,7 @@ const HARD_CODED_ZONE_SHEET_MAPPING: Array<[string, string]> = [
   ["PORTA A MARE", "AG-PISA"], // FERIE MARCO: era "MARCO"
   ["PORTA FIORENTINA", "MASSIMO"],
   ["BORGATA SESTRIERE", "MASSIMO"],
-  ["PORTA NUOVA", "AG-PISA"], // FERIE MATTIA: era "MATTIA"
+  ["PORTA NUOVA", "MATTIA"],
   ["PRATALE", "AG-PISA"], // FERIE GIUSEPPE: era "GIUSEPPE"
   ["PUTIGNANO", "AG-PISA"],
   ["RIGLIONE", "AG-PISA"],
@@ -33,9 +33,9 @@ const HARD_CODED_ZONE_SHEET_MAPPING: Array<[string, string]> = [
   ["SAN GIUSTO", "AG-PISA"], // FERIE MARTA: era "MARTA"
   ["SAN MARCO", "AG-PISA"], // FERIE MARTA: era "MARTA"
   ["SAN MARTINO", "AG-PISA"], // FERIE SAMUELE: era "SAMUELE"
-  ["SAN PIERO A GRADO", "LUIGI"],
-  ["SAN ROSSORE", "LUIGI"],
-  ["SANTA MARIA", "AG-PISA"], // FERIE MATTIA: era "MATTIA"
+  ["SAN PIERO A GRADO", "AG-PISA"], // FERIE LUIGI: era "LUIGI"
+  ["SAN ROSSORE", "AG-PISA"], // FERIE LUIGI: era "LUIGI"
+  ["SANTA MARIA", "MATTIA"],
   ["SANT'ANTONIO", "AG-PISA"], // FERIE MARCO: era "MARCO"
   ["SANT'ERMETE", "MASSIMO"],
   ["STAZIONE", "AG-PISA"], // FERIE SAMUELE: era "SAMUELE"
