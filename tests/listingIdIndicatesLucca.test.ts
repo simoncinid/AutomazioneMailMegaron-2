@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { listingIdIndicatesLucca } from "../src/services/leadProcessor.js";
+import {
+  listingIdIndicatesLucca,
+  resolveDirectAgentSheetForListingId,
+} from "../src/services/leadProcessor.js";
 
 describe("listingIdIndicatesLucca", () => {
   it("riconosce LU in qualsiasi combinazione di maiuscole/minuscole", () => {
@@ -14,5 +17,18 @@ describe("listingIdIndicatesLucca", () => {
     expect(listingIdIndicatesLucca("2024057")).toBe(false);
     expect(listingIdIndicatesLucca("2026LI025")).toBe(false);
     expect(listingIdIndicatesLucca("")).toBe(false);
+  });
+});
+
+describe("resolveDirectAgentSheetForListingId", () => {
+  it("instrada 2026181 su MATTEO", () => {
+    expect(resolveDirectAgentSheetForListingId("2026181")).toBe("MATTEO");
+    expect(resolveDirectAgentSheetForListingId(" 2026181 ")).toBe("MATTEO");
+  });
+
+  it("non applica override ad altri ID", () => {
+    expect(resolveDirectAgentSheetForListingId("2024057")).toBeUndefined();
+    expect(resolveDirectAgentSheetForListingId("")).toBeUndefined();
+    expect(resolveDirectAgentSheetForListingId("NO-ID")).toBeUndefined();
   });
 });

@@ -194,6 +194,21 @@ function isAgLivornoSheet(sheetTitle: string): boolean {
   return normalizeSheetKey(sheetTitle) === "ag-livorno";
 }
 
+/**
+ * ID annuncio con assegnazione diretta a un agente (salta zona/pool AG-*).
+ * Chiave = riferimento estratto dalla mail (es. "2026181").
+ */
+const LISTING_ID_DIRECT_SHEETS: Readonly<Record<string, string>> = {
+  "2026181": "MATTEO",
+};
+
+/** Se l'ID ha un override, restituisce il titolo del tab agente (es. "MATTEO"). */
+export function resolveDirectAgentSheetForListingId(listingId: string): string | undefined {
+  const id = listingId.trim();
+  if (!id || id === "NO-ID") return undefined;
+  return LISTING_ID_DIRECT_SHEETS[id];
+}
+
 /** ID annuncio con sotto-stringa "lu" (qualsiasi maiuscole/minuscole) -> territorio Lucca. */
 export function listingIdIndicatesLucca(listingId: string): boolean {
   const id = listingId.trim();
@@ -647,6 +662,32 @@ export async function processInboundEmail(
   let target: SheetTarget | null = null;
   let routingLog = "fallback_default";
 
+  const directSheet = resolveDirectAgentSheetForListingId(listingId);
+  if (directSheet) {
+    try {
+      let listing = deps.listingCache?.get(listingId) ?? null;
+      if (!deps.listingCache?.has(listingId)) {
+        listing = await deps.listings.findLatestByExternalListingId(listingId);
+        deps.listingCache?.set(listingId, listing);
+      }
+      zone = listing?.zone?.trim() ?? "";
+      leadProvince = listing?.province?.trim() ?? "";
+    } catch (e) {
+      log.warn(
+        { err: e, uid: uidLabel, listingId, sheet: directSheet },
+        "[routing] lookup zona fallito su assegnazione diretta (proseguo comunque)",
+      );
+    }
+    target = {
+      spreadsheetId: deps.env.defaultSpreadsheetIdResolved,
+      sheetTitle: directSheet,
+    };
+    routingLog = `listing_id_direct:${directSheet}`;
+    log.info(
+      { uid: uidLabel, listingId, sheet: directSheet },
+      "[routing] assegnazione diretta per ID annuncio",
+    );
+  } else {
   try {
     let listing = deps.listingCache?.get(listingId) ?? null;
     if (!deps.listingCache?.has(listingId)) {
@@ -841,6 +882,7 @@ export async function processInboundEmail(
       );
     }
     return;
+  }
   }
 
   if (!target) {

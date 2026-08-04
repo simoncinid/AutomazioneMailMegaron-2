@@ -259,6 +259,63 @@ describe("processInboundEmail AG-PISA routing", () => {
     expect(appended.map((row) => row.sheetTitle)).not.toContain("EROS");
   });
 
+  it("assegna direttamente a MATTEO i lead con riferimento 2026181", async () => {
+    const { processInboundEmail } = await import("../src/services/leadProcessor.js");
+    const appended: LeadRowPayload[] = [];
+    const noIdRows: unknown[] = [];
+    const sheets = {
+      appendLead: vi.fn(async (payload: LeadRowPayload) => {
+        appended.push(payload);
+      }),
+      appendNoId: vi.fn(async (payload: unknown) => {
+        noIdRows.push(payload);
+      }),
+    } as unknown as GoogleSheetsWriter;
+    const listings = {
+      findLatestByExternalListingId: vi.fn(async () => ({
+        ...buildListing("livorno-0"),
+        externalListingId: "2026181",
+        zone: "MONTEBELLO",
+      })),
+    } as unknown as ListingRepository;
+
+    await processInboundEmail(
+      {
+        messageId: "message-direct-matteo-2026181",
+        from: "portal@example.com",
+        subject: "2026181",
+        receivedAt: new Date("2026-05-25T10:00:00Z"),
+        textBody: "Lead Rif. 2026181",
+      },
+      { env: buildEnv(), listings, sheets },
+      new Date("2026-05-25T10:00:00Z"),
+    );
+
+    // Anche senza zona in gestim, l'override deve comunque andare a MATTEO
+    await processInboundEmail(
+      {
+        messageId: "message-direct-matteo-2026181-no-zone",
+        from: "portal@example.com",
+        subject: "2026181",
+        receivedAt: new Date("2026-05-25T10:00:00Z"),
+        textBody: "Lead Rif. 2026181 senza zona",
+      },
+      {
+        env: buildEnv(),
+        listings: {
+          findLatestByExternalListingId: vi.fn(async () => null),
+        } as unknown as ListingRepository,
+        sheets,
+      },
+      new Date("2026-05-25T10:00:00Z"),
+    );
+
+    expect(appended).toHaveLength(2);
+    expect(appended.every((row) => row.sheetTitle === "MATTEO")).toBe(true);
+    expect(appended.every((row) => row.listingId === "2026181")).toBe(true);
+    expect(noIdRows).toHaveLength(0);
+  });
+
   it("mantiene LISA come assegnazione diretta e instrada ex-LUIGI su pool Pisa", async () => {
     const { processInboundEmail } = await import("../src/services/leadProcessor.js");
     const appended: LeadRowPayload[] = [];
