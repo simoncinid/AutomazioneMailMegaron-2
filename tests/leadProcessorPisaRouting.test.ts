@@ -151,7 +151,7 @@ describe("processInboundEmail AG-PISA routing", () => {
     } as unknown as ListingRepository;
 
     const env = buildEnv();
-    for (let i = 0; i < 6; i += 1) {
+    for (let i = 0; i < 7; i += 1) {
       const id = i % 2 === 0 ? `passi-${i}` : `calambrone-${i}`;
       await processInboundEmail(
         {
@@ -170,6 +170,7 @@ describe("processInboundEmail AG-PISA routing", () => {
       "MASSIMO",
       "DAVIDE",
       "EROS",
+      "SAMUELE",
       "TOMMASO",
       "MATTIA",
       "STEFANIA",

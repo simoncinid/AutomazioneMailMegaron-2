@@ -131,8 +131,8 @@ function pickSheetByZoneCityProvince(
       return null;
     case "stazione":
       if (cityIn("pontedera")) return "ELISABETTA";
-      // FERIE SAMUELE: era "SAMUELE"
-      if (cityIn("pisa")) return "AG-PISA";
+      // FERIE SAMUELE: ripristinato — era "AG-PISA" in ferie
+      if (cityIn("pisa")) return "SAMUELE";
       return null;
     case "usigliano":
       if (cityIn("palaia")) return "AG-PONTEDERA";

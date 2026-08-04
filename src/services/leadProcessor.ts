@@ -41,7 +41,7 @@ const PISA_AGENT_SHEETS = [
   "MASSIMO",
   "DAVIDE",
   "EROS",
-  // "SAMUELE", // FERIE SAMUELE: ripristinare al rientro
+  "SAMUELE",
   // "GIUSEPPE", // FERIE GIUSEPPE: ripristinare al rientro
   "TOMMASO",
   // "REBECCA", // solo pool Pontedera, non Pisa
