@@ -9,17 +9,17 @@ const HARD_CODED_ZONE_SHEET_MAPPING: Array<[string, string]> = [
   ["BORGHETTO", "EROS"],
   ["CALAMBRONE", "AG-PISA"],
   ["CEP", "AG-PISA"], // FERIE LUIGI: era "LUIGI"
-  ["CISANELLO", "STEFANIA"],
-  ["COLTANO", "REBECCA"],
+  ["CISANELLO", "STEFANIA"], // FERIE STEFANIA: era "STEFANIA"
+  ["COLTANO", "REBECCA"], // FERIE REBECCA: era "REBECCA"
   ["DON BOSCO", "AG-PISA"], // FERIE VALENTINA: era "VALENTINA"
   ["GAGNO", "AG-PISA"],
   ["I PASSI", "AG-PISA"],
   ["LA VETTOLA", "AG-PISA"], // FERIE LUIGI: era "LUIGI"
   ["MARINA DI PISA", "AG-PISA"],
-  ["MONTACCHIELLO", "REBECCA"],
+  ["MONTACCHIELLO", "REBECCA"], // FERIE REBECCA: era "REBECCA"
   ["ORATOIO", "AG-PISA"],
-  ["OSPEDALETTO", "REBECCA"],
-  ["PIAGGE", "STEFANIA"],
+  ["OSPEDALETTO", "REBECCA"], // FERIE REBECCA: era "REBECCA"
+  ["PIAGGE", "STEFANIA"], // FERIE STEFANIA: era "STEFANIA"
   ["PISANOVA", "AG-PISA"], // FERIE VALENTINA: era "VALENTINA"
   ["PORTA A LUCCA", "AG-PISA"], // FERIE GIUSEPPE: era "GIUSEPPE"
   ["PORTA A MARE", "AG-PISA"], // FERIE MARCO: era "MARCO"
@@ -58,7 +58,7 @@ const HARD_CODED_ZONE_SHEET_MAPPING: Array<[string, string]> = [
   ["Santa Lucia", "AG-PISA"], // FERIE GIUSEPPE: era "GIUSEPPE"
   ["Tre Colli", "AG-PISA"], // FERIE GIUSEPPE: era "GIUSEPPE"
   ["Villa Sant'Andrea", "AG-PISA"], // FERIE GIUSEPPE: era "GIUSEPPE"
-  ["Calcinaia", "REBECCA"],
+  ["Calcinaia", "REBECCA"], // FERIE REBECCA: era "REBECCA"
   ["Fornacette", "AG-PONTEDERA"],
   ["Montecchio", "AG-PONTEDERA"],
   ["Oltrarno", "AG-PONTEDERA"],
@@ -156,7 +156,7 @@ const HARD_CODED_ZONE_SHEET_MAPPING: Array<[string, string]> = [
   ["BRACCIONI PIETROCONTI", "AG-PONTEDERA"],
   ["BRACCIONI", "AG-PONTEDERA"],
   ["PIETROCONTI", "AG-PONTEDERA"],
-  ["CENTRO", "ELISABETTA"],
+  ["CENTRO", "ELISABETTA"], // FERIE ELISABETTA: era "ELISABETTA"
   ["CHIESINO", "AG-PONTEDERA"],
   ["GELLO", "AG-PONTEDERA"],
   ["I FABBRI", "AG-PONTEDERA"],
@@ -166,11 +166,11 @@ const HARD_CODED_ZONE_SHEET_MAPPING: Array<[string, string]> = [
   ["LA ROTTA", "AG-PONTEDERA"],
   ["MONTECASTELLO", "AG-PONTEDERA"],
   ["OLTRERA", "AG-PONTEDERA"],
-  ["OSPEDALE", "ELISABETTA"],
+  ["OSPEDALE", "ELISABETTA"], // FERIE ELISABETTA: era "ELISABETTA"
   ["PARDOSSI", "AG-PONTEDERA"],
   ["SANTA LUCIA", "AG-PONTEDERA"],
-  ["STADIO", "ELISABETTA"],
-  ["STAZIONE", "ELISABETTA"],
+  ["STADIO", "ELISABETTA"], // FERIE ELISABETTA: era "ELISABETTA"
+  ["STAZIONE", "ELISABETTA"], // FERIE ELISABETTA: era "ELISABETTA"
   ["TREGGIAIA", "AG-PONTEDERA"],
   ["VILLAGGIO GRAMSCI", "AG-PONTEDERA"],
   ["Caccialupi", "AG-PONTEDERA"],
@@ -325,60 +325,60 @@ const HARD_CODED_ZONE_SHEET_MAPPING: Array<[string, string]> = [
   ["FUCECCHIO - BOTTEGHE", "AG-PONTEDERA"],
   ["Pomarance", "AG-PISA"],
   ["Ponsacco", "AG-PISA"],
-  ["Pontedera", "ELISABETTA"],
+  ["Pontedera", "ELISABETTA"], // FERIE ELISABETTA: era "ELISABETTA"
   ["Riparbella", "AG-PISA"],
-  ["San Giuliano Terme", "DAVIDE"],
-  ["Agnano", "DAVIDE"],
-  ["Arena-Metato", "DAVIDE"],
-  ["Asciano", "DAVIDE"],
-  ["Asciano Pisano", "DAVIDE"],
-  ["Campo", "DAVIDE"],
-  ["Capoluogo", "DAVIDE"],
-  ["Cnr", "DAVIDE"],
-  ["Colignola", "DAVIDE"],
-  ["Colognole", "DAVIDE"],
-  ["Gello", "DAVIDE"],
-  ["Ghezzano", "DAVIDE"],
-  ["La Fontina", "DAVIDE"],
-  ["Madonna dell'Acqua", "DAVIDE"],
-  ["Mezzana", "DAVIDE"],
-  ["Molina di Quosa", "DAVIDE"],
-  ["no zona", "DAVIDE"],
-  ["Orzignano", "DAVIDE"],
-  ["Pappiana", "DAVIDE"],
-  ["Pontasserchio", "DAVIDE"],
-  ["Pugnano", "DAVIDE"],
-  ["Rigoli", "DAVIDE"],
-  ["Ripafratta", "DAVIDE"],
-  ["S. Andrea A Pescaiola", "DAVIDE"],
-  ["San Martino a Ulmiano", "DAVIDE"],
-  ["Sant'Andrea a Pescaiola", "DAVIDE"],
+  ["San Giuliano Terme", "DAVIDE"], // FERIE DAVIDE: era "DAVIDE"
+  ["Agnano", "DAVIDE"], // FERIE DAVIDE: era "DAVIDE"
+  ["Arena-Metato", "DAVIDE"], // FERIE DAVIDE: era "DAVIDE"
+  ["Asciano", "DAVIDE"], // FERIE DAVIDE: era "DAVIDE"
+  ["Asciano Pisano", "DAVIDE"], // FERIE DAVIDE: era "DAVIDE"
+  ["Campo", "DAVIDE"], // FERIE DAVIDE: era "DAVIDE"
+  ["Capoluogo", "DAVIDE"], // FERIE DAVIDE: era "DAVIDE"
+  ["Cnr", "DAVIDE"], // FERIE DAVIDE: era "DAVIDE"
+  ["Colignola", "DAVIDE"], // FERIE DAVIDE: era "DAVIDE"
+  ["Colognole", "DAVIDE"], // FERIE DAVIDE: era "DAVIDE"
+  ["Gello", "DAVIDE"], // FERIE DAVIDE: era "DAVIDE"
+  ["Ghezzano", "DAVIDE"], // FERIE DAVIDE: era "DAVIDE"
+  ["La Fontina", "DAVIDE"], // FERIE DAVIDE: era "DAVIDE"
+  ["Madonna dell'Acqua", "DAVIDE"], // FERIE DAVIDE: era "DAVIDE"
+  ["Mezzana", "DAVIDE"], // FERIE DAVIDE: era "DAVIDE"
+  ["Molina di Quosa", "DAVIDE"], // FERIE DAVIDE: era "DAVIDE"
+  ["no zona", "DAVIDE"], // FERIE DAVIDE: era "DAVIDE"
+  ["Orzignano", "DAVIDE"], // FERIE DAVIDE: era "DAVIDE"
+  ["Pappiana", "DAVIDE"], // FERIE DAVIDE: era "DAVIDE"
+  ["Pontasserchio", "DAVIDE"], // FERIE DAVIDE: era "DAVIDE"
+  ["Pugnano", "DAVIDE"], // FERIE DAVIDE: era "DAVIDE"
+  ["Rigoli", "DAVIDE"], // FERIE DAVIDE: era "DAVIDE"
+  ["Ripafratta", "DAVIDE"], // FERIE DAVIDE: era "DAVIDE"
+  ["S. Andrea A Pescaiola", "DAVIDE"], // FERIE DAVIDE: era "DAVIDE"
+  ["San Martino a Ulmiano", "DAVIDE"], // FERIE DAVIDE: era "DAVIDE"
+  ["Sant'Andrea a Pescaiola", "DAVIDE"], // FERIE DAVIDE: era "DAVIDE"
   ["San Miniato", "AG-PISA"],
   ["San Vincenzo", "AG-LIVORNO"],
   ["Sassetta", "AG-LIVORNO"],
   ["Santa Croce sull'Arno", "AG-PISA"],
   ["Santa Luce", "AG-PISA"],
   ["Suvereto", "AG-LIVORNO"],
-  ["Vecchiano", "DAVIDE"],
-  ["Avane", "DAVIDE"],
-  ["Filettole", "DAVIDE"],
-  ["Marina Di Vecchiano", "DAVIDE"],
-  ["Migliarino", "DAVIDE"],
-  ["Nodica", "DAVIDE"],
-  ["Vicopisano", "LUIS"],
-  ["Capoluogo", "LUIS"],
-  ["Caprona", "LUIS"],
-  ["Cevoli", "LUIS"],
-  ["Cucigliana", "LUIS"],
-  ["Guerrazzi", "LUIS"],
-  ["Loc. Lucchetta", "LUIS"],
-  ["Lugnano", "LUIS"],
-  ["Noce", "LUIS"],
-  ["Noce da togliere", "LUIS"],
-  ["Novi", "LUIS"],
-  ["S. Andrea", "LUIS"],
-  ["San Giovanni alla Vena", "LUIS"],
-  ["Uliveto Terme", "LUIS"],
+  ["Vecchiano", "DAVIDE"], // FERIE DAVIDE: era "DAVIDE"
+  ["Avane", "DAVIDE"], // FERIE DAVIDE: era "DAVIDE"
+  ["Filettole", "DAVIDE"], // FERIE DAVIDE: era "DAVIDE"
+  ["Marina Di Vecchiano", "DAVIDE"], // FERIE DAVIDE: era "DAVIDE"
+  ["Migliarino", "DAVIDE"], // FERIE DAVIDE: era "DAVIDE"
+  ["Nodica", "DAVIDE"], // FERIE DAVIDE: era "DAVIDE"
+  ["Vicopisano", "LUIS"], // FERIE LUIS: era "LUIS"
+  ["Capoluogo", "LUIS"], // FERIE LUIS: era "LUIS"
+  ["Caprona", "LUIS"], // FERIE LUIS: era "LUIS"
+  ["Cevoli", "LUIS"], // FERIE LUIS: era "LUIS"
+  ["Cucigliana", "LUIS"], // FERIE LUIS: era "LUIS"
+  ["Guerrazzi", "LUIS"], // FERIE LUIS: era "LUIS"
+  ["Loc. Lucchetta", "LUIS"], // FERIE LUIS: era "LUIS"
+  ["Lugnano", "LUIS"], // FERIE LUIS: era "LUIS"
+  ["Noce", "LUIS"], // FERIE LUIS: era "LUIS"
+  ["Noce da togliere", "LUIS"], // FERIE LUIS: era "LUIS"
+  ["Novi", "LUIS"], // FERIE LUIS: era "LUIS"
+  ["S. Andrea", "LUIS"], // FERIE LUIS: era "LUIS"
+  ["San Giovanni alla Vena", "LUIS"], // FERIE LUIS: era "LUIS"
+  ["Uliveto Terme", "LUIS"], // FERIE LUIS: era "LUIS"
   ["Volterra", "AG-PISA"],
   ["Bibbona", "AG-LIVORNO"],
   ["Campiglia Marittima", "AG-LIVORNO"],

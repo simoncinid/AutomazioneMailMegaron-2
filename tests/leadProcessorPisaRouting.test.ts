@@ -151,7 +151,7 @@ describe("processInboundEmail AG-PISA routing", () => {
     } as unknown as ListingRepository;
 
     const env = buildEnv();
-    for (let i = 0; i < 7; i += 1) {
+    for (let i = 0; i < 5; i += 1) {
       const id = i % 2 === 0 ? `passi-${i}` : `calambrone-${i}`;
       await processInboundEmail(
         {
@@ -168,12 +168,10 @@ describe("processInboundEmail AG-PISA routing", () => {
 
     expect(appended.map((row) => row.sheetTitle)).toEqual([
       "MASSIMO",
-      "DAVIDE",
       "EROS",
       "SAMUELE",
       "TOMMASO",
       "MATTIA",
-      "STEFANIA",
     ]);
     expect(appended.map((row) => row.sheetTitle)).not.toContain("ELISABETTA");
     expect(appended.map((row) => row.sheetTitle)).not.toContain("FAUSTO");
@@ -384,7 +382,7 @@ describe("processInboundEmail AG-PISA routing", () => {
     }
 
     expect(appended).toHaveLength(1);
-    expect(appended[0]?.sheetTitle).toBe("DAVIDE");
+    expect(appended[0]?.sheetTitle).toBe("EROS");
   });
 
   it("assegna AG-LUCCA solo agli agenti del pool Lucca", async () => {

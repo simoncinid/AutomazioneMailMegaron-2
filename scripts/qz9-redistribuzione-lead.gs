@@ -7,16 +7,16 @@
  * 2) qz9InstallTriggerGiornaliero    (una volta)
  *
  * POOL ATTIVI
- * - Pisa:      massimo, davide, eros, tommaso, mattia, samuele, stefania
- * - Pontedera: rebecca, elisabetta, luis
+ * - Pisa:      massimo, eros, tommaso, mattia, samuele
+ * - Pontedera: (nessuno — tutti in ferie)
  * - Livorno:   matteo, viviana, massimiliano, guido
  * - Lucca:     alfredo, mary
  *
  * FERIE (zone -> AG-PISA / AG-PONTEDERA nel backend, fuori pool)
- * - Pisa:      giuseppe, valentina, marco, marta, luigi
- * - Pontedera: fausto
+ * - Pisa:      giuseppe, valentina, marco, marta, luigi, stefania, davide
+ * - Pontedera: fausto, elisabetta, rebecca, luis
  *
- * Rebecca: attiva, solo pool Pontedera (+ routing per provincia col. J)
+ * Rebecca (ferie): tab sorgente + routing provincia col. J verso pool attivi
  */
 
 const qz9Cfg = {
@@ -53,20 +53,15 @@ const qz9KeepAgencySheets = new Set(["AG-PISA", "AG-LUCCA", "AG-VIAREGGIO"]);
  * Per riattivare un agente in ferie: aggiungerlo qui + qz9AgentOwnerZoneByCode.
  */
 const qz9PoolsByZone = {
-  pontedera: ["rebecca", "elisabetta", "luis"],
+  pontedera: [],
   livorno: ["matteo", "viviana", "massimiliano", "guido"],
   lucca: ["alfredo", "mary"],
-  pisa: ["massimo", "davide", "eros", "tommaso", "mattia", "samuele", "stefania"],
+  pisa: ["massimo", "eros", "tommaso", "mattia", "samuele"],
   viareggio: [],
 };
 
 // Agenti attivi — owner zona (routing da tab agente)
 const qz9AgentOwnerZoneByCode = {
-  // Pontedera
-  rebecca: "pontedera",
-  elisabetta: "pontedera",
-  luis: "pontedera",
-
   // Livorno
   matteo: "livorno",
   viviana: "livorno",
@@ -80,12 +75,10 @@ const qz9AgentOwnerZoneByCode = {
 
   // Pisa — attivi
   massimo: "pisa",
-  davide: "pisa",
   eros: "pisa",
   tommaso: "pisa",
   mattia: "pisa",
   samuele: "pisa",
-  stefania: "pisa",
 };
 
 /**
@@ -100,18 +93,21 @@ const qz9SuspendedAgentOwnerZone = {
   marco: "pisa",
   marta: "pisa",
   luigi: "pisa",
+  stefania: "pisa",
+  davide: "pisa",
   // Pontedera
   fausto: "pontedera",
+  elisabetta: "pontedera",
+  rebecca: "pontedera",
+  luis: "pontedera",
 };
 
 // Mappa codice agente -> nome tab reale nel file
 const qz9AgentTabByCode = {
-  // Pontedera — attivi
+  // Pontedera — FERIE
   rebecca: "rebecca",
   elisabetta: "elisabetta",
   luis: "luis",
-
-  // Pontedera — FERIE
   fausto: "fausto",
 
   // Livorno
@@ -127,14 +123,14 @@ const qz9AgentTabByCode = {
 
   // Pisa — attivi
   massimo: "massimo",
-  davide: "davide",
   eros: "eros",
   tommaso: "tommaso",
   mattia: "mattia",
   samuele: "samuele",
-  stefania: "stefania",
 
   // Pisa — FERIE
+  davide: "davide",
+  stefania: "stefania",
   giuseppe: "giuseppe",
   valentina: "valentina",
   marco: "marco",

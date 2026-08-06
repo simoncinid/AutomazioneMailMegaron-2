@@ -39,14 +39,14 @@ const DEFAULT_LIVORNO_ROUND_ROBIN_STATE_PATH = join(
 );
 const PISA_AGENT_SHEETS = [
   "MASSIMO",
-  "DAVIDE",
+  // "DAVIDE", // FERIE DAVIDE: ripristinare al rientro
   "EROS",
   "SAMUELE",
   // "GIUSEPPE", // FERIE GIUSEPPE: ripristinare al rientro
   "TOMMASO",
   // "REBECCA", // solo pool Pontedera, non Pisa
   "MATTIA",
-  "STEFANIA",
+  // "STEFANIA", // FERIE STEFANIA: ripristinare al rientro
   // "VALENTINA", // FERIE VALENTINA: ripristinare al rientro
   // "MARCO", // FERIE MARCO: ripristinare al rientro
   // "MARTA", // FERIE MARTA: ripristinare al rientro
@@ -56,10 +56,10 @@ const LUCCA_VIAREGGIO_AGENT_SHEETS = [
   "MARY",
 ] as const;
 const PONTEDERA_AGENT_SHEETS = [
-  "REBECCA",
+  // "REBECCA", // FERIE REBECCA: ripristinare al rientro
   // "FAUSTO", // FERIE FAUSTO: ripristinare al rientro
-  "ELISABETTA",
-  "LUIS",
+  // "ELISABETTA", // FERIE ELISABETTA: ripristinare al rientro
+  // "LUIS", // FERIE LUIS: ripristinare al rientro
 ] as const;
 const LIVORNO_AGENT_SHEETS = [
   "MATTEO",
@@ -809,16 +809,23 @@ export async function processInboundEmail(
       );
     }
     if (isAgPontederaSheet(target.sheetTitle)) {
-      const reassigned = await pickPontederaAgentSheet();
-      const originalSheet = target.sheetTitle;
-      target = {
-        ...target,
-        sheetTitle: reassigned.sheetTitle,
-      };
-      log.info(
-        { uid: uidLabel, listingId, fromSheet: originalSheet, toSheet: target.sheetTitle, strategy: reassigned.strategy },
-        "[routing] AG-PONTEDERA riassegnata pool Pontedera",
-      );
+      if (PONTEDERA_AGENT_SHEETS.length > 0) {
+        const reassigned = await pickPontederaAgentSheet();
+        const originalSheet = target.sheetTitle;
+        target = {
+          ...target,
+          sheetTitle: reassigned.sheetTitle,
+        };
+        log.info(
+          { uid: uidLabel, listingId, fromSheet: originalSheet, toSheet: target.sheetTitle, strategy: reassigned.strategy },
+          "[routing] AG-PONTEDERA riassegnata pool Pontedera",
+        );
+      } else {
+        log.info(
+          { uid: uidLabel, listingId, sheet: target.sheetTitle },
+          "[routing] AG-PONTEDERA: pool Pontedera vuoto (ferie), lead resta su AG-PONTEDERA",
+        );
+      }
     }
     if (isAgLivornoSheet(target.sheetTitle)) {
       const reassigned = await pickLivornoAgentSheet();

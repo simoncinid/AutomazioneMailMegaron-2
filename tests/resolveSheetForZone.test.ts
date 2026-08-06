@@ -64,7 +64,7 @@ describe("resolveSheetForZone", () => {
         pattern: "Capoluogo",
         match: "contains",
         spreadsheetId: "sid",
-        sheetTitle: "DAVIDE",
+        sheetTitle: "AG-PISA",
       },
       {
         pattern: "Capoluogo",
@@ -77,7 +77,7 @@ describe("resolveSheetForZone", () => {
     const r = resolveSheetForZone("Capoluogo", capRules, "sid", "DefaultTab", {
       city: "San Giuliano Terme",
     });
-    expect(r.sheetTitle).toBe("DAVIDE");
+    expect(r.sheetTitle).toBe("AG-PISA");
     expect(r.fallback).toBe(false);
   });
 
