@@ -7,13 +7,13 @@
  * 2) qz9InstallTriggerGiornaliero    (una volta)
  *
  * POOL ATTIVI
- * - Pisa:      massimo, eros, tommaso, mattia, samuele
+ * - Pisa:      massimo, eros, tommaso, mattia, samuele, marco, luigi
  * - Pontedera: (nessuno — tutti in ferie)
  * - Livorno:   matteo, viviana, massimiliano, guido
  * - Lucca:     alfredo, mary
  *
  * FERIE (zone -> AG-PISA / AG-PONTEDERA nel backend, fuori pool)
- * - Pisa:      giuseppe, valentina, marco, marta, luigi, stefania, davide
+ * - Pisa:      giuseppe, valentina, marta, stefania, davide
  * - Pontedera: fausto, elisabetta, rebecca, luis
  *
  * Rebecca (ferie): tab sorgente + routing provincia col. J verso pool attivi
@@ -56,7 +56,7 @@ const qz9PoolsByZone = {
   pontedera: [],
   livorno: ["matteo", "viviana", "massimiliano", "guido"],
   lucca: ["alfredo", "mary"],
-  pisa: ["massimo", "eros", "tommaso", "mattia", "samuele"],
+  pisa: ["massimo", "eros", "tommaso", "mattia", "samuele", "marco", "luigi"],
   viareggio: [],
 };
 
@@ -79,6 +79,8 @@ const qz9AgentOwnerZoneByCode = {
   tommaso: "pisa",
   mattia: "pisa",
   samuele: "pisa",
+  marco: "pisa",
+  luigi: "pisa",
 };
 
 /**
@@ -90,9 +92,7 @@ const qz9SuspendedAgentOwnerZone = {
   // Pisa
   giuseppe: "pisa",
   valentina: "pisa",
-  marco: "pisa",
   marta: "pisa",
-  luigi: "pisa",
   stefania: "pisa",
   davide: "pisa",
   // Pontedera
@@ -127,15 +127,15 @@ const qz9AgentTabByCode = {
   tommaso: "tommaso",
   mattia: "mattia",
   samuele: "samuele",
+  marco: "marco",
+  luigi: "luigi",
 
   // Pisa — FERIE
   davide: "davide",
   stefania: "stefania",
   giuseppe: "giuseppe",
   valentina: "valentina",
-  marco: "marco",
   marta: "Marta",
-  luigi: "luigi",
 };
 
 // Agenti il cui pool destinazione dipende dalla provincia (colonna J)

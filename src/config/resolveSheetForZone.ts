@@ -93,8 +93,7 @@ function pickSheetByZoneCityProvince(
       if (cityIn("pontedera")) return "AG-PONTEDERA";
       return null;
     case "porta a mare":
-      // FERIE MARCO: era "MARCO"
-      if (cityIn("pisa")) return "AG-PISA";
+      if (cityIn("pisa")) return "MARCO";
       if (cityIn("livorno")) return "GUIDO";
       return null;
     case "quattro strade":

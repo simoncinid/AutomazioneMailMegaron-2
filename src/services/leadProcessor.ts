@@ -48,7 +48,8 @@ const PISA_AGENT_SHEETS = [
   "MATTIA",
   // "STEFANIA", // FERIE STEFANIA: ripristinare al rientro
   // "VALENTINA", // FERIE VALENTINA: ripristinare al rientro
-  // "MARCO", // FERIE MARCO: ripristinare al rientro
+  "MARCO",
+  "LUIGI",
   // "MARTA", // FERIE MARTA: ripristinare al rientro
 ] as const;
 const LUCCA_VIAREGGIO_AGENT_SHEETS = [
