@@ -9,24 +9,24 @@ const HARD_CODED_ZONE_SHEET_MAPPING: Array<[string, string]> = [
   ["BORGHETTO", "EROS"],
   ["CALAMBRONE", "AG-PISA"],
   ["CEP", "LUIGI"],
-  ["CISANELLO", "STEFANIA"], // FERIE STEFANIA: era "STEFANIA"
-  ["COLTANO", "REBECCA"], // FERIE REBECCA: era "REBECCA"
+  ["CISANELLO", "AG-PISA"], // FERIE STEFANIA: era "STEFANIA"
+  ["COLTANO", "AG-PONTEDERA"], // FERIE REBECCA: era "REBECCA"
   ["DON BOSCO", "AG-PISA"], // FERIE VALENTINA: era "VALENTINA"
   ["GAGNO", "AG-PISA"],
   ["I PASSI", "AG-PISA"],
   ["LA VETTOLA", "LUIGI"],
   ["MARINA DI PISA", "AG-PISA"],
-  ["MONTACCHIELLO", "REBECCA"], // FERIE REBECCA: era "REBECCA"
+  ["MONTACCHIELLO", "AG-PONTEDERA"], // FERIE REBECCA: era "REBECCA"
   ["ORATOIO", "AG-PISA"],
-  ["OSPEDALETTO", "REBECCA"], // FERIE REBECCA: era "REBECCA"
-  ["PIAGGE", "STEFANIA"], // FERIE STEFANIA: era "STEFANIA"
+  ["OSPEDALETTO", "AG-PONTEDERA"], // FERIE REBECCA: era "REBECCA"
+  ["PIAGGE", "AG-PISA"], // FERIE STEFANIA: era "STEFANIA"
   ["PISANOVA", "AG-PISA"], // FERIE VALENTINA: era "VALENTINA"
-  ["PORTA A LUCCA", "AG-PISA"], // FERIE GIUSEPPE: era "GIUSEPPE"
+  ["PORTA A LUCCA", "GIUSEPPE"],
   ["PORTA A MARE", "MARCO"],
   ["PORTA FIORENTINA", "MASSIMO"],
   ["BORGATA SESTRIERE", "MASSIMO"],
   ["PORTA NUOVA", "MATTIA"],
-  ["PRATALE", "AG-PISA"], // FERIE GIUSEPPE: era "GIUSEPPE"
+  ["PRATALE", "GIUSEPPE"],
   ["PUTIGNANO", "AG-PISA"],
   ["RIGLIONE", "AG-PISA"],
   ["SAN FRANCESCO", "EROS"],
@@ -42,23 +42,23 @@ const HARD_CODED_ZONE_SHEET_MAPPING: Array<[string, string]> = [
   ["TIRRENIA", "AG-PISA"],
   ["Bientina", "AG-PONTEDERA"],
   ["Buti", "AG-PONTEDERA"],
-  ["Calci", "AG-PISA"], // FERIE GIUSEPPE: era "GIUSEPPE"
-  ["Calci Alta", "AG-PISA"], // FERIE GIUSEPPE: era "GIUSEPPE"
-  ["Calci La Corte", "AG-PISA"], // FERIE GIUSEPPE: era "GIUSEPPE"
-  ["Capoluogo", "AG-PISA"], // FERIE GIUSEPPE: era "GIUSEPPE"
-  ["Castel Maggiore", "AG-PISA"], // FERIE GIUSEPPE: era "GIUSEPPE"
-  ["Il Colle", "AG-PISA"], // FERIE GIUSEPPE: era "GIUSEPPE"
-  ["La Corte", "AG-PISA"], // FERIE GIUSEPPE: era "GIUSEPPE"
-  ["La Gabella", "AG-PISA"], // FERIE GIUSEPPE: era "GIUSEPPE"
-  ["La Pieve", "AG-PISA"], // FERIE GIUSEPPE: era "GIUSEPPE"
-  ["MonteMagno", "AG-PISA"], // FERIE GIUSEPPE: era "GIUSEPPE"
-  ["Paduletto", "AG-PISA"], // FERIE GIUSEPPE: era "GIUSEPPE"
-  ["Rezzano", "AG-PISA"], // FERIE GIUSEPPE: era "GIUSEPPE"
-  ["San Lorenzo", "AG-PISA"], // FERIE GIUSEPPE: era "GIUSEPPE"
-  ["Santa Lucia", "AG-PISA"], // FERIE GIUSEPPE: era "GIUSEPPE"
-  ["Tre Colli", "AG-PISA"], // FERIE GIUSEPPE: era "GIUSEPPE"
-  ["Villa Sant'Andrea", "AG-PISA"], // FERIE GIUSEPPE: era "GIUSEPPE"
-  ["Calcinaia", "REBECCA"], // FERIE REBECCA: era "REBECCA"
+  ["Calci", "GIUSEPPE"],
+  ["Calci Alta", "GIUSEPPE"],
+  ["Calci La Corte", "GIUSEPPE"],
+  ["Capoluogo", "GIUSEPPE"],
+  ["Castel Maggiore", "GIUSEPPE"],
+  ["Il Colle", "GIUSEPPE"],
+  ["La Corte", "GIUSEPPE"],
+  ["La Gabella", "GIUSEPPE"],
+  ["La Pieve", "GIUSEPPE"],
+  ["MonteMagno", "GIUSEPPE"],
+  ["Paduletto", "GIUSEPPE"],
+  ["Rezzano", "GIUSEPPE"],
+  ["San Lorenzo", "GIUSEPPE"],
+  ["Santa Lucia", "GIUSEPPE"],
+  ["Tre Colli", "GIUSEPPE"],
+  ["Villa Sant'Andrea", "GIUSEPPE"],
+  ["Calcinaia", "AG-PONTEDERA"], // FERIE REBECCA: era "REBECCA"
   ["Fornacette", "AG-PONTEDERA"],
   ["Montecchio", "AG-PONTEDERA"],
   ["Oltrarno", "AG-PONTEDERA"],
@@ -156,7 +156,7 @@ const HARD_CODED_ZONE_SHEET_MAPPING: Array<[string, string]> = [
   ["BRACCIONI PIETROCONTI", "AG-PONTEDERA"],
   ["BRACCIONI", "AG-PONTEDERA"],
   ["PIETROCONTI", "AG-PONTEDERA"],
-  ["CENTRO", "ELISABETTA"], // FERIE ELISABETTA: era "ELISABETTA"
+  ["CENTRO", "AG-PONTEDERA"], // FERIE ELISABETTA: era "ELISABETTA"
   ["CHIESINO", "AG-PONTEDERA"],
   ["GELLO", "AG-PONTEDERA"],
   ["I FABBRI", "AG-PONTEDERA"],
@@ -166,11 +166,11 @@ const HARD_CODED_ZONE_SHEET_MAPPING: Array<[string, string]> = [
   ["LA ROTTA", "AG-PONTEDERA"],
   ["MONTECASTELLO", "AG-PONTEDERA"],
   ["OLTRERA", "AG-PONTEDERA"],
-  ["OSPEDALE", "ELISABETTA"], // FERIE ELISABETTA: era "ELISABETTA"
+  ["OSPEDALE", "AG-PONTEDERA"], // FERIE ELISABETTA: era "ELISABETTA"
   ["PARDOSSI", "AG-PONTEDERA"],
   ["SANTA LUCIA", "AG-PONTEDERA"],
-  ["STADIO", "ELISABETTA"], // FERIE ELISABETTA: era "ELISABETTA"
-  ["STAZIONE", "ELISABETTA"], // FERIE ELISABETTA: era "ELISABETTA"
+  ["STADIO", "AG-PONTEDERA"], // FERIE ELISABETTA: era "ELISABETTA"
+  ["STAZIONE", "AG-PONTEDERA"], // FERIE ELISABETTA: era "ELISABETTA"
   ["TREGGIAIA", "AG-PONTEDERA"],
   ["VILLAGGIO GRAMSCI", "AG-PONTEDERA"],
   ["Caccialupi", "AG-PONTEDERA"],
@@ -325,7 +325,7 @@ const HARD_CODED_ZONE_SHEET_MAPPING: Array<[string, string]> = [
   ["FUCECCHIO - BOTTEGHE", "AG-PONTEDERA"],
   ["Pomarance", "AG-PISA"],
   ["Ponsacco", "AG-PISA"],
-  ["Pontedera", "ELISABETTA"], // FERIE ELISABETTA: era "ELISABETTA"
+  ["Pontedera", "AG-PONTEDERA"], // FERIE ELISABETTA: era "ELISABETTA"
   ["Riparbella", "AG-PISA"],
   ["San Giuliano Terme", "DAVIDE"], // FERIE DAVIDE: era "DAVIDE"
   ["Agnano", "DAVIDE"], // FERIE DAVIDE: era "DAVIDE"

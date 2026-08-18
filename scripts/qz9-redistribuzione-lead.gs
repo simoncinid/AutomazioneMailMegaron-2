@@ -7,14 +7,14 @@
  * 2) qz9InstallTriggerGiornaliero    (una volta)
  *
  * POOL ATTIVI
- * - Pisa:      massimo, eros, tommaso, mattia, samuele, marco, luigi
- * - Pontedera: (nessuno — tutti in ferie)
+ * - Pisa:      massimo, davide, eros, samuele, giuseppe, tommaso, mattia, marco, luigi
+ * - Pontedera: luis
  * - Livorno:   matteo, viviana, massimiliano, guido
  * - Lucca:     alfredo, mary
  *
  * FERIE (zone -> AG-PISA / AG-PONTEDERA nel backend, fuori pool)
- * - Pisa:      giuseppe, valentina, marta, stefania, davide
- * - Pontedera: fausto, elisabetta, rebecca, luis
+ * - Pisa:      valentina, marta, stefania
+ * - Pontedera: fausto, elisabetta, rebecca
  *
  * Rebecca (ferie): tab sorgente + routing provincia col. J verso pool attivi
  */
@@ -53,10 +53,10 @@ const qz9KeepAgencySheets = new Set(["AG-PISA", "AG-LUCCA", "AG-VIAREGGIO"]);
  * Per riattivare un agente in ferie: aggiungerlo qui + qz9AgentOwnerZoneByCode.
  */
 const qz9PoolsByZone = {
-  pontedera: [],
+  pontedera: ["luis"],
   livorno: ["matteo", "viviana", "massimiliano", "guido"],
   lucca: ["alfredo", "mary"],
-  pisa: ["massimo", "eros", "tommaso", "mattia", "samuele", "marco", "luigi"],
+  pisa: ["massimo", "davide", "eros", "samuele", "giuseppe", "tommaso", "mattia", "marco", "luigi"],
   viareggio: [],
 };
 
@@ -75,12 +75,17 @@ const qz9AgentOwnerZoneByCode = {
 
   // Pisa — attivi
   massimo: "pisa",
+  davide: "pisa",
   eros: "pisa",
+  samuele: "pisa",
+  giuseppe: "pisa",
   tommaso: "pisa",
   mattia: "pisa",
-  samuele: "pisa",
   marco: "pisa",
   luigi: "pisa",
+
+  // Pontedera — attivi
+  luis: "pontedera",
 };
 
 /**
@@ -90,24 +95,23 @@ const qz9AgentOwnerZoneByCode = {
  */
 const qz9SuspendedAgentOwnerZone = {
   // Pisa
-  giuseppe: "pisa",
   valentina: "pisa",
   marta: "pisa",
   stefania: "pisa",
-  davide: "pisa",
   // Pontedera
   fausto: "pontedera",
   elisabetta: "pontedera",
   rebecca: "pontedera",
-  luis: "pontedera",
 };
 
 // Mappa codice agente -> nome tab reale nel file
 const qz9AgentTabByCode = {
+  // Pontedera — attivi
+  luis: "luis",
+
   // Pontedera — FERIE
   rebecca: "rebecca",
   elisabetta: "elisabetta",
-  luis: "luis",
   fausto: "fausto",
 
   // Livorno
@@ -123,17 +127,17 @@ const qz9AgentTabByCode = {
 
   // Pisa — attivi
   massimo: "massimo",
+  davide: "davide",
   eros: "eros",
+  samuele: "samuele",
+  giuseppe: "giuseppe",
   tommaso: "tommaso",
   mattia: "mattia",
-  samuele: "samuele",
   marco: "marco",
   luigi: "luigi",
 
   // Pisa — FERIE
-  davide: "davide",
   stefania: "stefania",
-  giuseppe: "giuseppe",
   valentina: "valentina",
   marta: "Marta",
 };

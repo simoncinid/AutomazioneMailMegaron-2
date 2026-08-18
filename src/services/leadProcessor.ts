@@ -39,10 +39,10 @@ const DEFAULT_LIVORNO_ROUND_ROBIN_STATE_PATH = join(
 );
 const PISA_AGENT_SHEETS = [
   "MASSIMO",
-  // "DAVIDE", // FERIE DAVIDE: ripristinare al rientro
+  "DAVIDE",
   "EROS",
   "SAMUELE",
-  // "GIUSEPPE", // FERIE GIUSEPPE: ripristinare al rientro
+  "GIUSEPPE",
   "TOMMASO",
   // "REBECCA", // solo pool Pontedera, non Pisa
   "MATTIA",
@@ -57,10 +57,10 @@ const LUCCA_VIAREGGIO_AGENT_SHEETS = [
   "MARY",
 ] as const;
 const PONTEDERA_AGENT_SHEETS = [
+  "LUIS",
   // "REBECCA", // FERIE REBECCA: ripristinare al rientro
   // "FAUSTO", // FERIE FAUSTO: ripristinare al rientro
   // "ELISABETTA", // FERIE ELISABETTA: ripristinare al rientro
-  // "LUIS", // FERIE LUIS: ripristinare al rientro
 ] as const;
 const LIVORNO_AGENT_SHEETS = [
   "MATTEO",

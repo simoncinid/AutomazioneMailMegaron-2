@@ -77,7 +77,7 @@ describe("resolveSheetForZone", () => {
     const r = resolveSheetForZone("Capoluogo", capRules, "sid", "DefaultTab", {
       city: "San Giuliano Terme",
     });
-    expect(r.sheetTitle).toBe("AG-PISA");
+    expect(r.sheetTitle).toBe("DAVIDE");
     expect(r.fallback).toBe(false);
   });
 

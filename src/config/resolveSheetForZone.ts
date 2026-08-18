@@ -39,13 +39,12 @@ function pickSheetByZoneCityProvince(
 
   switch (z) {
     case "capoluogo":
-      // FERIE GIUSEPPE: era "GIUSEPPE"
-      if (cityIn("calci")) return "AG-PISA";
-      if (cityIn("san giuliano terme")) return "AG-PISA"; // FERIE DAVIDE: era "DAVIDE"
+      if (cityIn("calci")) return "GIUSEPPE";
+      if (cityIn("san giuliano terme")) return "DAVIDE";
       if (cityIn("castelfranco di sotto")) return "AG-PONTEDERA";
-      if (cityIn("vicopisano")) return "AG-PONTEDERA"; // FERIE LUIS: era "LUIS"
+      if (cityIn("vicopisano")) return "LUIS";
       if (cityIn("cascina")) return "TOMMASO";
-      if (cityIn("vecchiano")) return "AG-PISA"; // FERIE DAVIDE: era "DAVIDE"
+      if (cityIn("vecchiano")) return "DAVIDE";
       return null;
     case "centro":
       if (cityIn("viareggio")) return "AG-VIAREGGIO";
@@ -56,7 +55,7 @@ function pickSheetByZoneCityProvince(
       if (cityIn("ponsacco")) return "AG-PONTEDERA";
       return null;
     case "cevoli":
-      if (cityIn("vicopisano")) return "AG-PONTEDERA"; // FERIE LUIS: era "LUIS"
+      if (cityIn("vicopisano")) return "LUIS";
       // FERIE FAUSTO: era "FAUSTO"
       if (cityIn("casciana terme lari")) return "AG-PONTEDERA";
       return null;
@@ -68,11 +67,10 @@ function pickSheetByZoneCityProvince(
       if (cityIn("montecatini val di cecina")) return "AG-PONTEDERA";
       if (cityIn("pontedera")) return "AG-PONTEDERA";
       if (cityIn("palaia")) return "AG-PONTEDERA";
-      if (cityIn("san giuliano terme")) return "AG-PISA"; // FERIE DAVIDE: era "DAVIDE"
+      if (cityIn("san giuliano terme")) return "DAVIDE";
       return null;
     case "la pieve":
-      // FERIE GIUSEPPE: era "GIUSEPPE"
-      if (cityIn("calci")) return "AG-PISA";
+      if (cityIn("calci")) return "GIUSEPPE";
       if (cityIn("chianni")) return "AG-PONTEDERA";
       return null;
     case "lorenzana":
@@ -124,8 +122,7 @@ function pickSheetByZoneCityProvince(
       if (cityIn("cascina")) return "TOMMASO";
       return null;
     case "santa lucia":
-      // FERIE GIUSEPPE: era "GIUSEPPE"
-      if (cityIn("calci")) return "AG-PISA";
+      if (cityIn("calci")) return "GIUSEPPE";
       if (cityIn("pontedera")) return "AG-PONTEDERA";
       return null;
     case "stazione":
