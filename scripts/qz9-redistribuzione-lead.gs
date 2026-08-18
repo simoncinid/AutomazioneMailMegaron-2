@@ -131,7 +131,7 @@ const qz9AgentTabByCode = {
   eros: "eros",
   samuele: "samuele",
   giuseppe: "giuseppe",
-  tommaso: "tommaso",
+  tommaso: "TOMMASO",
   mattia: "mattia",
   marco: "marco",
   luigi: "luigi",

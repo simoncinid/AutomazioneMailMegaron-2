@@ -159,16 +159,6 @@ export class GoogleSheetsWriter {
         touched.set(touchedKey, { spreadsheetId, sheetTitle, minEndColumnIndex });
       }
 
-      if (kind === "lead") {
-        await this.writeLeadRowsWithFixedColumns(
-          spreadsheetId,
-          sheetTitle,
-          entries.map((e) => e.values),
-        );
-        this.bufferedRows.delete(key);
-        continue;
-      }
-
       const range = formatSheetRange(sheetTitle, RANGE_BY_KIND[kind]);
       await withGoogleSheetsOperation((sheets) =>
         sheets.spreadsheets.values.append({
@@ -203,76 +193,6 @@ export class GoogleSheetsWriter {
     const arr = this.bufferedRows.get(key) ?? [];
     arr.push({ kind, values });
     this.bufferedRows.set(key, arr);
-  }
-
-  private async writeLeadRowsWithFixedColumns(
-    spreadsheetId: string,
-    sheetTitle: string,
-    rows: (string | number)[][],
-  ): Promise<void> {
-    const readRange = formatSheetRange(sheetTitle, "A:J");
-    const readRes = await withGoogleSheetsOperation((sheets) =>
-      sheets.spreadsheets.values.get({
-        spreadsheetId,
-        range: readRange,
-      }),
-      { spreadsheetId, sheetTitle, range: readRange, operation: "values.get" },
-    );
-    const existingRows = readRes.data.values?.length ?? 0;
-    const nextRow = Math.max(2, existingRows + 1);
-    const endRow = nextRow + rows.length - 1;
-    await this.ensureRowCapacity(spreadsheetId, sheetTitle, endRow);
-    const writeRange = formatSheetRange(sheetTitle, `A${nextRow}:J${endRow}`);
-
-    await withGoogleSheetsOperation((sheets) =>
-      sheets.spreadsheets.values.update({
-        spreadsheetId,
-        range: writeRange,
-        valueInputOption: "USER_ENTERED",
-        requestBody: { values: rows },
-      }),
-      { spreadsheetId, sheetTitle, range: writeRange, operation: "values.update" },
-    );
-  }
-
-  private async ensureRowCapacity(
-    spreadsheetId: string,
-    sheetTitle: string,
-    requiredRowCount: number,
-  ): Promise<void> {
-    const meta = await withGoogleSheetsOperation((sheets) =>
-      sheets.spreadsheets.get({
-        spreadsheetId,
-        fields: "sheets(properties(sheetId,title,gridProperties(rowCount)))",
-      }),
-      { spreadsheetId, sheetTitle, operation: "spreadsheets.get" },
-    );
-    const target = (meta.data.sheets ?? []).find((s) => s.properties?.title === sheetTitle);
-    const sheetId = target?.properties?.sheetId;
-    const rowCount = target?.properties?.gridProperties?.rowCount ?? 0;
-    if (sheetId == null) {
-      throw new Error(`Foglio non trovato: ${sheetTitle}`);
-    }
-    if (rowCount >= requiredRowCount) return;
-
-    const rowsToAppend = requiredRowCount - rowCount;
-    await withGoogleSheetsOperation((sheets) =>
-      sheets.spreadsheets.batchUpdate({
-        spreadsheetId,
-        requestBody: {
-          requests: [
-            {
-              appendDimension: {
-                sheetId,
-                dimension: "ROWS",
-                length: rowsToAppend,
-              },
-            },
-          ],
-        },
-      }),
-      { spreadsheetId, sheetTitle, operation: "spreadsheets.batchUpdate" },
-    );
   }
 
   private async syncBasicFilterRange(touchedSheets: TouchedSheet[]): Promise<void> {
