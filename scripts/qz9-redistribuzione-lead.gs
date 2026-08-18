@@ -12,11 +12,19 @@
  * - Livorno:   matteo, viviana, massimiliano, guido
  * - Lucca:     alfredo, mary
  *
- * FERIE (zone -> AG-PISA / AG-PONTEDERA nel backend, fuori pool)
+ * FERIE (tab sorgente restano attivi; lead nuovi → AG-PISA / AG-PONTEDERA nel backend)
  * - Pisa:      valentina, marta, stefania
  * - Pontedera: fausto, elisabetta, rebecca
  *
- * Rebecca (ferie): tab sorgente + routing provincia col. J verso pool attivi
+ * ═══ RIATTIVARE UN AGENTE AL 100% (es. STEFANIA) ═══
+ * Checklist completa anche in src/config/suspendedAgents.ts (backend Node).
+ * 1) qz9SuspendedAgentOwnerZone     → rimuovere agente
+ * 2) qz9AgentOwnerZoneByCode       → aggiungere agente con zona owner
+ * 3) qz9PoolsByZone[zona]          → aggiungere agente al pool round-robin
+ * 4) src/config/loadEnv.ts         → zone "FERIE <NOME>": ripristinare tab agente
+ * 5) src/services/leadProcessor.ts → decommentare in PISA/PONTEDERA_AGENT_SHEETS
+ * 6) src/config/suspendedAgents.ts → rimuovere da elenco sospesi
+ * 7) src/services/leadAutoReply.ts → decommentare owner + pool
  */
 
 const qz9Cfg = {
@@ -49,8 +57,9 @@ const qz9AgencyZoneBySheet = {
 const qz9KeepAgencySheets = new Set(["AG-PISA", "AG-LUCCA", "AG-VIAREGGIO"]);
 
 /**
- * Pool destinazione round-robin (allineato a leadAutoReply.ts).
- * Per riattivare un agente in ferie: aggiungerlo qui + qz9AgentOwnerZoneByCode.
+ * Pool destinazione round-robin (allineato a leadAutoReply.ts / leadProcessor.ts).
+ * RIATTIVARE agente in ferie: aggiungerlo qui + qz9AgentOwnerZoneByCode
+ * + togliere da qz9SuspendedAgentOwnerZone. V. header e suspendedAgents.ts.
  */
 const qz9PoolsByZone = {
   pontedera: ["luis"],
@@ -89,16 +98,15 @@ const qz9AgentOwnerZoneByCode = {
 };
 
 /**
- * FERIE: tab restano sorgenti (lead da redistribuire),
- * ma NON sono in qz9PoolsByZone.
- * Per riattivare: spostare in qz9AgentOwnerZoneByCode e aggiungere al pool.
+ * FERIE: tab restano sorgenti (lead da redistribuire), fuori pool attivo.
+ * RIATTIVARE: spostare in qz9AgentOwnerZoneByCode + pool + suspendedAgents.ts.
  */
 const qz9SuspendedAgentOwnerZone = {
-  // Pisa
+  // Pisa — RIATTIVARE: valentina, marta, stefania
   valentina: "pisa",
   marta: "pisa",
   stefania: "pisa",
-  // Pontedera
+  // Pontedera — RIATTIVARE: fausto, elisabetta, rebecca
   fausto: "pontedera",
   elisabetta: "pontedera",
   rebecca: "pontedera",
@@ -136,13 +144,13 @@ const qz9AgentTabByCode = {
   marco: "marco",
   luigi: "luigi",
 
-  // Pisa — FERIE
+  // Pisa — FERIE (RIATTIVARE: spostare in blocco attivi sopra)
   stefania: "stefania",
   valentina: "valentina",
   marta: "Marta",
 };
 
-// Agenti il cui pool destinazione dipende dalla provincia (colonna J)
+// Rebecca (ferie): tab sorgente; pool destinazione da provincia col. J
 const qz9ProvinceRoutedAgents = new Set(["rebecca"]);
 
 // provincia -> zona pool

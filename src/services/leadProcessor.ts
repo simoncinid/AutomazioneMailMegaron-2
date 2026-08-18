@@ -1,5 +1,9 @@
 import type { AppEnv } from "../config/loadEnv.js";
 import { resolveSheetForZone } from "../config/resolveSheetForZone.js";
+import {
+  isSuspendedPisaAgentSheet,
+  isSuspendedPontederaAgentSheet,
+} from "../config/suspendedAgents.js";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import type {
@@ -37,6 +41,7 @@ const DEFAULT_LIVORNO_ROUND_ROBIN_STATE_PATH = join(
   ".state",
   "livorno-round-robin.json",
 );
+/** Pool Pisa attivo. RIATTIVARE agente in ferie: decommentare qui + suspendedAgents.ts + loadEnv + QZ9. */
 const PISA_AGENT_SHEETS = [
   "MASSIMO",
   "DAVIDE",
@@ -46,21 +51,22 @@ const PISA_AGENT_SHEETS = [
   "TOMMASO",
   // "REBECCA", // solo pool Pontedera, non Pisa
   "MATTIA",
-  // "STEFANIA", // FERIE STEFANIA: ripristinare al rientro
-  // "VALENTINA", // FERIE VALENTINA: ripristinare al rientro
+  // "STEFANIA", // FERIE STEFANIA → v. src/config/suspendedAgents.ts
+  // "VALENTINA", // FERIE VALENTINA → v. src/config/suspendedAgents.ts
   "MARCO",
   "LUIGI",
-  // "MARTA", // FERIE MARTA: ripristinare al rientro
+  // "MARTA", // FERIE MARTA → v. src/config/suspendedAgents.ts
 ] as const;
 const LUCCA_VIAREGGIO_AGENT_SHEETS = [
   "ALFREDO",
   "MARY",
 ] as const;
+/** Pool Pontedera attivo. RIATTIVARE agente in ferie: decommentare qui + suspendedAgents.ts + loadEnv + QZ9. */
 const PONTEDERA_AGENT_SHEETS = [
   "LUIS",
-  // "REBECCA", // FERIE REBECCA: ripristinare al rientro
-  // "FAUSTO", // FERIE FAUSTO: ripristinare al rientro
-  // "ELISABETTA", // FERIE ELISABETTA: ripristinare al rientro
+  // "REBECCA", // FERIE REBECCA → v. src/config/suspendedAgents.ts
+  // "FAUSTO", // FERIE FAUSTO → v. src/config/suspendedAgents.ts
+  // "ELISABETTA", // FERIE ELISABETTA → v. src/config/suspendedAgents.ts
 ] as const;
 const LIVORNO_AGENT_SHEETS = [
   "MATTEO",
@@ -783,6 +789,39 @@ export async function processInboundEmail(
     }
 
     target = { spreadsheetId: resolved.spreadsheetId, sheetTitle: resolved.sheetTitle };
+    if (isSuspendedPisaAgentSheet(target.sheetTitle)) {
+      const reassigned = PISA_RANDOM_POOL_ZONE_KEYS.has(zone.trim().toLowerCase())
+        ? pickRandomPisaAgentSheetFromPool()
+        : await pickPisaAgentSheet();
+      const originalSheet = target.sheetTitle;
+      target = {
+        ...target,
+        sheetTitle: reassigned.sheetTitle,
+      };
+      log.info(
+        { uid: uidLabel, listingId, fromSheet: originalSheet, toSheet: target.sheetTitle, strategy: reassigned.strategy },
+        "[routing] agente Pisa in ferie: riassegnato pool attivo",
+      );
+    } else if (isSuspendedPontederaAgentSheet(target.sheetTitle)) {
+      const originalSheet = target.sheetTitle;
+      if (PONTEDERA_AGENT_SHEETS.length > 0) {
+        const reassigned = await pickPontederaAgentSheet();
+        target = {
+          ...target,
+          sheetTitle: reassigned.sheetTitle,
+        };
+        log.info(
+          { uid: uidLabel, listingId, fromSheet: originalSheet, toSheet: target.sheetTitle, strategy: reassigned.strategy },
+          "[routing] agente Pontedera in ferie: riassegnato pool attivo",
+        );
+      } else {
+        target = { ...target, sheetTitle: "AG-PONTEDERA" };
+        log.info(
+          { uid: uidLabel, listingId, fromSheet: originalSheet, toSheet: target.sheetTitle },
+          "[routing] agente Pontedera in ferie: pool vuoto, lead su AG-PONTEDERA",
+        );
+      }
+    }
     if (isAgPisaSheet(target.sheetTitle)) {
       const reassigned = PISA_RANDOM_POOL_ZONE_KEYS.has(zone.trim().toLowerCase())
         ? pickRandomPisaAgentSheetFromPool()

@@ -127,15 +127,121 @@ describe("processInboundEmail AG-PISA routing", () => {
   beforeEach(async () => {
     testStateDir = await mkdtemp(join(tmpdir(), "pisa-round-robin-"));
     process.env.PISA_ROUND_ROBIN_STATE_PATH = join(testStateDir, "pisa-state.json");
+    process.env.PONTEDERA_ROUND_ROBIN_STATE_PATH = join(testStateDir, "pontedera-state.json");
     process.env.VIAREGGIO_ROUND_ROBIN_STATE_PATH = join(testStateDir, "viareggio-state.json");
     process.env.LIVORNO_ROUND_ROBIN_STATE_PATH = join(testStateDir, "livorno-state.json");
   });
 
   afterEach(async () => {
     delete process.env.PISA_ROUND_ROBIN_STATE_PATH;
+    delete process.env.PONTEDERA_ROUND_ROBIN_STATE_PATH;
     delete process.env.VIAREGGIO_ROUND_ROBIN_STATE_PATH;
     delete process.env.LIVORNO_ROUND_ROBIN_STATE_PATH;
     await rm(testStateDir, { force: true, recursive: true });
+  });
+
+  it("non assegna ad agenti Pisa in ferie se il mapping punta al tab diretto", async () => {
+    const { processInboundEmail } = await import("../src/services/leadProcessor.js");
+    const appended: LeadRowPayload[] = [];
+    const sheets = {
+      appendLead: vi.fn(async (payload: LeadRowPayload) => {
+        appended.push(payload);
+      }),
+    } as unknown as GoogleSheetsWriter;
+
+    const suspendedCases = [
+      { id: "cisanello-0", zone: "CISANELLO", legacySheet: "STEFANIA" },
+      { id: "donbosco-0", zone: "DON BOSCO", legacySheet: "VALENTINA" },
+      { id: "sanmarco-0", zone: "SAN MARCO", legacySheet: "MARTA" },
+    ] as const;
+
+    for (const testCase of suspendedCases) {
+      appended.length = 0;
+      const listings = {
+        findLatestByExternalListingId: vi.fn(async () => ({
+          ...buildListing(testCase.id),
+          zone: testCase.zone,
+        })),
+      } as unknown as ListingRepository;
+
+      const env = buildEnv();
+      env.zoneSheetRules.push({
+        name: `legacy_${testCase.legacySheet.toLowerCase()}`,
+        pattern: testCase.zone,
+        match: "contains",
+        spreadsheetId: "spreadsheet-id",
+        sheetTitle: testCase.legacySheet,
+      });
+
+      await processInboundEmail(
+        {
+          messageId: `message-${testCase.id}`,
+          from: "portal@example.com",
+          subject: testCase.id,
+          receivedAt: new Date("2026-08-17T10:00:00Z"),
+          textBody: `Lead ${testCase.zone}`,
+        },
+        { env, listings, sheets },
+        new Date("2026-08-17T10:00:00Z"),
+      );
+
+      expect(appended).toHaveLength(1);
+      expect(appended[0]?.sheetTitle).not.toBe(testCase.legacySheet);
+      expect([
+        "MASSIMO",
+        "DAVIDE",
+        "EROS",
+        "SAMUELE",
+        "GIUSEPPE",
+        "TOMMASO",
+        "MATTIA",
+        "MARCO",
+        "LUIGI",
+      ]).toContain(appended[0]?.sheetTitle);
+    }
+  });
+
+  it("non assegna ad agenti Pontedera in ferie se il mapping punta al tab diretto", async () => {
+    const { processInboundEmail } = await import("../src/services/leadProcessor.js");
+    const appended: LeadRowPayload[] = [];
+    const sheets = {
+      appendLead: vi.fn(async (payload: LeadRowPayload) => {
+        appended.push(payload);
+      }),
+    } as unknown as GoogleSheetsWriter;
+
+    const listings = {
+      findLatestByExternalListingId: vi.fn(async () => ({
+        ...buildListing("pontedera-0"),
+        zone: "CENTRO",
+        city: "Pontedera",
+      })),
+    } as unknown as ListingRepository;
+
+    const env = buildEnv();
+    env.zoneSheetRules.push({
+      name: "legacy_elisabetta",
+      pattern: "CENTRO",
+      match: "contains",
+      spreadsheetId: "spreadsheet-id",
+      sheetTitle: "ELISABETTA",
+    });
+
+    await processInboundEmail(
+      {
+        messageId: "message-elisabetta-centro",
+        from: "portal@example.com",
+        subject: "pontedera-0",
+        receivedAt: new Date("2026-08-17T10:00:00Z"),
+        textBody: "Lead CENTRO Pontedera",
+      },
+      { env, listings, sheets },
+      new Date("2026-08-17T10:00:00Z"),
+    );
+
+    expect(appended).toHaveLength(1);
+    expect(appended[0]?.sheetTitle).toBe("LUIS");
+    expect(appended[0]?.sheetTitle).not.toBe("ELISABETTA");
   });
 
   it("assegna AG-PISA solo agli agenti del pool Pisa", async () => {

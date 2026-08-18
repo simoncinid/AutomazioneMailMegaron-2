@@ -18,6 +18,11 @@ function isUnassignedZone(zone: string | null | undefined): boolean {
   return z === "nessuno" || z === "nessuna" || z === "nessuna zona" || z === "no zona";
 }
 
+/**
+ * Disambiguazione zone ambigue (city/province).
+ * RIATTIVARE agente in ferie: cercare "FERIE <NOME>" e ripristinare il return originale.
+ * Checklist: src/config/suspendedAgents.ts
+ */
 function pickSheetByZoneCityProvince(
   zone: string,
   city: string | null | undefined,

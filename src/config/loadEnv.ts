@@ -5,6 +5,9 @@ import { logger } from "../logging/logger.js";
 import { loadZoneMappingFromSheet } from "../sheets/loadZoneMappingFromSheet.js";
 
 const HARD_CODED_ZONE_SHEET_MAPPING: Array<[string, string]> = [
+  // Zone agenti in ferie → AG-PISA / AG-PONTEDERA (pool random).
+  // RIATTIVARE agente: cercare "FERIE <NOME>" e ripristinare il tab originale.
+  // Checklist completa: src/config/suspendedAgents.ts
   ["BARBARICINA", "LUIGI"],
   ["BORGHETTO", "EROS"],
   ["CALAMBRONE", "AG-PISA"],
