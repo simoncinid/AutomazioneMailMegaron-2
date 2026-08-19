@@ -100,7 +100,7 @@ function rowFromLead(p: LeadRowPayload): (string | number)[] {
 
 function rowFromNoId(p: NoIdRowPayload): (string | number)[] {
   return [
-    "",
+    emailCellOrPlaceholder(""),
     p.listingId,
     p.assignmentDate,
     p.phone,
@@ -159,16 +159,10 @@ export class GoogleSheetsWriter {
         touched.set(touchedKey, { spreadsheetId, sheetTitle, minEndColumnIndex });
       }
 
-      const range = formatSheetRange(sheetTitle, RANGE_BY_KIND[kind]);
-      await withGoogleSheetsOperation((sheets) =>
-        sheets.spreadsheets.values.append({
-          spreadsheetId,
-          range,
-          valueInputOption: "USER_ENTERED",
-          insertDataOption: "INSERT_ROWS",
-          requestBody: { values: entries.map((e) => e.values) },
-        }),
-        { spreadsheetId, sheetTitle, range, operation: "values.append" },
+      await this.appendRowsStartingAtColA(
+        spreadsheetId,
+        sheetTitle,
+        entries.map((e) => e.values),
       );
       this.bufferedRows.delete(key);
     }
@@ -193,6 +187,59 @@ export class GoogleSheetsWriter {
     const arr = this.bufferedRows.get(key) ?? [];
     arr.push({ kind, values });
     this.bufferedRows.set(key, arr);
+  }
+
+  /**
+   * Scrive in coda partendo sempre dalla colonna A.
+   * values.append può shiftare su B se A è vuota/nascosta e la "tabella" inizia da B.
+   */
+  private async appendRowsStartingAtColA(
+    spreadsheetId: string,
+    sheetTitle: string,
+    rows: (string | number)[][],
+  ): Promise<void> {
+    if (rows.length === 0) return;
+
+    const meta = await withGoogleSheetsOperation(
+      (sheets) =>
+        sheets.spreadsheets.get({
+          spreadsheetId,
+          fields: "sheets(properties(sheetId,title))",
+        }),
+      { spreadsheetId, sheetTitle, operation: "spreadsheets.get.sheetId" },
+    );
+    const sheet = (meta.data.sheets ?? []).find((s) => s.properties?.title === sheetTitle);
+    const sheetId = sheet?.properties?.sheetId;
+    if (sheetId == null) {
+      throw new Error(`Foglio non trovato: ${sheetTitle}`);
+    }
+
+    const cellRows: sheets_v4.Schema$RowData[] = rows.map((row) => ({
+      values: row.map((cell) => ({
+        userEnteredValue: {
+          stringValue: cell === null || cell === undefined ? "" : String(cell),
+        },
+      })),
+    }));
+
+    await withGoogleSheetsOperation(
+      (sheets) =>
+        sheets.spreadsheets.batchUpdate({
+          spreadsheetId,
+          requestBody: {
+            requests: [
+              {
+                appendCells: {
+                  sheetId,
+                  rows: cellRows,
+                  fields: "userEnteredValue",
+                },
+              },
+            ],
+          },
+        }),
+      { spreadsheetId, sheetTitle, operation: "spreadsheets.batchUpdate.appendCells" },
+    );
   }
 
   private async syncBasicFilterRange(touchedSheets: TouchedSheet[]): Promise<void> {

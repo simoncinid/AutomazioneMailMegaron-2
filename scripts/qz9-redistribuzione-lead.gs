@@ -288,11 +288,11 @@ function qz9RunControlloQuotidianoLead() {
         movedRow[qz9Cfg.colStato - 1] = "Da Chiamare";
 
         if (!qz9Cfg.dryRun) {
-          destSh.appendRow(movedRow);
+          const preparedRow = qz9EnsureColA_(movedRow);
+          const newDestRow = qz9AppendRowFromColA_(destSh, preparedRow);
 
-          const newDestRow = destSh.getLastRow();
           destSh
-            .getRange(newDestRow, 1, 1, movedRow.length)
+            .getRange(newDestRow, 1, 1, preparedRow.length)
             .setBackground(qz9Cfg.redistributedRowBackground);
 
           sourceSh.deleteRow(realRow);
@@ -614,6 +614,25 @@ function qz9Norm(v) {
     .replace(/[\u0300-\u036f]/g, "")
     .replace(/\s+/g, " ")
     .trim();
+}
+
+function qz9EnsureColA_(row) {
+  const out = row.slice();
+  const email = String(out[0] || "").trim();
+  if (!email) out[0] = "—";
+  return out;
+}
+
+/**
+ * Append esplicito da colonna A (appendRow può shiftare su B se A è vuota/nascosta).
+ * @returns numero riga scritta
+ */
+function qz9AppendRowFromColA_(sheet, rowValues) {
+  const lastRow = sheet.getLastRow();
+  const nextRow = Math.max(lastRow, qz9Cfg.firstDataRow - 1) + 1;
+  const width = rowValues.length;
+  sheet.getRange(nextRow, 1, 1, width).setValues([rowValues]);
+  return nextRow;
 }
 
 function qz9Slug(v) {
