@@ -1,8 +1,9 @@
 /**
- * Ordina un tab lead per data in colonna C (dd/MM/yyyy HH:mm:ss).
+ * Ordina tab lead per data in colonna C (dd/MM/yyyy HH:mm:ss).
  *
- * 1) Imposta sortLeadSheetName sotto
- * 2) Esegui sortLeadByData() da Apps Script
+ * 1) Imposta sortLeadSheetName sotto (o usa sortAllAgentSheetsByColC)
+ * 2) Esegui sortLeadByData()
+ * 3) sortLeadInstallDailyTrigger() — ordinamento automatico ogni giorno alle 3:00
  */
 
 // ═══ MODIFICA QUI ═══
@@ -13,9 +14,36 @@ const sortLeadAscending = true; // true = più vecchi in alto | false = più rec
 const sortLeadCfg = {
   firstDataRow: 2, // riga 1 = header
   colDataAssegnazione: 3, // C
+  timezone: "Europe/Rome",
 };
 
-/** Esegui questa funzione dopo aver impostato sortLeadSheetName. */
+const sortLeadAgentTabs = [
+  "luis",
+  "rebecca",
+  "elisabetta",
+  "fausto",
+  "matteo",
+  "viviana",
+  "massimiliano",
+  "guido",
+  "lisa",
+  "alfredo",
+  "mary",
+  "massimo",
+  "davide",
+  "eros",
+  "samuele",
+  "giuseppe",
+  "TOMMASO",
+  "mattia",
+  "marco",
+  "luigi",
+  "stefania",
+  "valentina",
+  "Marta",
+];
+
+/** Ordina il tab impostato in sortLeadSheetName. */
 function sortLeadByData() {
   const name = String(sortLeadSheetName || "").trim();
   if (!name) throw new Error("Imposta sortLeadSheetName in cima al file");
@@ -26,16 +54,56 @@ function sortLeadByData() {
   sortSheetByColC_(sh, sortLeadAscending !== false);
 }
 
-function sortSheetByColC_(sh, ascending) {
-  const lastRow = sh.getLastRow();
-  const lastCol = sh.getLastColumn();
-  if (lastRow < sortLeadCfg.firstDataRow) {
-    SpreadsheetApp.getActiveSpreadsheet().toast("Nessun dato in " + sh.getName(), "Sort lead", 4);
-    return;
+/** Ordina tutti i tab agente. */
+function sortAllAgentSheetsByColC() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const seen = {};
+  let count = 0;
+
+  for (let i = 0; i < sortLeadAgentTabs.length; i++) {
+    const tabName = String(sortLeadAgentTabs[i]).trim();
+    const key = tabName.toLowerCase();
+    if (!tabName || seen[key]) continue;
+    seen[key] = true;
+
+    const sh = ss.getSheetByName(tabName);
+    if (!sh) continue;
+
+    const rows = sortSheetByColC_(sh, sortLeadAscending !== false);
+    if (rows > 0) count++;
   }
 
-  const numRows = lastRow - sortLeadCfg.firstDataRow + 1;
-  const range = sh.getRange(sortLeadCfg.firstDataRow, 1, numRows, lastCol);
+  ss.toast("Ordinati " + count + " tab agente", "Sort lead", 6);
+}
+
+/** Trigger giornaliero alle 3:00 (dopo QZ9 alle 2:00). */
+function sortLeadInstallDailyTrigger() {
+  const handler = "sortAllAgentSheetsByColC";
+  const triggers = ScriptApp.getProjectTriggers();
+  for (let i = 0; i < triggers.length; i++) {
+    if (triggers[i].getHandlerFunction() === handler) {
+      ScriptApp.deleteTrigger(triggers[i]);
+    }
+  }
+  ScriptApp.newTrigger(handler).timeBased().everyDays(1).atHour(3).create();
+  SpreadsheetApp.getActiveSpreadsheet().toast("Trigger sort 3:00 installato", "Sort lead", 5);
+}
+
+function sortSheetByColC_(sh, ascending) {
+  const lastRow = sortFindLastDataRow_(sh);
+  if (lastRow < sortLeadCfg.firstDataRow) {
+    SpreadsheetApp.getActiveSpreadsheet().toast("Nessun dato in " + sh.getName(), "Sort lead", 4);
+    return 0;
+  }
+
+  const lastCol = Math.max(sh.getLastColumn(), sortLeadCfg.colDataAssegnazione);
+  const a1 =
+    "A" +
+    sortLeadCfg.firstDataRow +
+    ":" +
+    sortColToLetter_(lastCol) +
+    lastRow;
+  const range = sh.getRange(a1);
   const values = range.getValues();
   const backgrounds = range.getBackgrounds();
 
@@ -74,11 +142,41 @@ function sortSheetByColC_(sh, ascending) {
     }),
   );
 
+  sortClearFilterSort_(sh);
+
   SpreadsheetApp.getActiveSpreadsheet().toast(
-    sh.getName() + ": " + numRows + " righe ordinate (" + (ascending ? "↑ data" : "↓ data") + ")",
+    sh.getName() + ": " + values.length + " righe ordinate (" + (ascending ? "↑ data" : "↓ data") + ")",
     "Sort lead",
     5,
   );
+
+  return values.length;
+}
+
+function sortFindLastDataRow_(sh) {
+  const lastRow = sh.getLastRow();
+  if (lastRow < sortLeadCfg.firstDataRow) return sortLeadCfg.firstDataRow - 1;
+
+  const col = sortLeadCfg.colDataAssegnazione;
+  const vals = sh.getRange(sortLeadCfg.firstDataRow, col, lastRow, col).getValues();
+  for (let i = vals.length - 1; i >= 0; i--) {
+    const cell = vals[i][0];
+    if (cell !== null && cell !== undefined && String(cell).trim() !== "") {
+      return sortLeadCfg.firstDataRow + i;
+    }
+  }
+  return sortLeadCfg.firstDataRow - 1;
+}
+
+function sortClearFilterSort_(sh) {
+  try {
+    const filter = sh.getFilter();
+    if (!filter) return;
+    const range = filter.getRange();
+    sh.getRange(range.getRow(), range.getColumn(), range.getNumRows(), range.getNumColumns()).createFilter();
+  } catch (e) {
+    Logger.log("[sort] clear filter sort skip " + sh.getName() + ": " + e);
+  }
 }
 
 /** Parse dd/MM/yyyy[ HH:mm[:ss]] e Date/seriali foglio. */
@@ -110,4 +208,16 @@ function sortParseDate_(v) {
 
   const dIso = new Date(s);
   return isNaN(dIso.getTime()) ? null : dIso.getTime();
+}
+
+function sortColToLetter_(col) {
+  let n = Number(col);
+  if (!Number.isFinite(n) || n < 1) return "A";
+  let s = "";
+  while (n > 0) {
+    const m = (n - 1) % 26;
+    s = String.fromCharCode(65 + m) + s;
+    n = Math.floor((n - 1) / 26);
+  }
+  return s;
 }

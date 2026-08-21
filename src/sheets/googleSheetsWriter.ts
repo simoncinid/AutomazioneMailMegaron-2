@@ -190,8 +190,8 @@ export class GoogleSheetsWriter {
   }
 
   /**
-   * Scrive in coda partendo sempre dalla colonna A.
-   * values.append può shiftare su B se A è vuota/nascosta e la "tabella" inizia da B.
+   * Scrive in coda partendo sempre dalla colonna A, alla prima riga vuota dopo l'ultima data (col. C).
+   * appendCells / values.append possono inserire in mezzo al foglio se la "tabella" rilevata è sbagliata.
    */
   private async appendRowsStartingAtColA(
     spreadsheetId: string,
@@ -200,46 +200,38 @@ export class GoogleSheetsWriter {
   ): Promise<void> {
     if (rows.length === 0) return;
 
-    const meta = await withGoogleSheetsOperation(
-      (sheets) =>
-        sheets.spreadsheets.get({
-          spreadsheetId,
-          fields: "sheets(properties(sheetId,title))",
-        }),
-      { spreadsheetId, sheetTitle, operation: "spreadsheets.get.sheetId" },
-    );
-    const sheet = (meta.data.sheets ?? []).find((s) => s.properties?.title === sheetTitle);
-    const sheetId = sheet?.properties?.sheetId;
-    if (sheetId == null) {
-      throw new Error(`Foglio non trovato: ${sheetTitle}`);
-    }
-
-    const cellRows: sheets_v4.Schema$RowData[] = rows.map((row) => ({
-      values: row.map((cell) => ({
-        userEnteredValue: {
-          stringValue: cell === null || cell === undefined ? "" : String(cell),
-        },
-      })),
-    }));
+    const startRow = await this.resolveNextAppendRow(spreadsheetId, sheetTitle);
+    const range = formatSheetRange(sheetTitle, `A${startRow}`);
 
     await withGoogleSheetsOperation(
       (sheets) =>
-        sheets.spreadsheets.batchUpdate({
+        sheets.spreadsheets.values.update({
           spreadsheetId,
-          requestBody: {
-            requests: [
-              {
-                appendCells: {
-                  sheetId,
-                  rows: cellRows,
-                  fields: "userEnteredValue",
-                },
-              },
-            ],
-          },
+          range,
+          valueInputOption: "USER_ENTERED",
+          requestBody: { values: rows },
         }),
-      { spreadsheetId, sheetTitle, operation: "spreadsheets.batchUpdate.appendCells" },
+      { spreadsheetId, sheetTitle, range, operation: "values.update.appendAtEnd" },
     );
+  }
+
+  /** Ultima riga con data in col. C (header escluso) + 1. */
+  private async resolveNextAppendRow(
+    spreadsheetId: string,
+    sheetTitle: string,
+  ): Promise<number> {
+    const range = formatSheetRange(sheetTitle, "C:C");
+    const readRes = await withGoogleSheetsOperation(
+      (sheets) =>
+        sheets.spreadsheets.values.get({
+          spreadsheetId,
+          range,
+        }),
+      { spreadsheetId, sheetTitle, range, operation: "values.get.lastDataRow" },
+    );
+    const values = readRes.data.values ?? [];
+    // Riga 1 = header; values.length è l'ultima riga occupata in C (1-based).
+    return Math.max(values.length + 1, 2);
   }
 
   private async syncBasicFilterRange(touchedSheets: TouchedSheet[]): Promise<void> {
@@ -290,15 +282,16 @@ export class GoogleSheetsWriter {
 
           const hasSameColumnCoverage = nextEndColumnIndex === currentEndColumnIndex;
           const isAlreadyOpenRows = currentRange.endRowIndex == null;
-          if (hasSameColumnCoverage && isAlreadyOpenRows) continue;
+          const hasSortSpecs = (basic.sortSpecs?.length ?? 0) > 0;
+          if (hasSameColumnCoverage && isAlreadyOpenRows && !hasSortSpecs) continue;
 
+          // sortSpecs omesso: evita vista filtrata ordinata diversamente dalle righe fisiche.
           requests.push({
             setBasicFilter: {
               filter: {
                 range: nextRange,
                 criteria: basic.criteria,
                 filterSpecs: basic.filterSpecs,
-                sortSpecs: basic.sortSpecs,
               },
             },
           });

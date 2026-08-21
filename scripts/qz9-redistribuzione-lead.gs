@@ -42,6 +42,9 @@ const qz9Cfg = {
   dryRun: false, // true = nessuna scrittura/cancellazione/counter
   maxRowLogsPerSheet: 200,
   redistributedRowBackground: "#f4cccc",
+  /** Dopo spostamenti, riordina tab agente per data col. C (evita "mescolata" il giorno dopo). */
+  sortAgentSheetsAfterRun: true,
+  sortAgentSheetsAscending: true, // true = più vecchi in alto
 };
 
 // Tab AG-* (sorgenti agenzia)
@@ -354,6 +357,9 @@ function qz9RunControlloQuotidianoLead() {
 
     if (!qz9Cfg.dryRun) {
       qz9ApplyGraphCounters(ss, graphIncrements, now);
+      if (qz9Cfg.sortAgentSheetsAfterRun) {
+        qz9SortAllAgentSheets_(ss);
+      }
     } else {
       qz9Log("[GRAPH] dry-run attivo: counter non aggiornati.");
     }
@@ -628,11 +634,130 @@ function qz9EnsureColA_(row) {
  * @returns numero riga scritta
  */
 function qz9AppendRowFromColA_(sheet, rowValues) {
-  const lastRow = sheet.getLastRow();
-  const nextRow = Math.max(lastRow, qz9Cfg.firstDataRow - 1) + 1;
+  const nextRow = qz9FindLastDataRow_(sheet) + 1;
   const width = rowValues.length;
   sheet.getRange(nextRow, 1, 1, width).setValues([rowValues]);
   return nextRow;
+}
+
+/** Ultima riga dati in base a col. C (data assegnazione), non getLastRow(). */
+function qz9FindLastDataRow_(sh) {
+  const lastRow = sh.getLastRow();
+  if (lastRow < qz9Cfg.firstDataRow) return qz9Cfg.firstDataRow - 1;
+
+  const col = qz9Cfg.colDataAssegnazione;
+  const vals = sh.getRange(qz9Cfg.firstDataRow, col, lastRow, col).getValues();
+  for (let i = vals.length - 1; i >= 0; i--) {
+    const cell = vals[i][0];
+    if (cell !== null && cell !== undefined && String(cell).trim() !== "") {
+      return qz9Cfg.firstDataRow + i;
+    }
+  }
+  return qz9Cfg.firstDataRow - 1;
+}
+
+/** Rimuove ordinamento dal filtro (la vista deve seguire l'ordine fisico delle righe). */
+function qz9ClearFilterSort_(sh) {
+  try {
+    const filter = sh.getFilter();
+    if (!filter) return;
+    const range = filter.getRange();
+    const numRows = range.getNumRows();
+    const numCols = range.getNumColumns();
+    if (numRows < 2 || numCols < 1) return;
+    sh.getRange(range.getRow(), range.getColumn(), numRows, numCols).createFilter();
+  } catch (e) {
+    qz9Log("[SORT] clear filter sort skip " + sh.getName() + ": " + e);
+  }
+}
+
+/** Ordina righe dati per data assegnazione (col. C). */
+function qz9SortSheetByColC_(sh, ascending) {
+  const lastRow = qz9FindLastDataRow_(sh);
+  if (lastRow < qz9Cfg.firstDataRow) return 0;
+
+  const lastCol = Math.max(sh.getLastColumn(), qz9Cfg.colDataAssegnazione);
+  const a1 = "A" + qz9Cfg.firstDataRow + ":" + qz9ColToLetter_(lastCol) + lastRow;
+  const range = sh.getRange(a1);
+  const values = range.getValues();
+  const backgrounds = range.getBackgrounds();
+  const colC = qz9Cfg.colDataAssegnazione - 1;
+
+  const indexed = [];
+  for (let i = 0; i < values.length; i++) {
+    const assignedAt = qz9ParseDate(values[i][colC]);
+    indexed.push({
+      idx: i,
+      row: values[i],
+      bg: backgrounds[i],
+      ts: assignedAt ? assignedAt.getTime() : null,
+    });
+  }
+
+  indexed.sort(function (a, b) {
+    const ta = a.ts;
+    const tb = b.ts;
+    const aMissing = ta == null;
+    const bMissing = tb == null;
+    if (aMissing && bMissing) return a.idx - b.idx;
+    if (aMissing) return 1;
+    if (bMissing) return -1;
+    if (ta === tb) return a.idx - b.idx;
+    return ascending ? ta - tb : tb - ta;
+  });
+
+  range.setValues(
+    indexed.map(function (x) {
+      return x.row;
+    }),
+  );
+  range.setBackgrounds(
+    indexed.map(function (x) {
+      return x.bg;
+    }),
+  );
+
+  qz9ClearFilterSort_(sh);
+
+  return values.length;
+}
+
+/** Riordina tutti i tab agente (dopo redistribuzione + nuovi append in coda). */
+function qz9SortAllAgentSheets_(ss) {
+  const seen = new Set();
+  let sortedSheets = 0;
+  let sortedRows = 0;
+
+  Object.keys(qz9AgentTabByCode).forEach(function (code) {
+    const tabName = String(qz9AgentTabByCode[code] || "").trim();
+    const key = qz9Norm(tabName);
+    if (!tabName || seen.has(key)) return;
+    seen.add(key);
+
+    const sh = ss.getSheetByName(tabName);
+    if (!sh) return;
+
+    const rows = qz9SortSheetByColC_(sh, qz9Cfg.sortAgentSheetsAscending !== false);
+    if (rows > 0) {
+      sortedSheets++;
+      sortedRows += rows;
+      qz9Log("[SORT] " + tabName + " rows=" + rows);
+    }
+  });
+
+  qz9Log("[SORT-END] sheets=" + sortedSheets + " rows=" + sortedRows);
+}
+
+function qz9ColToLetter_(col) {
+  let n = Number(col);
+  if (!Number.isFinite(n) || n < 1) return "A";
+  let s = "";
+  while (n > 0) {
+    const m = (n - 1) % 26;
+    s = String.fromCharCode(65 + m) + s;
+    n = Math.floor((n - 1) / 26);
+  }
+  return s;
 }
 
 function qz9Slug(v) {
