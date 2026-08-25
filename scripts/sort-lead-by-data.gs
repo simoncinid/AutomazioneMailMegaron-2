@@ -50,7 +50,6 @@ const sortLeadAgentTabs = [
   "luigi",
   "stefania",
   "valentina",
-  "Marta",
 ];
 
 /** Ordina il tab impostato in sortLeadSheetName. */

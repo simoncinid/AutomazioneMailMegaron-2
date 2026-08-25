@@ -110,7 +110,6 @@ const DEFAULT_PERSON_CONTACTS: Record<string, ReplyContact> = {
   valentina: { fullName: "Valentina Foà", phone: "3395063633", email: "valentina.foa@megaronimmobiliare.it" },
   marco: { fullName: "Marco Rossi", phone: "3703124895", email: "marco.rossi@megaronimmobiliare.it" },
   massimo: { fullName: "Massimo Nieri", phone: "3341488711", email: "massimo.nieri@megaronimmobiliare.it" },
-  marta: { fullName: "Marta Genovesi", phone: "3333506005", email: "marta.genovesi@megaronimmobiliare.it" },
 };
 
 type AgencyZone = "pisa" | "pontedera" | "livorno" | "lucca" | "viareggio";
@@ -162,7 +161,6 @@ const AGENT_OWNER_ZONE_BY_CODE: Partial<Record<string, AgencyZone>> = {
   luigi: "pisa",
   // stefania: "pisa", // FERIE STEFANIA → v. suspendedAgents.ts
   // valentina: "pisa", // FERIE VALENTINA → v. suspendedAgents.ts
-  // marta: "pisa", // non più attiva → v. suspendedAgents.ts
 };
 
 function buildAgentZoneByCode(): Map<string, AgencyZone> {

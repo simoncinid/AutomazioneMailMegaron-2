@@ -54,7 +54,6 @@ const PISA_AGENT_SHEETS = [
   // "VALENTINA", // FERIE VALENTINA → v. src/config/suspendedAgents.ts
   "MARCO",
   "LUIGI",
-  // "MARTA", // non più attiva → v. src/config/suspendedAgents.ts
 ] as const;
 const LUCCA_VIAREGGIO_AGENT_SHEETS = [
   "ALFREDO",

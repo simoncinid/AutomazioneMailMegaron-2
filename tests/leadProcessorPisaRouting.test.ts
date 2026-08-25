@@ -152,7 +152,6 @@ describe("processInboundEmail AG-PISA routing", () => {
     const suspendedCases = [
       { id: "cisanello-0", zone: "CISANELLO", legacySheet: "STEFANIA" },
       { id: "donbosco-0", zone: "DON BOSCO", legacySheet: "VALENTINA" },
-      { id: "sanmarco-0", zone: "SAN MARCO", legacySheet: "MARTA" },
     ] as const;
 
     for (const testCase of suspendedCases) {

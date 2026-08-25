@@ -13,7 +13,7 @@
  * - Lucca:     alfredo, mary
  *
  * FERIE (tab sorgente restano attivi; lead nuovi → AG-PISA / AG-PONTEDERA nel backend)
- * - Pisa:      valentina, stefania, massimo, marta
+ * - Pisa:      valentina, stefania, massimo
  * - Pontedera: elisabetta
  *
  * ═══ RIATTIVARE UN AGENTE AL 100% (es. STEFANIA) ═══
@@ -118,7 +118,6 @@ const qz9SuspendedAgentOwnerZone = {
   valentina: "pisa",
   stefania: "pisa",
   massimo: "pisa",
-  marta: "pisa",
   // Pontedera — sospesi
   elisabetta: "pontedera",
 };
@@ -155,10 +154,9 @@ const qz9AgentTabByCode = {
   marco: "marco",
   luigi: "luigi",
 
-  // Pisa — FERIE (RIATTIVARE: spostare in blocco attivi sopra)
+  // Pisa — sospesi
   stefania: "stefania",
   valentina: "valentina",
-  marta: "Marta",
 };
 
 const qz9ProvinceRoutedAgents = new Set();

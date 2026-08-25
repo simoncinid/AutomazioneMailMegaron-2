@@ -43,7 +43,6 @@ const fixShiftedAgentTabs = [
   "luigi",
   "stefania",
   "valentina",
-  "Marta",
 ];
 
 /** Esegui per riparare tutti i tab agente. */

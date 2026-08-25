@@ -9,7 +9,7 @@ import {
 
 describe("suspendedAgents", () => {
   it("elenca tutti gli agenti in ferie attesi", () => {
-    expect([...SUSPENDED_PISA_AGENT_CODES]).toEqual(["valentina", "stefania", "massimo", "marta"]);
+    expect([...SUSPENDED_PISA_AGENT_CODES]).toEqual(["valentina", "stefania", "massimo"]);
     expect([...SUSPENDED_PONTEDERA_AGENT_CODES]).toEqual(["elisabetta"]);
   });
 
