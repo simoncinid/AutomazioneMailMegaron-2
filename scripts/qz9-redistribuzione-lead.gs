@@ -7,14 +7,14 @@
  * 2) qz9InstallTriggerGiornaliero    (una volta)
  *
  * POOL ATTIVI
- * - Pisa:      massimo, davide, eros, samuele, giuseppe, tommaso, mattia, marco, luigi
- * - Pontedera: luis
+ * - Pisa:      davide, eros, samuele, giuseppe, tommaso, mattia, marco, luigi
+ * - Pontedera: luis, rebecca, fausto
  * - Livorno:   matteo, viviana, massimiliano, guido
  * - Lucca:     alfredo, mary
  *
  * FERIE (tab sorgente restano attivi; lead nuovi → AG-PISA / AG-PONTEDERA nel backend)
- * - Pisa:      valentina, marta, stefania
- * - Pontedera: fausto, elisabetta, rebecca
+ * - Pisa:      valentina, stefania, massimo, marta
+ * - Pontedera: elisabetta
  *
  * ═══ RIATTIVARE UN AGENTE AL 100% (es. STEFANIA) ═══
  * Checklist completa anche in src/config/suspendedAgents.ts (backend Node).
@@ -47,6 +47,14 @@ const qz9Cfg = {
   sortAgentSheetsAscending: true, // true = più vecchi in alto
 };
 
+const qz9AllowedStati = [
+  "Da Chiamare",
+  "Whatsapp",
+  "Appuntamento Fissato",
+  "Non Risponde",
+  "Chiamato",
+];
+
 // Tab AG-* (sorgenti agenzia)
 const qz9AgencyZoneBySheet = {
   "AG-PONTEDERA": "pontedera",
@@ -65,10 +73,10 @@ const qz9KeepAgencySheets = new Set(["AG-PISA", "AG-LUCCA", "AG-VIAREGGIO"]);
  * + togliere da qz9SuspendedAgentOwnerZone. V. header e suspendedAgents.ts.
  */
 const qz9PoolsByZone = {
-  pontedera: ["luis"],
+  pontedera: ["luis", "rebecca", "fausto"],
   livorno: ["matteo", "viviana", "massimiliano", "guido"],
   lucca: ["alfredo", "mary"],
-  pisa: ["massimo", "davide", "eros", "samuele", "giuseppe", "tommaso", "mattia", "marco", "luigi"],
+  pisa: ["davide", "eros", "samuele", "giuseppe", "tommaso", "mattia", "marco", "luigi"],
   viareggio: [],
 };
 
@@ -86,7 +94,6 @@ const qz9AgentOwnerZoneByCode = {
   mary: "lucca",
 
   // Pisa — attivi
-  massimo: "pisa",
   davide: "pisa",
   eros: "pisa",
   samuele: "pisa",
@@ -98,6 +105,8 @@ const qz9AgentOwnerZoneByCode = {
 
   // Pontedera — attivi
   luis: "pontedera",
+  rebecca: "pontedera",
+  fausto: "pontedera",
 };
 
 /**
@@ -105,14 +114,13 @@ const qz9AgentOwnerZoneByCode = {
  * RIATTIVARE: spostare in qz9AgentOwnerZoneByCode + pool + suspendedAgents.ts.
  */
 const qz9SuspendedAgentOwnerZone = {
-  // Pisa — RIATTIVARE: valentina, marta, stefania
+  // Pisa — sospesi
   valentina: "pisa",
-  marta: "pisa",
   stefania: "pisa",
-  // Pontedera — RIATTIVARE: fausto, elisabetta, rebecca
-  fausto: "pontedera",
+  massimo: "pisa",
+  marta: "pisa",
+  // Pontedera — sospesi
   elisabetta: "pontedera",
-  rebecca: "pontedera",
 };
 
 // Mappa codice agente -> nome tab reale nel file
@@ -153,8 +161,7 @@ const qz9AgentTabByCode = {
   marta: "Marta",
 };
 
-// Rebecca (ferie): tab sorgente; pool destinazione da provincia col. J
-const qz9ProvinceRoutedAgents = new Set(["rebecca"]);
+const qz9ProvinceRoutedAgents = new Set();
 
 // provincia -> zona pool
 const qz9ProvinceToZone = {
@@ -288,7 +295,7 @@ function qz9RunControlloQuotidianoLead() {
           qz9Cfg.timezone,
           "dd/MM/yyyy HH:mm:ss",
         );
-        movedRow[qz9Cfg.colStato - 1] = "Da Chiamare";
+        movedRow[qz9Cfg.colStato - 1] = qz9NormalizeStato_("Da Chiamare");
 
         if (!qz9Cfg.dryRun) {
           const preparedRow = qz9EnsureColA_(movedRow);
@@ -622,6 +629,23 @@ function qz9Norm(v) {
     .trim();
 }
 
+function qz9NormalizeStato_(raw) {
+  const s = String(raw || "")
+    .replace(/\u00a0/g, " ")
+    .trim();
+  if (!s) return s;
+  for (let i = 0; i < qz9AllowedStati.length; i++) {
+    const allowed = qz9AllowedStati[i];
+    if (s === allowed) return allowed;
+    if (s.toLowerCase() === allowed.toLowerCase()) return allowed;
+  }
+  return s;
+}
+
+function qz9SanitizeRowStato_(row) {
+  row[qz9Cfg.colStato - 1] = qz9NormalizeStato_(row[qz9Cfg.colStato - 1]);
+}
+
 function qz9EnsureColA_(row) {
   const out = row.slice();
   const email = String(out[0] || "").trim();
@@ -685,10 +709,12 @@ function qz9SortSheetByColC_(sh, ascending) {
 
   const indexed = [];
   for (let i = 0; i < values.length; i++) {
+    const row = values[i];
+    qz9SanitizeRowStato_(row);
     const assignedAt = qz9ParseDate(values[i][colC]);
     indexed.push({
       idx: i,
-      row: values[i],
+      row: row,
       bg: backgrounds[i],
       ts: assignedAt ? assignedAt.getTime() : null,
     });

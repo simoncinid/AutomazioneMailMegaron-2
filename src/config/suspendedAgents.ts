@@ -21,12 +21,12 @@
  *    e al pool qz9PoolsByZone corrispondente.
  *
  * Sospesi (ago 2026):
- * - Pisa:      valentina, marta, stefania  → zone su AG-PISA (pool random attivo)
- * - Pontedera: fausto, elisabetta, rebecca → zone su AG-PONTEDERA (pool random attivo)
+ * - Pisa:      valentina, stefania, massimo, marta → zone su AG-PISA (pool random attivo)
+ * - Pontedera: elisabetta → zone su AG-PONTEDERA (pool random attivo)
  */
 
-export const SUSPENDED_PISA_AGENT_CODES = ["valentina", "marta", "stefania"] as const;
-export const SUSPENDED_PONTEDERA_AGENT_CODES = ["fausto", "elisabetta", "rebecca"] as const;
+export const SUSPENDED_PISA_AGENT_CODES = ["valentina", "stefania", "massimo", "marta"] as const;
+export const SUSPENDED_PONTEDERA_AGENT_CODES = ["elisabetta"] as const;
 
 export type SuspendedPisaAgentCode = (typeof SUSPENDED_PISA_AGENT_CODES)[number];
 export type SuspendedPontederaAgentCode = (typeof SUSPENDED_PONTEDERA_AGENT_CODES)[number];

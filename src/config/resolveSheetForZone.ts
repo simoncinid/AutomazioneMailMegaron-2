@@ -61,8 +61,7 @@ function pickSheetByZoneCityProvince(
       return null;
     case "cevoli":
       if (cityIn("vicopisano")) return "LUIS";
-      // FERIE FAUSTO: era "FAUSTO"
-      if (cityIn("casciana terme lari")) return "AG-PONTEDERA";
+      if (cityIn("casciana terme lari")) return "FAUSTO";
       return null;
     case "darsena":
       if (cityIn("livorno")) return "AG-LIVORNO";
@@ -79,8 +78,7 @@ function pickSheetByZoneCityProvince(
       if (cityIn("chianni")) return "AG-PONTEDERA";
       return null;
     case "lorenzana":
-      // FERIE FAUSTO: era "FAUSTO"
-      if (cityIn("crespina lorenzana")) return "AG-PONTEDERA";
+      if (cityIn("crespina lorenzana")) return "FAUSTO";
       if (provinceIn("pisa")) return "AG-PISA";
       return null;
     case "marciana":
@@ -100,8 +98,7 @@ function pickSheetByZoneCityProvince(
       if (cityIn("livorno")) return "GUIDO";
       return null;
     case "quattro strade":
-      // FERIE FAUSTO: era "FAUSTO"
-      if (cityIn("casciana terme lari")) return "AG-PONTEDERA";
+      if (cityIn("casciana terme lari")) return "FAUSTO";
       if (cityIn("bientina")) return "AG-PONTEDERA";
       return null;
     case "quatro strade":
@@ -113,12 +110,10 @@ function pickSheetByZoneCityProvince(
       if (cityIn("lucca")) return "AG-LUCCA";
       return null;
     case "san marco":
-      // FERIE MARTA: era "MARTA"
       if (cityIn("pisa")) return "AG-PISA";
       if (cityIn("lucca")) return "AG-LUCCA";
       return null;
     case "san giusto":
-      // FERIE MARTA: era "MARTA"
       if (cityIn("pisa")) return "AG-PISA";
       if (cityIn("lucca")) return "AG-LUCCA";
       return null;
@@ -137,8 +132,7 @@ function pickSheetByZoneCityProvince(
       return null;
     case "usigliano":
       if (cityIn("palaia")) return "AG-PONTEDERA";
-      // FERIE FAUSTO: era "FAUSTO"
-      if (cityIn("casciana terme lari")) return "AG-PONTEDERA";
+      if (cityIn("casciana terme lari")) return "FAUSTO";
       return null;
     default:
       return null;

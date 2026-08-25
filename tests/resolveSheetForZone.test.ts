@@ -101,7 +101,7 @@ describe("resolveSheetForZone", () => {
       city: "Crespina Lorenzana",
       province: "Pisa",
     });
-    expect(r.sheetTitle).toBe("AG-PONTEDERA");
+    expect(r.sheetTitle).toBe("FAUSTO");
     expect(r.fallback).toBe(false);
   });
 

@@ -273,7 +273,6 @@ describe("processInboundEmail AG-PISA routing", () => {
     }
 
     expect(appended.map((row) => row.sheetTitle)).toEqual([
-      "MASSIMO",
       "DAVIDE",
       "EROS",
       "SAMUELE",
@@ -282,6 +281,7 @@ describe("processInboundEmail AG-PISA routing", () => {
       "MATTIA",
       "MARCO",
       "LUIGI",
+      "DAVIDE",
     ]);
     expect(appended.map((row) => row.sheetTitle)).not.toContain("ELISABETTA");
     expect(appended.map((row) => row.sheetTitle)).not.toContain("FAUSTO");
@@ -492,7 +492,7 @@ describe("processInboundEmail AG-PISA routing", () => {
     }
 
     expect(appended).toHaveLength(1);
-    expect(appended[0]?.sheetTitle).toBe("DAVIDE");
+    expect(appended[0]?.sheetTitle).toBe("EROS");
   });
 
   it("assegna AG-LUCCA solo agli agenti del pool Lucca", async () => {

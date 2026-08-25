@@ -41,9 +41,8 @@ const DEFAULT_LIVORNO_ROUND_ROBIN_STATE_PATH = join(
   ".state",
   "livorno-round-robin.json",
 );
-/** Pool Pisa attivo. RIATTIVARE agente in ferie: decommentare qui + suspendedAgents.ts + loadEnv + QZ9. */
+/** Pool Pisa attivo. */
 const PISA_AGENT_SHEETS = [
-  "MASSIMO",
   "DAVIDE",
   "EROS",
   "SAMUELE",
@@ -55,17 +54,17 @@ const PISA_AGENT_SHEETS = [
   // "VALENTINA", // FERIE VALENTINA → v. src/config/suspendedAgents.ts
   "MARCO",
   "LUIGI",
-  // "MARTA", // FERIE MARTA → v. src/config/suspendedAgents.ts
+  // "MARTA", // non più attiva → v. src/config/suspendedAgents.ts
 ] as const;
 const LUCCA_VIAREGGIO_AGENT_SHEETS = [
   "ALFREDO",
   "MARY",
 ] as const;
-/** Pool Pontedera attivo. RIATTIVARE agente in ferie: decommentare qui + suspendedAgents.ts + loadEnv + QZ9. */
+/** Pool Pontedera attivo. */
 const PONTEDERA_AGENT_SHEETS = [
   "LUIS",
-  // "REBECCA", // FERIE REBECCA → v. src/config/suspendedAgents.ts
-  // "FAUSTO", // FERIE FAUSTO → v. src/config/suspendedAgents.ts
+  "REBECCA",
+  "FAUSTO",
   // "ELISABETTA", // FERIE ELISABETTA → v. src/config/suspendedAgents.ts
 ] as const;
 const LIVORNO_AGENT_SHEETS = [
@@ -790,9 +789,7 @@ export async function processInboundEmail(
 
     target = { spreadsheetId: resolved.spreadsheetId, sheetTitle: resolved.sheetTitle };
     if (isSuspendedPisaAgentSheet(target.sheetTitle)) {
-      const reassigned = PISA_RANDOM_POOL_ZONE_KEYS.has(zone.trim().toLowerCase())
-        ? pickRandomPisaAgentSheetFromPool()
-        : await pickPisaAgentSheet();
+      const reassigned = pickRandomPisaAgentSheetFromPool();
       const originalSheet = target.sheetTitle;
       target = {
         ...target,

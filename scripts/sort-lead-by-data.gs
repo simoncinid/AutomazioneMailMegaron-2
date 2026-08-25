@@ -14,8 +14,18 @@ const sortLeadAscending = true; // true = più vecchi in alto | false = più rec
 const sortLeadCfg = {
   firstDataRow: 2, // riga 1 = header
   colDataAssegnazione: 3, // C
+  colStato: 8, // H
   timezone: "Europe/Rome",
 };
+
+/** Valori ammessi dalla convalida dati col. H (devono coincidere esattamente). */
+const sortLeadAllowedStati = [
+  "Da Chiamare",
+  "Whatsapp",
+  "Appuntamento Fissato",
+  "Non Risponde",
+  "Chiamato",
+];
 
 const sortLeadAgentTabs = [
   "luis",
@@ -110,6 +120,7 @@ function sortSheetByColC_(sh, ascending) {
   const indexed = [];
   for (let i = 0; i < values.length; i++) {
     const row = values[i];
+    sortSanitizeRowStato_(row);
     const dtRaw = row[sortLeadCfg.colDataAssegnazione - 1];
     indexed.push({
       idx: i,
@@ -177,6 +188,43 @@ function sortClearFilterSort_(sh) {
   } catch (e) {
     Logger.log("[sort] clear filter sort skip " + sh.getName() + ": " + e);
   }
+}
+
+/**
+ * Trim + normalizza col. H. La convalida Google è case-sensitive e rifiuta spazi extra.
+ * Es. "Chiamato " (con spazio) ≠ "Chiamato".
+ */
+function sortSanitizeRowStato_(row) {
+  const idx = sortLeadCfg.colStato - 1;
+  row[idx] = sortNormalizeStato_(row[idx]);
+}
+
+function sortNormalizeStato_(raw) {
+  const s = String(raw || "")
+    .replace(/\u00a0/g, " ")
+    .trim();
+  if (!s) return s;
+  for (let i = 0; i < sortLeadAllowedStati.length; i++) {
+    const allowed = sortLeadAllowedStati[i];
+    if (s === allowed) return allowed;
+    if (s.toLowerCase() === allowed.toLowerCase()) return allowed;
+  }
+  return s;
+}
+
+/** Debug riga TOMMASO: Logger.log valori A:J con lunghezza (utile per H119). */
+function sortDebugRowTommaso(rowNumber) {
+  const row = Number(rowNumber || 119);
+  const sh = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("TOMMASO");
+  if (!sh) throw new Error("Tab TOMMASO non trovato");
+  const cols = "ABCDEFGHIJ".split("");
+  for (let i = 0; i < cols.length; i++) {
+    const v = sh.getRange(cols[i] + row).getDisplayValue();
+    const len = String(sh.getRange(cols[i] + row).getValue()).length;
+    Logger.log(cols[i] + row + ': "' + v + '" len=' + len);
+  }
+  const h = sh.getRange("H" + row).getValue();
+  Logger.log("H" + row + ' EXACT "Chiamato": ' + (h === "Chiamato"));
 }
 
 /** Parse dd/MM/yyyy[ HH:mm[:ss]] e Date/seriali foglio. */

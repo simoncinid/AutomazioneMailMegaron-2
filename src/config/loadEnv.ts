@@ -4,7 +4,7 @@ import { hasDatabaseConnection } from "./pgPool.js";
 import { logger } from "../logging/logger.js";
 import { loadZoneMappingFromSheet } from "../sheets/loadZoneMappingFromSheet.js";
 
-const HARD_CODED_ZONE_SHEET_MAPPING: Array<[string, string]> = [
+const BASE_HARD_CODED_ZONE_SHEET_MAPPING: Array<[string, string]> = [
   // Zone agenti in ferie → AG-PISA / AG-PONTEDERA (pool random).
   // RIATTIVARE agente: cercare "FERIE <NOME>" e ripristinare il tab originale.
   // Checklist completa: src/config/suspendedAgents.ts
@@ -15,8 +15,8 @@ const HARD_CODED_ZONE_SHEET_MAPPING: Array<[string, string]> = [
   ["CISANELLO", "AG-PISA"], // FERIE STEFANIA: era "STEFANIA"
   ["COLTANO", "AG-PONTEDERA"], // FERIE REBECCA: era "REBECCA"
   ["DON BOSCO", "AG-PISA"], // FERIE VALENTINA: era "VALENTINA"
-  ["GAGNO", "AG-PISA"],
-  ["I PASSI", "AG-PISA"],
+  ["GAGNO", "LUIGI"],
+  ["I PASSI", "LUIGI"],
   ["LA VETTOLA", "LUIGI"],
   ["MARINA DI PISA", "AG-PISA"],
   ["MONTACCHIELLO", "AG-PONTEDERA"], // FERIE REBECCA: era "REBECCA"
@@ -33,10 +33,10 @@ const HARD_CODED_ZONE_SHEET_MAPPING: Array<[string, string]> = [
   ["PUTIGNANO", "AG-PISA"],
   ["RIGLIONE", "AG-PISA"],
   ["SAN FRANCESCO", "EROS"],
-  ["SAN GIUSTO", "AG-PISA"], // FERIE MARTA: era "MARTA"
-  ["SAN MARCO", "AG-PISA"], // FERIE MARTA: era "MARTA"
+  ["SAN GIUSTO", "AG-PISA"],
+  ["SAN MARCO", "AG-PISA"],
   ["SAN MARTINO", "SAMUELE"],
-  ["SAN PIERO A GRADO", "LUIGI"],
+  ["SAN PIERO A GRADO", "AG-PISA"],
   ["SAN ROSSORE", "LUIGI"],
   ["SANTA MARIA", "MATTIA"],
   ["SANT'ANTONIO", "MARCO"],
@@ -608,6 +608,30 @@ const HARD_CODED_ZONE_SHEET_MAPPING: Array<[string, string]> = [
   ["VENEZIA", "LISA"],
   ["PONTINO", "LISA"],
 ];
+
+/** Zone personali ripristinate con la riattivazione di Rebecca e Fausto. */
+const REBECCA_DIRECT_ZONE_KEYS = new Set([
+  "coltano",
+  "montacchiello",
+  "ospedaletto",
+  "calcinaia",
+]);
+const FAUSTO_DIRECT_ZONE_KEYS = new Set([
+  "casciana terme lari", "boschi di lari", "casciana alta", "casciana terme", "cevoli",
+  "colle montanino", "la capannina", "lari", "lavaiano", "parlascio", "perignano",
+  "quattro strade", "san ruffino", "sant'ermo", "usigliano", "crespina lorenzana",
+  "belvedere", "botteghino", "cenaia", "cenaia vecchia", "ceppaiano", "colle alberti",
+  "crespina", "fungiaia", "i gioielli", "ii colle", "la casa", "la tana", "laura",
+  "lavoria", "le lame", "lorenzana", "migliano", "siberia", "tremoleto", "tripalle",
+  "vicchio", "volpaia",
+]);
+
+const HARD_CODED_ZONE_SHEET_MAPPING = BASE_HARD_CODED_ZONE_SHEET_MAPPING.map(([zone, sheetTitle]) => {
+  const key = zone.trim().toLowerCase();
+  if (REBECCA_DIRECT_ZONE_KEYS.has(key)) return [zone, "REBECCA"] as [string, string];
+  if (FAUSTO_DIRECT_ZONE_KEYS.has(key)) return [zone, "FAUSTO"] as [string, string];
+  return [zone, sheetTitle] as [string, string];
+});
 
 const HARD_CODED_ZONE_SHEET_MAPPING_RAW = HARD_CODED_ZONE_SHEET_MAPPING.map(
   ([zone, sheetTitle]) => `${zone}\t${sheetTitle}`,

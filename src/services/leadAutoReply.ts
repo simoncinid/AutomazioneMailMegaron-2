@@ -132,18 +132,17 @@ const AGENCY_ZONE_BY_SHEET: Partial<Record<string, AgencyZone>> = {
 };
 
 const POOL_CODES_BY_ZONE: Record<AgencyZone, string[]> = {
-  // Agenti in ferie: v. src/config/suspendedAgents.ts (checklist riattivazione).
-  pontedera: ["luis"],
+  pontedera: ["luis", "rebecca", "fausto"],
   livorno: ["matteo", "viviana", "massimiliano", "guido"],
   lucca: ["alfredo", "mary"],
-  pisa: ["massimo", "davide", "eros", "samuele", "giuseppe", "tommaso", "mattia", "marco", "luigi"],
+  pisa: ["davide", "eros", "samuele", "giuseppe", "tommaso", "mattia", "marco", "luigi"],
   viareggio: [],
 };
 
 const AGENT_OWNER_ZONE_BY_CODE: Partial<Record<string, AgencyZone>> = {
   // RIATTIVARE: decommentare riga agente + aggiungere a POOL_CODES_BY_ZONE sopra.
-  // rebecca: "pontedera", // FERIE REBECCA → v. suspendedAgents.ts
-  // fausto: "pontedera", // FERIE FAUSTO → v. suspendedAgents.ts
+  rebecca: "pontedera",
+  fausto: "pontedera",
   // elisabetta: "pontedera", // FERIE ELISABETTA → v. suspendedAgents.ts
   luis: "pontedera",
   matteo: "livorno",
@@ -153,7 +152,7 @@ const AGENT_OWNER_ZONE_BY_CODE: Partial<Record<string, AgencyZone>> = {
   eros: "pisa",
   alfredo: "lucca",
   mary: "lucca",
-  massimo: "pisa",
+  // massimo: "pisa", // SOSPESO → v. suspendedAgents.ts
   davide: "pisa",
   samuele: "pisa",
   giuseppe: "pisa",
@@ -163,7 +162,7 @@ const AGENT_OWNER_ZONE_BY_CODE: Partial<Record<string, AgencyZone>> = {
   luigi: "pisa",
   // stefania: "pisa", // FERIE STEFANIA → v. suspendedAgents.ts
   // valentina: "pisa", // FERIE VALENTINA → v. suspendedAgents.ts
-  // marta: "pisa", // FERIE MARTA → v. suspendedAgents.ts
+  // marta: "pisa", // non più attiva → v. suspendedAgents.ts
 };
 
 function buildAgentZoneByCode(): Map<string, AgencyZone> {
