@@ -50,7 +50,7 @@ const PISA_AGENT_SHEETS = [
   "TOMMASO",
   // "REBECCA", // solo pool Pontedera, non Pisa
   "MATTIA",
-  // "STEFANIA", // FERIE STEFANIA → v. src/config/suspendedAgents.ts
+  "STEFANIA",
   // "VALENTINA", // FERIE VALENTINA → v. src/config/suspendedAgents.ts
   "MARCO",
   "LUIGI",
@@ -64,7 +64,7 @@ const PONTEDERA_AGENT_SHEETS = [
   "LUIS",
   "REBECCA",
   "FAUSTO",
-  // "ELISABETTA", // FERIE ELISABETTA → v. src/config/suspendedAgents.ts
+  "ELISABETTA",
 ] as const;
 const LIVORNO_AGENT_SHEETS = [
   "MATTEO",

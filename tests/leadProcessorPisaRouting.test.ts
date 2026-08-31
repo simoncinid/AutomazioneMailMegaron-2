@@ -150,7 +150,6 @@ describe("processInboundEmail AG-PISA routing", () => {
     } as unknown as GoogleSheetsWriter;
 
     const suspendedCases = [
-      { id: "cisanello-0", zone: "CISANELLO", legacySheet: "STEFANIA" },
       { id: "donbosco-0", zone: "DON BOSCO", legacySheet: "VALENTINA" },
     ] as const;
 
@@ -187,20 +186,20 @@ describe("processInboundEmail AG-PISA routing", () => {
       expect(appended).toHaveLength(1);
       expect(appended[0]?.sheetTitle).not.toBe(testCase.legacySheet);
       expect([
-        "MASSIMO",
         "DAVIDE",
         "EROS",
         "SAMUELE",
         "GIUSEPPE",
         "TOMMASO",
         "MATTIA",
+        "STEFANIA",
         "MARCO",
         "LUIGI",
       ]).toContain(appended[0]?.sheetTitle);
     }
   });
 
-  it("non assegna ad agenti Pontedera in ferie se il mapping punta al tab diretto", async () => {
+  it("assegna CENTRO Pontedera a ELISABETTA (diretta)", async () => {
     const { processInboundEmail } = await import("../src/services/leadProcessor.js");
     const appended: LeadRowPayload[] = [];
     const sheets = {
@@ -239,8 +238,7 @@ describe("processInboundEmail AG-PISA routing", () => {
     );
 
     expect(appended).toHaveLength(1);
-    expect(appended[0]?.sheetTitle).toBe("LUIS");
-    expect(appended[0]?.sheetTitle).not.toBe("ELISABETTA");
+    expect(appended[0]?.sheetTitle).toBe("ELISABETTA");
   });
 
   it("assegna AG-PISA solo agli agenti del pool Pisa", async () => {
@@ -278,9 +276,9 @@ describe("processInboundEmail AG-PISA routing", () => {
       "GIUSEPPE",
       "TOMMASO",
       "MATTIA",
+      "STEFANIA",
       "MARCO",
       "LUIGI",
-      "DAVIDE",
     ]);
     expect(appended.map((row) => row.sheetTitle)).not.toContain("ELISABETTA");
     expect(appended.map((row) => row.sheetTitle)).not.toContain("FAUSTO");

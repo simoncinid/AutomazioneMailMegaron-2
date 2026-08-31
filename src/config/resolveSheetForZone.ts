@@ -53,7 +53,7 @@ function pickSheetByZoneCityProvince(
       return null;
     case "centro":
       if (cityIn("viareggio")) return "AG-VIAREGGIO";
-      if (cityIn("pontedera")) return "AG-PONTEDERA"; // FERIE ELISABETTA: era "ELISABETTA"
+      if (cityIn("pontedera")) return "ELISABETTA";
       return null;
     case "centro storico":
       if (cityIn("livorno")) return "GUIDO";
@@ -126,7 +126,7 @@ function pickSheetByZoneCityProvince(
       if (cityIn("pontedera")) return "AG-PONTEDERA";
       return null;
     case "stazione":
-      if (cityIn("pontedera")) return "AG-PONTEDERA"; // FERIE ELISABETTA: era "ELISABETTA"
+      if (cityIn("pontedera")) return "ELISABETTA";
       // FERIE SAMUELE: ripristinato — era "AG-PISA" in ferie
       if (cityIn("pisa")) return "SAMUELE";
       return null;
