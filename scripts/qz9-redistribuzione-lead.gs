@@ -156,11 +156,6 @@ const qz9AgentTabByCode = {
   valentina: "valentina",
 };
 
-  // Pisa — sospesi
-  massimo: "massimo",
-  valentina: "valentina",
-};
-
 const qz9ProvinceRoutedAgents = new Set();
 
 // provincia -> zona pool
