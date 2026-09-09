@@ -460,12 +460,15 @@ async function maybeHandleExistingContact(
 
   if (decision.action !== "reactivate" || !decision.existing) return false;
 
+  const listingFields = await lookupListingZoneForReactivation(deps, args.selectedListingId);
+
   const row = await deps.assignmentCooldown.reactivateExistingRow(decision, {
     identity: { email: args.leadEmail, phone: args.phone },
     listingId: args.selectedListingId,
     assignmentDate: args.assignmentDate,
     phone: args.phone,
-    zone: "",
+    zone: listingFields.zone,
+    province: listingFields.province,
     nome: args.nome,
     cognome: args.cognome,
     leadEmail: args.leadEmail,
@@ -488,10 +491,41 @@ async function maybeHandleExistingContact(
       sheet: row.sheetTitle,
       row: row.rowNumber,
       reason: decision.reason,
+      listingId: args.selectedListingId,
+      prevListingId: decision.existing.snapshot.listingId,
+      prevZone: decision.existing.snapshot.zone,
+      zone: listingFields.zone || decision.existing.snapshot.zone,
+      province: listingFields.province,
     },
-    "[contatto-multiplo] riattivato: stato -> Da Chiamare",
+    "[contatto-multiplo] riattivato: stato -> Da Chiamare (zona dal DB se disponibile)",
   );
   return true;
+}
+
+async function lookupListingZoneForReactivation(
+  deps: LeadProcessorDeps,
+  listingId: string,
+): Promise<{ zone: string; province: string }> {
+  const id = listingId.trim();
+  if (!id || id === "NO-ID") return { zone: "", province: "" };
+
+  try {
+    let listing = deps.listingCache?.get(id) ?? null;
+    if (!deps.listingCache?.has(id)) {
+      listing = await deps.listings.findLatestByExternalListingId(id);
+      deps.listingCache?.set(id, listing);
+    }
+    return {
+      zone: listing?.zone?.trim() ?? "",
+      province: listing?.province?.trim() ?? "",
+    };
+  } catch (e) {
+    log.warn(
+      { err: e, listingId: id },
+      "[contatto-multiplo] lookup zona fallito su riattivazione: lascio zona precedente",
+    );
+    return { zone: "", province: "" };
+  }
 }
 
 async function insertLeadRow(

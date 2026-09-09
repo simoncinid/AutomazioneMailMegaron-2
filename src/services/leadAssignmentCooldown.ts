@@ -73,6 +73,8 @@ export interface ReactivationPayload {
   assignmentDate: string;
   phone: string;
   zone: string;
+  /** Provincia dal DB del nuovo annuncio; scritta in colonna J. */
+  province?: string;
   nome: string;
   cognome: string;
   leadEmail: string;
@@ -204,18 +206,23 @@ export class LeadAssignmentCooldown {
 
     const prev = decision.existing.snapshot;
     const leadEmail = payload.leadEmail || prev.leadEmail;
+    const listingId = payload.listingId || prev.listingId;
+    const nextZone = payload.zone.trim() || prev.zone;
+    const nextProvince = (payload.province ?? "").trim();
     const nextValues = [
       leadEmail,
-      payload.listingId || prev.listingId,
+      listingId,
       payload.assignmentDate,
       payload.phone || prev.phone,
-      payload.zone || prev.zone,
+      nextZone,
       payload.nome || prev.nome,
       payload.cognome || prev.cognome,
       "Da Chiamare",
+      "",
+      nextProvince,
     ];
 
-    const range = formatSheetRange(rowRef.sheetTitle, `A${rowRef.rowNumber}:H${rowRef.rowNumber}`);
+    const range = formatSheetRange(rowRef.sheetTitle, `A${rowRef.rowNumber}:J${rowRef.rowNumber}`);
 
     await withGoogleSheetsOperation((sheets) =>
       sheets.spreadsheets.values.update({
