@@ -134,7 +134,7 @@ const POOL_CODES_BY_ZONE: Record<AgencyZone, string[]> = {
   pontedera: ["luis", "rebecca", "fausto", "elisabetta"],
   livorno: ["matteo", "viviana", "massimiliano", "guido"],
   lucca: ["alfredo", "mary"],
-  pisa: ["davide", "eros", "samuele", "giuseppe", "tommaso", "mattia", "stefania", "marco", "luigi"],
+  pisa: ["massimo", "davide", "eros", "samuele", "giuseppe", "tommaso", "mattia", "stefania", "marco", "luigi"],
   viareggio: [],
 };
 
@@ -151,7 +151,7 @@ const AGENT_OWNER_ZONE_BY_CODE: Partial<Record<string, AgencyZone>> = {
   eros: "pisa",
   alfredo: "lucca",
   mary: "lucca",
-  // massimo: "pisa", // SOSPESO → v. suspendedAgents.ts
+  massimo: "pisa",
   davide: "pisa",
   samuele: "pisa",
   giuseppe: "pisa",

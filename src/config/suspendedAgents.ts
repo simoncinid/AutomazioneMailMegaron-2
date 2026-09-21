@@ -20,12 +20,12 @@
  *    Rimuovere da qz9SuspendedAgentOwnerZone; aggiungere a qz9AgentOwnerZoneByCode
  *    e al pool qz9PoolsByZone corrispondente.
  *
- * Sospesi (ago 2026):
- * - Pisa:      valentina, massimo → zone su AG-PISA (pool random attivo)
+ * Sospesi (set 2026):
+ * - Pisa:      valentina → zone su AG-PISA (pool random attivo)
  * - Pontedera: (nessuno)
  */
 
-export const SUSPENDED_PISA_AGENT_CODES = ["valentina", "massimo"] as const;
+export const SUSPENDED_PISA_AGENT_CODES = ["valentina"] as const;
 export const SUSPENDED_PONTEDERA_AGENT_CODES = [] as const;
 
 export type SuspendedPisaAgentCode = (typeof SUSPENDED_PISA_AGENT_CODES)[number];

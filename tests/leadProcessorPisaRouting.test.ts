@@ -186,6 +186,7 @@ describe("processInboundEmail AG-PISA routing", () => {
       expect(appended).toHaveLength(1);
       expect(appended[0]?.sheetTitle).not.toBe(testCase.legacySheet);
       expect([
+        "MASSIMO",
         "DAVIDE",
         "EROS",
         "SAMUELE",
@@ -197,6 +198,47 @@ describe("processInboundEmail AG-PISA routing", () => {
         "LUIGI",
       ]).toContain(appended[0]?.sheetTitle);
     }
+  });
+
+  it("assegna PORTA FIORENTINA direttamente a MASSIMO", async () => {
+    const { processInboundEmail } = await import("../src/services/leadProcessor.js");
+    const appended: LeadRowPayload[] = [];
+    const sheets = {
+      appendLead: vi.fn(async (payload: LeadRowPayload) => {
+        appended.push(payload);
+      }),
+    } as unknown as GoogleSheetsWriter;
+
+    const listings = {
+      findLatestByExternalListingId: vi.fn(async () => ({
+        ...buildListing("porta-fiorentina-0"),
+        zone: "PORTA FIORENTINA",
+      })),
+    } as unknown as ListingRepository;
+
+    const env = buildEnv();
+    env.zoneSheetRules.push({
+      name: "porta_fiorentina",
+      pattern: "PORTA FIORENTINA",
+      match: "contains",
+      spreadsheetId: "spreadsheet-id",
+      sheetTitle: "MASSIMO",
+    });
+
+    await processInboundEmail(
+      {
+        messageId: "message-massimo-porta",
+        from: "portal@example.com",
+        subject: "porta-fiorentina-0",
+        receivedAt: new Date("2026-09-21T10:00:00Z"),
+        textBody: "Lead PORTA FIORENTINA",
+      },
+      { env, listings, sheets },
+      new Date("2026-09-21T10:00:00Z"),
+    );
+
+    expect(appended).toHaveLength(1);
+    expect(appended[0]?.sheetTitle).toBe("MASSIMO");
   });
 
   it("assegna CENTRO Pontedera a ELISABETTA (diretta)", async () => {
@@ -254,7 +296,7 @@ describe("processInboundEmail AG-PISA routing", () => {
     } as unknown as ListingRepository;
 
     const env = buildEnv();
-    for (let i = 0; i < 9; i += 1) {
+    for (let i = 0; i < 10; i += 1) {
       const id = i % 2 === 0 ? `passi-${i}` : `calambrone-${i}`;
       await processInboundEmail(
         {
@@ -270,6 +312,7 @@ describe("processInboundEmail AG-PISA routing", () => {
     }
 
     expect(appended.map((row) => row.sheetTitle)).toEqual([
+      "MASSIMO",
       "DAVIDE",
       "EROS",
       "SAMUELE",

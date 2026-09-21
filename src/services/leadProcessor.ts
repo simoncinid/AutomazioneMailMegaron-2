@@ -43,6 +43,7 @@ const DEFAULT_LIVORNO_ROUND_ROBIN_STATE_PATH = join(
 );
 /** Pool Pisa attivo. */
 const PISA_AGENT_SHEETS = [
+  "MASSIMO",
   "DAVIDE",
   "EROS",
   "SAMUELE",
