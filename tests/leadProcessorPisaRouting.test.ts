@@ -151,6 +151,8 @@ describe("processInboundEmail AG-PISA routing", () => {
 
     const suspendedCases = [
       { id: "donbosco-0", zone: "DON BOSCO", legacySheet: "VALENTINA" },
+      { id: "portaamare-0", zone: "PORTA A MARE", legacySheet: "MARCO" },
+      { id: "santantonio-0", zone: "SANT'ANTONIO", legacySheet: "MARCO" },
     ] as const;
 
     for (const testCase of suspendedCases) {
@@ -164,7 +166,7 @@ describe("processInboundEmail AG-PISA routing", () => {
 
       const env = buildEnv();
       env.zoneSheetRules.push({
-        name: `legacy_${testCase.legacySheet.toLowerCase()}`,
+        name: `legacy_${testCase.legacySheet.toLowerCase()}_${testCase.id}`,
         pattern: testCase.zone,
         match: "contains",
         spreadsheetId: "spreadsheet-id",
@@ -194,7 +196,6 @@ describe("processInboundEmail AG-PISA routing", () => {
         "TOMMASO",
         "MATTIA",
         "STEFANIA",
-        "MARCO",
         "LUIGI",
       ]).toContain(appended[0]?.sheetTitle);
     }
@@ -320,12 +321,13 @@ describe("processInboundEmail AG-PISA routing", () => {
       "TOMMASO",
       "MATTIA",
       "STEFANIA",
-      "MARCO",
       "LUIGI",
+      "MASSIMO",
     ]);
     expect(appended.map((row) => row.sheetTitle)).not.toContain("ELISABETTA");
     expect(appended.map((row) => row.sheetTitle)).not.toContain("FAUSTO");
     expect(appended.map((row) => row.sheetTitle)).not.toContain("LUIS");
+    expect(appended.map((row) => row.sheetTitle)).not.toContain("MARCO");
   });
 
   it("assegna AG-VIAREGGIO solo agli agenti del pool Lucca", async () => {
@@ -532,7 +534,7 @@ describe("processInboundEmail AG-PISA routing", () => {
     }
 
     expect(appended).toHaveLength(1);
-    expect(appended[0]?.sheetTitle).toBe("EROS");
+    expect(appended[0]?.sheetTitle).toBe("DAVIDE");
   });
 
   it("assegna AG-LUCCA solo agli agenti del pool Lucca", async () => {

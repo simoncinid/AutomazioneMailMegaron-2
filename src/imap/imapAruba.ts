@@ -46,42 +46,47 @@ export async function listInboxMessagesFromImap(
   const lock = await client.getMailboxLock("INBOX");
   try {
     const since = lookbackDate(options.lookbackHours);
-    const uids = (await client.search({ since })) || [];
+    // Senza `{ uid: true }` imapflow usa SEARCH (numeri di sequenza), non UID SEARCH.
+    // Quei numeri venivano poi passati a UID FETCH → fetch vuoti e 0 mail da elaborare
+    // (es. seq 432..445 con UIDNEXT ~26279).
+    const uids = (await client.search({ since }, { uid: true })) || [];
     const selectedUids = uids.slice(-Math.max(1, options.limit));
     const out: ParsedInboundEmail[] = [];
 
-    for (const uid of selectedUids) {
-      for await (const msg of client.fetch(
-        { uid },
-        {
-          uid: true,
-          envelope: true,
-          internalDate: true,
-          source: true,
-        },
-      )) {
-        if (!msg.source) continue;
-        const parsed = await simpleParser(msg.source, {});
-        const fromValue = parsed.from?.text ?? msg.envelope?.from?.[0]?.address ?? "";
-        const internalReceivedAt = msg.internalDate
-          ? new Date(msg.internalDate)
-          : parsed.date
-            ? new Date(parsed.date)
-            : new Date();
-        if (internalReceivedAt.getTime() < since.getTime()) continue;
+    if (selectedUids.length === 0) {
+      return out;
+    }
 
-        const receivedAt = internalReceivedAt;
-        out.push({
-          messageId: parsed.messageId ?? `imap-uid-${msg.uid}`,
-          from: fromValue,
-          fromDisplayName: parsed.from?.value?.[0]?.name ?? undefined,
-          to: toAddressText(parsed.to) ?? undefined,
-          subject: parsed.subject ?? "",
-          receivedAt,
-          textBody: parsed.text ?? "",
-          htmlBody: typeof parsed.html === "string" ? parsed.html : undefined,
-        });
-      }
+    for await (const msg of client.fetch(
+      selectedUids,
+      {
+        envelope: true,
+        internalDate: true,
+        source: true,
+      },
+      { uid: true },
+    )) {
+      if (!msg.source) continue;
+      const parsed = await simpleParser(msg.source, {});
+      const fromValue = parsed.from?.text ?? msg.envelope?.from?.[0]?.address ?? "";
+      const internalReceivedAt = msg.internalDate
+        ? new Date(msg.internalDate)
+        : parsed.date
+          ? new Date(parsed.date)
+          : new Date();
+      if (internalReceivedAt.getTime() < since.getTime()) continue;
+
+      const receivedAt = internalReceivedAt;
+      out.push({
+        messageId: parsed.messageId ?? `imap-uid-${msg.uid}`,
+        from: fromValue,
+        fromDisplayName: parsed.from?.value?.[0]?.name ?? undefined,
+        to: toAddressText(parsed.to) ?? undefined,
+        subject: parsed.subject ?? "",
+        receivedAt,
+        textBody: parsed.text ?? "",
+        htmlBody: typeof parsed.html === "string" ? parsed.html : undefined,
+      });
     }
 
     return out;

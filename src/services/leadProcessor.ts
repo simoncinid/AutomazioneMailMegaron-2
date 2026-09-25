@@ -53,7 +53,7 @@ const PISA_AGENT_SHEETS = [
   "MATTIA",
   "STEFANIA",
   // "VALENTINA", // FERIE VALENTINA → v. src/config/suspendedAgents.ts
-  "MARCO",
+  // "MARCO", // FERIE MARCO → v. src/config/suspendedAgents.ts
   "LUIGI",
 ] as const;
 const LUCCA_VIAREGGIO_AGENT_SHEETS = [

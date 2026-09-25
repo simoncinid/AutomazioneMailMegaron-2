@@ -7,13 +7,13 @@
  * 2) qz9InstallTriggerGiornaliero    (una volta)
  *
  * POOL ATTIVI
- * - Pisa:      massimo, davide, eros, samuele, giuseppe, tommaso, mattia, stefania, marco, luigi
+ * - Pisa:      massimo, davide, eros, samuele, giuseppe, tommaso, mattia, stefania, luigi
  * - Pontedera: luis, rebecca, fausto, elisabetta
  * - Livorno:   matteo, viviana, massimiliano, guido
  * - Lucca:     alfredo, mary
  *
  * FERIE (tab sorgente restano attivi; lead nuovi → AG-PISA / AG-PONTEDERA nel backend)
- * - Pisa:      valentina
+ * - Pisa:      valentina, marco
  * - Pontedera: (nessuno)
  *
  * ═══ RIATTIVARE UN AGENTE AL 100% (es. STEFANIA) ═══
@@ -76,7 +76,7 @@ const qz9PoolsByZone = {
   pontedera: ["luis", "rebecca", "fausto", "elisabetta"],
   livorno: ["matteo", "viviana", "massimiliano", "guido"],
   lucca: ["alfredo", "mary"],
-  pisa: ["massimo", "davide", "eros", "samuele", "giuseppe", "tommaso", "mattia", "stefania", "marco", "luigi"],
+  pisa: ["massimo", "davide", "eros", "samuele", "giuseppe", "tommaso", "mattia", "stefania", "luigi"],
   viareggio: [],
 };
 
@@ -101,7 +101,6 @@ const qz9AgentOwnerZoneByCode = {
   giuseppe: "pisa",
   tommaso: "pisa",
   mattia: "pisa",
-  marco: "pisa",
   luigi: "pisa",
   stefania: "pisa",
 
@@ -119,6 +118,7 @@ const qz9AgentOwnerZoneByCode = {
 const qz9SuspendedAgentOwnerZone = {
   // Pisa — sospesi
   valentina: "pisa",
+  marco: "pisa",
 };
 
 // Mappa codice agente -> nome tab reale nel file
@@ -148,12 +148,12 @@ const qz9AgentTabByCode = {
   giuseppe: "giuseppe",
   tommaso: "TOMMASO",
   mattia: "mattia",
-  marco: "marco",
   luigi: "luigi",
   stefania: "stefania",
 
   // Pisa — sospesi
   valentina: "valentina",
+  marco: "marco",
 };
 
 const qz9ProvinceRoutedAgents = new Set();
