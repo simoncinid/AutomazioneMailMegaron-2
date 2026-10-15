@@ -57,7 +57,7 @@ function pickSheetByZoneCityProvince(
       return null;
     case "centro storico":
       if (cityIn("livorno")) return "GUIDO";
-      if (cityIn("ponsacco")) return "AG-PONTEDERA";
+      if (cityIn("ponsacco")) return "ANTONIO";
       return null;
     case "cevoli":
       if (cityIn("vicopisano")) return "LUIS";
@@ -111,8 +111,9 @@ function pickSheetByZoneCityProvince(
       if (cityIn("lucca")) return "AG-LUCCA";
       return null;
     case "san marco":
+    case "san maro":
       if (cityIn("pisa")) return "AG-PISA";
-      if (cityIn("lucca")) return "AG-LUCCA";
+      if (cityIn("lucca")) return "GIOVANNI";
       return null;
     case "san giusto":
       if (cityIn("pisa")) return "AG-PISA";

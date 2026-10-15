@@ -55,10 +55,12 @@ const PISA_AGENT_SHEETS = [
   // "VALENTINA", // FERIE VALENTINA → v. src/config/suspendedAgents.ts
   // "MARCO", // FERIE MARCO → v. src/config/suspendedAgents.ts
   "LUIGI",
+  "MORGAN",
 ] as const;
 const LUCCA_VIAREGGIO_AGENT_SHEETS = [
   "ALFREDO",
   "MARY",
+  "GIOVANNI",
 ] as const;
 /** Pool Pontedera attivo. */
 const PONTEDERA_AGENT_SHEETS = [
@@ -66,6 +68,7 @@ const PONTEDERA_AGENT_SHEETS = [
   "REBECCA",
   "FAUSTO",
   "ELISABETTA",
+  "ANTONIO",
 ] as const;
 const LIVORNO_AGENT_SHEETS = [
   "MATTEO",

@@ -20,9 +20,12 @@
  *    Rimuovere da qz9SuspendedAgentOwnerZone; aggiungere a qz9AgentOwnerZoneByCode
  *    e al pool qz9PoolsByZone corrispondente.
  *
- * Sospesi (set 2026):
- * - Pisa:      valentina, marco → zone su AG-PISA (pool random attivo)
+ * Sospesi (ott 2026):
+ * - Pisa:      valentina (nessuna zona; DON BOSCO/PISANOVA → MORGAN),
+ *              marco → zone su AG-PISA (pool random attivo)
  * - Pontedera: (nessuno)
+ *
+ * Valentina: tab resta sorgente QZ9 per drenare lead residui; fuori pool e senza mapping zone.
  */
 
 export const SUSPENDED_PISA_AGENT_CODES = ["valentina", "marco"] as const;

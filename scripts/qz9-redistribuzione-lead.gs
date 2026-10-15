@@ -7,13 +7,14 @@
  * 2) qz9InstallTriggerGiornaliero    (una volta)
  *
  * POOL ATTIVI
- * - Pisa:      massimo, davide, eros, samuele, giuseppe, tommaso, mattia, stefania, luigi
- * - Pontedera: luis, rebecca, fausto, elisabetta
+ * - Pisa:      massimo, davide, eros, samuele, giuseppe, tommaso, mattia, stefania, luigi, morgan
+ * - Pontedera: luis, rebecca, fausto, elisabetta, antonio
  * - Livorno:   matteo, viviana, massimiliano, guido
- * - Lucca:     alfredo, mary
+ * - Lucca:     alfredo, mary, giovanni
  *
- * FERIE (tab sorgente restano attivi; lead nuovi → AG-PISA / AG-PONTEDERA nel backend)
- * - Pisa:      valentina, marco
+ * FERIE / SOSPESI (tab sorgente restano attivi; lead nuovi non vanno a loro)
+ * - Pisa:      valentina (nessuna zona; ex DON BOSCO/PISANOVA → morgan),
+ *              marco (zone → AG-PISA nel backend)
  * - Pontedera: (nessuno)
  *
  * ═══ RIATTIVARE UN AGENTE AL 100% (es. STEFANIA) ═══
@@ -73,10 +74,10 @@ const qz9KeepAgencySheets = new Set(["AG-PISA", "AG-LUCCA", "AG-VIAREGGIO"]);
  * + togliere da qz9SuspendedAgentOwnerZone. V. header e suspendedAgents.ts.
  */
 const qz9PoolsByZone = {
-  pontedera: ["luis", "rebecca", "fausto", "elisabetta"],
+  pontedera: ["luis", "rebecca", "fausto", "elisabetta", "antonio"],
   livorno: ["matteo", "viviana", "massimiliano", "guido"],
-  lucca: ["alfredo", "mary"],
-  pisa: ["massimo", "davide", "eros", "samuele", "giuseppe", "tommaso", "mattia", "stefania", "luigi"],
+  lucca: ["alfredo", "mary", "giovanni"],
+  pisa: ["massimo", "davide", "eros", "samuele", "giuseppe", "tommaso", "mattia", "stefania", "luigi", "morgan"],
   viareggio: [],
 };
 
@@ -92,6 +93,7 @@ const qz9AgentOwnerZoneByCode = {
   // Lucca
   alfredo: "lucca",
   mary: "lucca",
+  giovanni: "lucca",
 
   // Pisa — attivi
   massimo: "pisa",
@@ -103,12 +105,14 @@ const qz9AgentOwnerZoneByCode = {
   mattia: "pisa",
   luigi: "pisa",
   stefania: "pisa",
+  morgan: "pisa",
 
   // Pontedera — attivi
   luis: "pontedera",
   rebecca: "pontedera",
   fausto: "pontedera",
   elisabetta: "pontedera",
+  antonio: "pontedera",
 };
 
 /**
@@ -116,8 +120,8 @@ const qz9AgentOwnerZoneByCode = {
  * RIATTIVARE: spostare in qz9AgentOwnerZoneByCode + pool + suspendedAgents.ts.
  */
 const qz9SuspendedAgentOwnerZone = {
-  // Pisa — sospesi
-  valentina: "pisa",
+  // Pisa — sospesi (fuori pool; tab ancora sorgente per drenare "Da Chiamare")
+  valentina: "pisa", // nessuna zona in mapping; lead residui → pool pisa
   marco: "pisa",
 };
 
@@ -128,6 +132,7 @@ const qz9AgentTabByCode = {
   rebecca: "rebecca",
   fausto: "fausto",
   elisabetta: "elisabetta",
+  antonio: "antonio",
 
   // Livorno
   matteo: "matteo",
@@ -139,6 +144,7 @@ const qz9AgentTabByCode = {
   // Lucca
   alfredo: "alfredo",
   mary: "mary",
+  giovanni: "giovanni",
 
   // Pisa — attivi
   massimo: "massimo",
@@ -150,6 +156,7 @@ const qz9AgentTabByCode = {
   mattia: "mattia",
   luigi: "luigi",
   stefania: "stefania",
+  morgan: "morgan",
 
   // Pisa — sospesi
   valentina: "valentina",

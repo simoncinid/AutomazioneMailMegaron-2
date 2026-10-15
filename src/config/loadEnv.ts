@@ -14,7 +14,7 @@ const BASE_HARD_CODED_ZONE_SHEET_MAPPING: Array<[string, string]> = [
   ["CEP", "LUIGI"],
   ["CISANELLO", "STEFANIA"],
   ["COLTANO", "AG-PONTEDERA"], // FERIE REBECCA: era "REBECCA"
-  ["DON BOSCO", "AG-PISA"], // FERIE VALENTINA: era "VALENTINA"
+  ["DON BOSCO", "MORGAN"], // era VALENTINA → AG-PISA
   ["GAGNO", "LUIGI"],
   ["I PASSI", "LUIGI"],
   ["LA VETTOLA", "LUIGI"],
@@ -23,7 +23,7 @@ const BASE_HARD_CODED_ZONE_SHEET_MAPPING: Array<[string, string]> = [
   ["ORATOIO", "AG-PISA"],
   ["OSPEDALETTO", "AG-PONTEDERA"], // FERIE REBECCA: era "REBECCA"
   ["PIAGGE", "STEFANIA"],
-  ["PISANOVA", "AG-PISA"], // FERIE VALENTINA: era "VALENTINA"
+  ["PISANOVA", "MORGAN"], // era VALENTINA → AG-PISA
   ["PORTA A LUCCA", "GIUSEPPE"],
   ["PORTA A MARE", "AG-PISA"], // FERIE MARCO: era "MARCO"
   ["PORTA FIORENTINA", "MASSIMO"],
@@ -263,7 +263,7 @@ const BASE_HARD_CODED_ZONE_SHEET_MAPPING: Array<[string, string]> = [
   ["I Poggini", "AG-PONTEDERA"],
   ["Le Melorie", "AG-PONTEDERA"],
   ["Parco Urbano", "AG-PONTEDERA"],
-  ["Ponsacco", "AG-PONTEDERA"],
+  ["Ponsacco", "ANTONIO"],
   ["Val Di Cava", "AG-PONTEDERA"],
   ["Zona Coop", "AG-PONTEDERA"],
   ["Nocolino", "AG-PONTEDERA"],
@@ -327,7 +327,7 @@ const BASE_HARD_CODED_ZONE_SHEET_MAPPING: Array<[string, string]> = [
   ["EMPOLI - PONTE A ELSA", "AG-PONTEDERA"],
   ["FUCECCHIO - BOTTEGHE", "AG-PONTEDERA"],
   ["Pomarance", "AG-PISA"],
-  ["Ponsacco", "AG-PISA"],
+  ["Ponsacco", "ANTONIO"],
   ["Pontedera", "ELISABETTA"],
   ["Riparbella", "AG-PISA"],
   ["San Giuliano Terme", "DAVIDE"], // FERIE DAVIDE: era "DAVIDE"
@@ -401,9 +401,9 @@ const BASE_HARD_CODED_ZONE_SHEET_MAPPING: Array<[string, string]> = [
   ["Rio nell'Elba", "AG-LIVORNO"],
   ["Rosignano Marittimo", "AG-LIVORNO"],
   ["Vada", "AG-LIVORNO"],
-  ["ANTRACCOLI", "AG-LUCCA"],
+  ["ANTRACCOLI", "GIOVANNI"],
   ["AQUILEA", "AG-LUCCA"],
-  ["ARANCIO", "AG-LUCCA"],
+  ["ARANCIO", "GIOVANNI"],
   ["ARLIANO", "AG-LUCCA"],
   ["ARSINA", "ALFREDO"],
   ["BALBANO", "AG-LUCCA"],
@@ -446,7 +446,8 @@ const BASE_HARD_CODED_ZONE_SHEET_MAPPING: Array<[string, string]> = [
   ["PIAGGIONE", "AG-LUCCA"],
   ["PIAZZA DI BRANCOLI", "AG-LUCCA"],
   ["PIAZZANO", "AG-LUCCA"],
-  ["PICCIONARA", "AG-LUCCA"],
+  ["PICCIONARA", "GIOVANNI"],
+  ["PICCIORANA", "GIOVANNI"], // alias / variante di Piccionara
   ["PIEVE DI BRANCOLI", "AG-LUCCA"],
   ["PIEVE SANTO STEFANO", "AG-LUCCA"],
   ["PONTE A MORIANO", "AG-LUCCA"],
@@ -454,12 +455,13 @@ const BASE_HARD_CODED_ZONE_SHEET_MAPPING: Array<[string, string]> = [
   ["PONTETETTO", "AG-LUCCA"],
   ["POZZUOLO", "AG-LUCCA"],
   ["SALTOCCHIO", "AG-LUCCA"],
-  ["SAN CASSIANO A VICO", "AG-LUCCA"],
+  ["SAN CASCIANO A VICO", "GIOVANNI"], // alias di San Cassiano a Vico
+  ["SAN CASSIANO A VICO", "GIOVANNI"],
   ["SAN CASSIANO DI MORIANO", "AG-LUCCA"],
   ["SAN CONCORDIO CONTRADA", "AG-LUCCA"],
   ["SAN CONCORDIO DI MORIANO", "AG-LUCCA"],
   ["SAN DONATO", "AG-LUCCA"],
-  ["SAN FILIPPO", "AG-LUCCA"],
+  ["SAN FILIPPO", "GIOVANNI"],
   ["SAN GEMIGNANO DI MORIANO", "AG-LUCCA"],
   ["SAN GIUSTO DI BRANCOLI", "AG-LUCCA"],
   ["SAN LEONARDO IN TREPONZIO", "AG-LUCCA"],
@@ -468,12 +470,13 @@ const BASE_HARD_CODED_ZONE_SHEET_MAPPING: Array<[string, string]> = [
   ["SAN LORENZO DI MORIANO", "AG-LUCCA"],
   ["SAN MACARIO IN MONTE", "AG-LUCCA"],
   ["SAN MACARIO IN PIANO", "AG-LUCCA"],
-  ["SAN MARCO", "AG-LUCCA"],
+  ["SAN MARCO", "GIOVANNI"],
+  ["SAN MARO", "GIOVANNI"], // alias / variante di San Marco (Lucca)
   ["SAN MARTINO IN VIGNALE", "AG-LUCCA"],
   ["SAN MICHELE DI MORIANO", "AG-LUCCA"],
   ["SAN MICHELE IN ESCHETTO", "AG-LUCCA"],
   ["SAN PANCRAZIO", "AG-LUCCA"],
-  ["SAN PIETRO A VICO", "AG-LUCCA"],
+  ["SAN PIETRO A VICO", "GIOVANNI"],
   ["SAN QUIRICO DI MORIANO", "AG-LUCCA"],
   ["SAN VITO", "AG-LUCCA"],
   ["SANT'ALESSIO", "AG-LUCCA"],
@@ -636,6 +639,11 @@ const HARD_CODED_ZONE_SHEET_MAPPING = BASE_HARD_CODED_ZONE_SHEET_MAPPING.map(([z
 const HARD_CODED_ZONE_SHEET_MAPPING_RAW = HARD_CODED_ZONE_SHEET_MAPPING.map(
   ([zone, sheetTitle]) => `${zone}\t${sheetTitle}`,
 ).join("\n");
+
+/** Esposto per test di allineamento mapping zone → tab. */
+export function getHardCodedZoneSheetMapping(): ReadonlyArray<readonly [string, string]> {
+  return HARD_CODED_ZONE_SHEET_MAPPING;
+}
 
 const zoneRuleSchema = z.object({
   name: z.string().optional(),

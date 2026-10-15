@@ -32,6 +32,7 @@ const sortLeadAgentTabs = [
   "rebecca",
   "elisabetta",
   "fausto",
+  "antonio",
   "matteo",
   "viviana",
   "massimiliano",
@@ -39,6 +40,7 @@ const sortLeadAgentTabs = [
   "lisa",
   "alfredo",
   "mary",
+  "giovanni",
   "massimo",
   "davide",
   "eros",
@@ -49,6 +51,7 @@ const sortLeadAgentTabs = [
   "marco",
   "luigi",
   "stefania",
+  "morgan",
   "valentina",
 ];
 

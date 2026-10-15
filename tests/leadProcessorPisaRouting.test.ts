@@ -59,8 +59,8 @@ function buildEnv(): AppEnv {
         sheetTitle: "AG-VIAREGGIO",
       },
       {
-        name: "san_marco_lucca",
-        pattern: "SAN MARCO",
+        name: "balbano_lucca",
+        pattern: "BALBANO",
         match: "contains",
         spreadsheetId: "spreadsheet-id",
         sheetTitle: "AG-LUCCA",
@@ -150,7 +150,6 @@ describe("processInboundEmail AG-PISA routing", () => {
     } as unknown as GoogleSheetsWriter;
 
     const suspendedCases = [
-      { id: "donbosco-0", zone: "DON BOSCO", legacySheet: "VALENTINA" },
       { id: "portaamare-0", zone: "PORTA A MARE", legacySheet: "MARCO" },
       { id: "santantonio-0", zone: "SANT'ANTONIO", legacySheet: "MARCO" },
     ] as const;
@@ -197,6 +196,7 @@ describe("processInboundEmail AG-PISA routing", () => {
         "MATTIA",
         "STEFANIA",
         "LUIGI",
+        "MORGAN",
       ]).toContain(appended[0]?.sheetTitle);
     }
   });
@@ -322,7 +322,7 @@ describe("processInboundEmail AG-PISA routing", () => {
       "MATTIA",
       "STEFANIA",
       "LUIGI",
-      "MASSIMO",
+      "MORGAN",
     ]);
     expect(appended.map((row) => row.sheetTitle)).not.toContain("ELISABETTA");
     expect(appended.map((row) => row.sheetTitle)).not.toContain("FAUSTO");
@@ -361,10 +361,10 @@ describe("processInboundEmail AG-PISA routing", () => {
     expect(appended.map((row) => row.sheetTitle)).toEqual([
       "ALFREDO",
       "MARY",
+      "GIOVANNI",
       "ALFREDO",
       "MARY",
-      "ALFREDO",
-      "MARY",
+      "GIOVANNI",
     ]);
   });
 
@@ -505,7 +505,8 @@ describe("processInboundEmail AG-PISA routing", () => {
   });
 
   it("assegna randomicamente le zone ex Patrizia sul pool Pisa", async () => {
-    const randomSpy = vi.spyOn(Math, "random").mockReturnValue(0.2);
+    // pool Pisa ha 10 agenti: index 1 = DAVIDE → floor(0.15 * 10) = 1
+    const randomSpy = vi.spyOn(Math, "random").mockReturnValue(0.15);
     const { processInboundEmail } = await import("../src/services/leadProcessor.js");
     const appended: LeadRowPayload[] = [];
     const sheets = {
@@ -550,7 +551,7 @@ describe("processInboundEmail AG-PISA routing", () => {
         ...buildListing(id),
         city: "Lucca",
         province: "Lucca",
-        zone: "SAN MARCO",
+        zone: "BALBANO",
       })),
     } as unknown as ListingRepository;
 
@@ -573,10 +574,10 @@ describe("processInboundEmail AG-PISA routing", () => {
     expect(appended.map((row) => row.sheetTitle)).toEqual([
       "ALFREDO",
       "MARY",
+      "GIOVANNI",
       "ALFREDO",
       "MARY",
-      "ALFREDO",
-      "MARY",
+      "GIOVANNI",
     ]);
   });
 
@@ -624,7 +625,7 @@ describe("processInboundEmail AG-PISA routing", () => {
 
     expect(appended).toHaveLength(1);
     expect(appended[0]?.listingId).toBe("2022lu034");
-    expect(["ALFREDO", "MARY"]).toContain(appended[0]?.sheetTitle);
+    expect(["ALFREDO", "MARY", "GIOVANNI"]).toContain(appended[0]?.sheetTitle);
     expect(noIdRows).toHaveLength(0);
   });
 

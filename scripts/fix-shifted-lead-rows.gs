@@ -25,6 +25,7 @@ const fixShiftedAgentTabs = [
   "rebecca",
   "elisabetta",
   "fausto",
+  "antonio",
   "matteo",
   "viviana",
   "massimiliano",
@@ -32,6 +33,7 @@ const fixShiftedAgentTabs = [
   "lisa",
   "alfredo",
   "mary",
+  "giovanni",
   "massimo",
   "davide",
   "eros",
@@ -42,6 +44,7 @@ const fixShiftedAgentTabs = [
   "marco",
   "luigi",
   "stefania",
+  "morgan",
   "valentina",
 ];
 
