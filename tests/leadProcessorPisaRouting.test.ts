@@ -361,10 +361,10 @@ describe("processInboundEmail AG-PISA routing", () => {
     expect(appended.map((row) => row.sheetTitle)).toEqual([
       "ALFREDO",
       "MARY",
-      "GIOVANNI",
       "ALFREDO",
       "MARY",
-      "GIOVANNI",
+      "ALFREDO",
+      "MARY",
     ]);
   });
 
@@ -574,10 +574,10 @@ describe("processInboundEmail AG-PISA routing", () => {
     expect(appended.map((row) => row.sheetTitle)).toEqual([
       "ALFREDO",
       "MARY",
-      "GIOVANNI",
       "ALFREDO",
       "MARY",
-      "GIOVANNI",
+      "ALFREDO",
+      "MARY",
     ]);
   });
 
@@ -625,7 +625,7 @@ describe("processInboundEmail AG-PISA routing", () => {
 
     expect(appended).toHaveLength(1);
     expect(appended[0]?.listingId).toBe("2022lu034");
-    expect(["ALFREDO", "MARY", "GIOVANNI"]).toContain(appended[0]?.sheetTitle);
+    expect(["ALFREDO", "MARY"]).toContain(appended[0]?.sheetTitle);
     expect(noIdRows).toHaveLength(0);
   });
 

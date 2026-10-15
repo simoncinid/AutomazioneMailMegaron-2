@@ -263,7 +263,7 @@ const BASE_HARD_CODED_ZONE_SHEET_MAPPING: Array<[string, string]> = [
   ["I Poggini", "AG-PONTEDERA"],
   ["Le Melorie", "AG-PONTEDERA"],
   ["Parco Urbano", "AG-PONTEDERA"],
-  ["Ponsacco", "ANTONIO"],
+  ["Ponsacco", "AG-PONTEDERA"], // FERIE ANTONIO: era "ANTONIO"
   ["Val Di Cava", "AG-PONTEDERA"],
   ["Zona Coop", "AG-PONTEDERA"],
   ["Nocolino", "AG-PONTEDERA"],
@@ -327,7 +327,7 @@ const BASE_HARD_CODED_ZONE_SHEET_MAPPING: Array<[string, string]> = [
   ["EMPOLI - PONTE A ELSA", "AG-PONTEDERA"],
   ["FUCECCHIO - BOTTEGHE", "AG-PONTEDERA"],
   ["Pomarance", "AG-PISA"],
-  ["Ponsacco", "ANTONIO"],
+  ["Ponsacco", "AG-PONTEDERA"], // FERIE ANTONIO: era "ANTONIO"
   ["Pontedera", "ELISABETTA"],
   ["Riparbella", "AG-PISA"],
   ["San Giuliano Terme", "DAVIDE"], // FERIE DAVIDE: era "DAVIDE"
@@ -401,9 +401,9 @@ const BASE_HARD_CODED_ZONE_SHEET_MAPPING: Array<[string, string]> = [
   ["Rio nell'Elba", "AG-LIVORNO"],
   ["Rosignano Marittimo", "AG-LIVORNO"],
   ["Vada", "AG-LIVORNO"],
-  ["ANTRACCOLI", "GIOVANNI"],
+  ["ANTRACCOLI", "AG-LUCCA"], // FERIE GIOVANNI: era "GIOVANNI"
   ["AQUILEA", "AG-LUCCA"],
-  ["ARANCIO", "GIOVANNI"],
+  ["ARANCIO", "AG-LUCCA"], // FERIE GIOVANNI: era "GIOVANNI"
   ["ARLIANO", "AG-LUCCA"],
   ["ARSINA", "ALFREDO"],
   ["BALBANO", "AG-LUCCA"],
@@ -446,8 +446,8 @@ const BASE_HARD_CODED_ZONE_SHEET_MAPPING: Array<[string, string]> = [
   ["PIAGGIONE", "AG-LUCCA"],
   ["PIAZZA DI BRANCOLI", "AG-LUCCA"],
   ["PIAZZANO", "AG-LUCCA"],
-  ["PICCIONARA", "GIOVANNI"],
-  ["PICCIORANA", "GIOVANNI"], // alias / variante di Piccionara
+  ["PICCIONARA", "AG-LUCCA"], // FERIE GIOVANNI: era "GIOVANNI"
+  ["PICCIORANA", "AG-LUCCA"], // FERIE GIOVANNI: alias Piccionara
   ["PIEVE DI BRANCOLI", "AG-LUCCA"],
   ["PIEVE SANTO STEFANO", "AG-LUCCA"],
   ["PONTE A MORIANO", "AG-LUCCA"],
@@ -455,13 +455,13 @@ const BASE_HARD_CODED_ZONE_SHEET_MAPPING: Array<[string, string]> = [
   ["PONTETETTO", "AG-LUCCA"],
   ["POZZUOLO", "AG-LUCCA"],
   ["SALTOCCHIO", "AG-LUCCA"],
-  ["SAN CASCIANO A VICO", "GIOVANNI"], // alias di San Cassiano a Vico
-  ["SAN CASSIANO A VICO", "GIOVANNI"],
+  ["SAN CASCIANO A VICO", "AG-LUCCA"], // FERIE GIOVANNI: alias San Cassiano a Vico
+  ["SAN CASSIANO A VICO", "AG-LUCCA"], // FERIE GIOVANNI: era "GIOVANNI"
   ["SAN CASSIANO DI MORIANO", "AG-LUCCA"],
   ["SAN CONCORDIO CONTRADA", "AG-LUCCA"],
   ["SAN CONCORDIO DI MORIANO", "AG-LUCCA"],
   ["SAN DONATO", "AG-LUCCA"],
-  ["SAN FILIPPO", "GIOVANNI"],
+  ["SAN FILIPPO", "AG-LUCCA"], // FERIE GIOVANNI: era "GIOVANNI"
   ["SAN GEMIGNANO DI MORIANO", "AG-LUCCA"],
   ["SAN GIUSTO DI BRANCOLI", "AG-LUCCA"],
   ["SAN LEONARDO IN TREPONZIO", "AG-LUCCA"],
@@ -470,13 +470,13 @@ const BASE_HARD_CODED_ZONE_SHEET_MAPPING: Array<[string, string]> = [
   ["SAN LORENZO DI MORIANO", "AG-LUCCA"],
   ["SAN MACARIO IN MONTE", "AG-LUCCA"],
   ["SAN MACARIO IN PIANO", "AG-LUCCA"],
-  ["SAN MARCO", "GIOVANNI"],
-  ["SAN MARO", "GIOVANNI"], // alias / variante di San Marco (Lucca)
+  ["SAN MARCO", "AG-LUCCA"], // FERIE GIOVANNI: era "GIOVANNI"
+  ["SAN MARO", "AG-LUCCA"], // FERIE GIOVANNI: alias San Marco (Lucca)
   ["SAN MARTINO IN VIGNALE", "AG-LUCCA"],
   ["SAN MICHELE DI MORIANO", "AG-LUCCA"],
   ["SAN MICHELE IN ESCHETTO", "AG-LUCCA"],
   ["SAN PANCRAZIO", "AG-LUCCA"],
-  ["SAN PIETRO A VICO", "GIOVANNI"],
+  ["SAN PIETRO A VICO", "AG-LUCCA"], // FERIE GIOVANNI: era "GIOVANNI"
   ["SAN QUIRICO DI MORIANO", "AG-LUCCA"],
   ["SAN VITO", "AG-LUCCA"],
   ["SANT'ALESSIO", "AG-LUCCA"],

@@ -1,7 +1,11 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
-import { SUSPENDED_PISA_AGENT_CODES } from "../src/config/suspendedAgents.js";
+import {
+  SUSPENDED_LUCCA_AGENT_CODES,
+  SUSPENDED_PISA_AGENT_CODES,
+  SUSPENDED_PONTEDERA_AGENT_CODES,
+} from "../src/config/suspendedAgents.js";
 import {
   QZ9_AGENT_OWNER_ZONE_BY_CODE,
   QZ9_AGENT_TAB_BY_CODE,
@@ -43,26 +47,32 @@ describe("QZ9 config allineata al .gs", () => {
     expect(parseGsStringArrayField(poolsBlock, "lucca")).toEqual(QZ9_POOLS_BY_ZONE.lucca);
   });
 
-  it("valentina e marco sono sospesi nel .gs e nel backend", () => {
+  it("sospesi allineati tra .gs e backend", () => {
     const suspendedBlock = extractGsArrayBlock(gs, "qz9SuspendedAgentOwnerZone");
     const suspendedKeys = parseGsStringMapKeys(suspendedBlock);
-    expect(suspendedKeys).toEqual(expect.arrayContaining(["valentina", "marco"]));
+    expect(suspendedKeys).toEqual(
+      expect.arrayContaining(["valentina", "marco", "antonio", "giovanni"]),
+    );
     expect(QZ9_SUSPENDED_AGENT_OWNER_ZONE.valentina).toBe("pisa");
     expect(QZ9_SUSPENDED_AGENT_OWNER_ZONE.marco).toBe("pisa");
+    expect(QZ9_SUSPENDED_AGENT_OWNER_ZONE.antonio).toBe("pontedera");
+    expect(QZ9_SUSPENDED_AGENT_OWNER_ZONE.giovanni).toBe("lucca");
     expect([...SUSPENDED_PISA_AGENT_CODES]).toEqual(["valentina", "marco"]);
+    expect([...SUSPENDED_PONTEDERA_AGENT_CODES]).toEqual(["antonio"]);
+    expect([...SUSPENDED_LUCCA_AGENT_CODES]).toEqual(["giovanni"]);
   });
 
-  it("valentina non è nel pool Pisa né negli owner attivi", () => {
+  it("valentina/antonio/giovanni fuori dai pool attivi", () => {
     expect(QZ9_POOLS_BY_ZONE.pisa).not.toContain("valentina");
+    expect(QZ9_POOLS_BY_ZONE.pontedera).not.toContain("antonio");
+    expect(QZ9_POOLS_BY_ZONE.lucca).not.toContain("giovanni");
     expect(QZ9_AGENT_OWNER_ZONE_BY_CODE.valentina).toBeUndefined();
-    expect(gs).toMatch(/valentina:\s*"pisa"/);
-    expect(gs).not.toMatch(/pisa:\s*\[[^\]]*valentina/);
+    expect(QZ9_AGENT_OWNER_ZONE_BY_CODE.antonio).toBeUndefined();
+    expect(QZ9_AGENT_OWNER_ZONE_BY_CODE.giovanni).toBeUndefined();
   });
 
-  it("nuovi agenti presenti in pool e tab map", () => {
+  it("morgan attivo; antonio/giovanni solo in tab map sospesi", () => {
     expect(QZ9_POOLS_BY_ZONE.pisa).toContain("morgan");
-    expect(QZ9_POOLS_BY_ZONE.pontedera).toContain("antonio");
-    expect(QZ9_POOLS_BY_ZONE.lucca).toContain("giovanni");
     expect(QZ9_AGENT_TAB_BY_CODE.morgan).toBe("morgan");
     expect(QZ9_AGENT_TAB_BY_CODE.antonio).toBe("antonio");
     expect(QZ9_AGENT_TAB_BY_CODE.giovanni).toBe("giovanni");
@@ -78,13 +88,13 @@ describe("QZ9 routing redistribuzione", () => {
     }
   });
 
-  it("AG-PONTEDERA muove sul pool Pontedera (con antonio)", () => {
+  it("AG-PONTEDERA muove sul pool Pontedera attivo (senza antonio)", () => {
     const r = qz9ComputeRouteForSource("AG-PONTEDERA", agentMap);
     expect(r.mode).toBe("move");
     if (r.mode !== "move") return;
     expect(r.routeZone).toBe("pontedera");
-    expect(r.destPoolCodes).toEqual(QZ9_POOLS_BY_ZONE.pontedera);
-    expect(r.destPoolCodes).toContain("antonio");
+    expect(r.destPoolCodes).toEqual(["luis", "rebecca", "fausto", "elisabetta"]);
+    expect(r.destPoolCodes).not.toContain("antonio");
   });
 
   it("AG-LIVORNO muove sul pool Livorno", () => {
@@ -101,9 +111,6 @@ describe("QZ9 routing redistribuzione", () => {
     expect(r.routeZone).toBe("pisa");
     expect(r.destPoolCodes).not.toContain("valentina");
     expect(r.destPoolCodes).toContain("morgan");
-    expect(r.destPoolCodes).toEqual(
-      QZ9_POOLS_BY_ZONE.pisa!.filter((c) => c !== "valentina"),
-    );
   });
 
   it("tab marco (sospeso) redistribuisce al pool Pisa", () => {
@@ -112,7 +119,6 @@ describe("QZ9 routing redistribuzione", () => {
     if (r.mode !== "move") return;
     expect(r.routeZone).toBe("pisa");
     expect(r.destPoolCodes).not.toContain("marco");
-    expect(r.destPoolCodes).toContain("morgan");
   });
 
   it("tab morgan redistribuisce agli altri Pisa (senza morgan)", () => {
@@ -123,7 +129,7 @@ describe("QZ9 routing redistribuzione", () => {
     expect(r.destPoolCodes).toContain("massimo");
   });
 
-  it("tab antonio redistribuisce agli altri Pontedera", () => {
+  it("tab antonio (sospeso) redistribuisce al pool Pontedera", () => {
     const r = qz9ComputeRouteForSource("antonio", agentMap);
     expect(r.mode).toBe("move");
     if (r.mode !== "move") return;
@@ -132,11 +138,12 @@ describe("QZ9 routing redistribuzione", () => {
     expect(r.destPoolCodes).toEqual(["luis", "rebecca", "fausto", "elisabetta"]);
   });
 
-  it("tab giovanni redistribuisce agli altri Lucca", () => {
+  it("tab giovanni (sospeso) redistribuisce al pool Lucca", () => {
     const r = qz9ComputeRouteForSource("giovanni", agentMap);
     expect(r.mode).toBe("move");
     if (r.mode !== "move") return;
     expect(r.routeZone).toBe("lucca");
+    expect(r.destPoolCodes).not.toContain("giovanni");
     expect(r.destPoolCodes).toEqual(["alfredo", "mary"]);
   });
 

@@ -57,7 +57,8 @@ function pickSheetByZoneCityProvince(
       return null;
     case "centro storico":
       if (cityIn("livorno")) return "GUIDO";
-      if (cityIn("ponsacco")) return "ANTONIO";
+      // FERIE ANTONIO: era "ANTONIO"
+      if (cityIn("ponsacco")) return "AG-PONTEDERA";
       return null;
     case "cevoli":
       if (cityIn("vicopisano")) return "LUIS";
@@ -113,7 +114,8 @@ function pickSheetByZoneCityProvince(
     case "san marco":
     case "san maro":
       if (cityIn("pisa")) return "AG-PISA";
-      if (cityIn("lucca")) return "GIOVANNI";
+      // FERIE GIOVANNI: era "GIOVANNI"
+      if (cityIn("lucca")) return "AG-LUCCA";
       return null;
     case "san giusto":
       if (cityIn("pisa")) return "AG-PISA";

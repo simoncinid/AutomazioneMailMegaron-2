@@ -8,14 +8,15 @@
  *
  * POOL ATTIVI
  * - Pisa:      massimo, davide, eros, samuele, giuseppe, tommaso, mattia, stefania, luigi, morgan
- * - Pontedera: luis, rebecca, fausto, elisabetta, antonio
+ * - Pontedera: luis, rebecca, fausto, elisabetta
  * - Livorno:   matteo, viviana, massimiliano, guido
- * - Lucca:     alfredo, mary, giovanni
+ * - Lucca:     alfredo, mary
  *
  * FERIE / SOSPESI (tab sorgente restano attivi; lead nuovi non vanno a loro)
  * - Pisa:      valentina (nessuna zona; ex DON BOSCO/PISANOVA → morgan),
  *              marco (zone → AG-PISA nel backend)
- * - Pontedera: (nessuno)
+ * - Pontedera: antonio (zone → AG-PONTEDERA nel backend)
+ * - Lucca:     giovanni (zone → AG-LUCCA nel backend)
  *
  * ═══ RIATTIVARE UN AGENTE AL 100% (es. STEFANIA) ═══
  * Checklist completa anche in src/config/suspendedAgents.ts (backend Node).
@@ -74,9 +75,9 @@ const qz9KeepAgencySheets = new Set(["AG-PISA", "AG-LUCCA", "AG-VIAREGGIO"]);
  * + togliere da qz9SuspendedAgentOwnerZone. V. header e suspendedAgents.ts.
  */
 const qz9PoolsByZone = {
-  pontedera: ["luis", "rebecca", "fausto", "elisabetta", "antonio"],
+  pontedera: ["luis", "rebecca", "fausto", "elisabetta"],
   livorno: ["matteo", "viviana", "massimiliano", "guido"],
-  lucca: ["alfredo", "mary", "giovanni"],
+  lucca: ["alfredo", "mary"],
   pisa: ["massimo", "davide", "eros", "samuele", "giuseppe", "tommaso", "mattia", "stefania", "luigi", "morgan"],
   viareggio: [],
 };
@@ -93,7 +94,6 @@ const qz9AgentOwnerZoneByCode = {
   // Lucca
   alfredo: "lucca",
   mary: "lucca",
-  giovanni: "lucca",
 
   // Pisa — attivi
   massimo: "pisa",
@@ -112,7 +112,6 @@ const qz9AgentOwnerZoneByCode = {
   rebecca: "pontedera",
   fausto: "pontedera",
   elisabetta: "pontedera",
-  antonio: "pontedera",
 };
 
 /**
@@ -123,6 +122,9 @@ const qz9SuspendedAgentOwnerZone = {
   // Pisa — sospesi (fuori pool; tab ancora sorgente per drenare "Da Chiamare")
   valentina: "pisa", // nessuna zona in mapping; lead residui → pool pisa
   marco: "pisa",
+  // Pontedera / Lucca — sospesi
+  antonio: "pontedera",
+  giovanni: "lucca",
 };
 
 // Mappa codice agente -> nome tab reale nel file
@@ -132,7 +134,6 @@ const qz9AgentTabByCode = {
   rebecca: "rebecca",
   fausto: "fausto",
   elisabetta: "elisabetta",
-  antonio: "antonio",
 
   // Livorno
   matteo: "matteo",
@@ -141,10 +142,9 @@ const qz9AgentTabByCode = {
   guido: "guido",
   lisa: "lisa",
 
-  // Lucca
+  // Lucca — attivi
   alfredo: "alfredo",
   mary: "mary",
-  giovanni: "giovanni",
 
   // Pisa — attivi
   massimo: "massimo",
@@ -158,9 +158,11 @@ const qz9AgentTabByCode = {
   stefania: "stefania",
   morgan: "morgan",
 
-  // Pisa — sospesi
+  // Sospesi (tab sorgente)
   valentina: "valentina",
   marco: "marco",
+  antonio: "antonio",
+  giovanni: "giovanni",
 };
 
 const qz9ProvinceRoutedAgents = new Set();

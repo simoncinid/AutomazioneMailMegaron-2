@@ -1,7 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { getHardCodedZoneSheetMapping } from "../src/config/loadEnv.js";
 import { resolveSheetForZone } from "../src/config/resolveSheetForZone.js";
-import { isSuspendedPisaAgentSheet } from "../src/config/suspendedAgents.js";
+import {
+  isSuspendedLuccaAgentSheet,
+  isSuspendedPontederaAgentSheet,
+  isSuspendedPisaAgentSheet,
+} from "../src/config/suspendedAgents.js";
 import type { ZoneSheetRule } from "../src/domain/types.js";
 
 function sheetsForZone(zone: string): string[] {
@@ -20,17 +24,17 @@ function rulesFromHardCoded(): ZoneSheetRule[] {
   }));
 }
 
-describe("nuovi agenti — mapping zone", () => {
-  it("Morgan riceve Pisanova e Don Bosco", () => {
+describe("nuovi agenti — mapping zone (Antonio/Giovanni in ferie)", () => {
+  it("Morgan riceve ancora Pisanova e Don Bosco", () => {
     expect(sheetsForZone("PISANOVA")).toEqual(["MORGAN"]);
     expect(sheetsForZone("DON BOSCO")).toEqual(["MORGAN"]);
   });
 
-  it("Antonio riceve Ponsacco (tutte le entry)", () => {
-    expect(sheetsForZone("Ponsacco")).toEqual(["ANTONIO", "ANTONIO"]);
+  it("Ponsacco va su AG-PONTEDERA (FERIE ANTONIO)", () => {
+    expect(sheetsForZone("Ponsacco")).toEqual(["AG-PONTEDERA", "AG-PONTEDERA"]);
   });
 
-  it("Giovanni riceve le zone Lucca assegnate", () => {
+  it("zone Lucca di Giovanni vanno su AG-LUCCA", () => {
     const exclusive = [
       "ANTRACCOLI",
       "ARANCIO",
@@ -43,42 +47,39 @@ describe("nuovi agenti — mapping zone", () => {
       "SAN PIETRO A VICO",
     ];
     for (const zone of exclusive) {
-      expect(sheetsForZone(zone), zone).toEqual(["GIOVANNI"]);
+      expect(sheetsForZone(zone), zone).toEqual(["AG-LUCCA"]);
     }
-    // SAN MARCO: entry Pisa (AG-PISA) + entry Lucca (GIOVANNI); city disambigua
-    expect(sheetsForZone("SAN MARCO")).toEqual(["AG-PISA", "GIOVANNI"]);
+    expect(sheetsForZone("SAN MARCO")).toEqual(["AG-PISA", "AG-LUCCA"]);
   });
 
-  it("disambigua SAN MARCO Lucca → GIOVANNI, Pisa → AG-PISA", () => {
+  it("disambigua SAN MARCO Lucca → AG-LUCCA, Pisa → AG-PISA", () => {
     const rules = rulesFromHardCoded();
     expect(
       resolveSheetForZone("SAN MARCO", rules, "sid", "Default", { city: "Lucca" }).sheetTitle,
-    ).toBe("GIOVANNI");
+    ).toBe("AG-LUCCA");
     expect(
       resolveSheetForZone("SAN MARCO", rules, "sid", "Default", { city: "Pisa" }).sheetTitle,
     ).toBe("AG-PISA");
   });
 
-  it("disambigua Centro Storico Ponsacco → ANTONIO", () => {
+  it("disambigua Centro Storico Ponsacco → AG-PONTEDERA", () => {
     const rules = rulesFromHardCoded();
     expect(
       resolveSheetForZone("Centro Storico", rules, "sid", "Default", {
         city: "Ponsacco",
       }).sheetTitle,
-    ).toBe("ANTONIO");
+    ).toBe("AG-PONTEDERA");
   });
 });
 
-describe("Valentina sospesa senza zone", () => {
-  it("nessuna riga del mapping punta a VALENTINA", () => {
+describe("agenti sospesi", () => {
+  it("Valentina senza zone; Antonio e Giovanni sospesi", () => {
     const valentinaZones = getHardCodedZoneSheetMapping().filter(
       ([, sheet]) => sheet.trim().toLowerCase() === "valentina",
     );
     expect(valentinaZones).toEqual([]);
-  });
-
-  it("è riconosciuta come agente Pisa sospeso", () => {
     expect(isSuspendedPisaAgentSheet("VALENTINA")).toBe(true);
-    expect(isSuspendedPisaAgentSheet("valentina")).toBe(true);
+    expect(isSuspendedPontederaAgentSheet("ANTONIO")).toBe(true);
+    expect(isSuspendedLuccaAgentSheet("GIOVANNI")).toBe(true);
   });
 });

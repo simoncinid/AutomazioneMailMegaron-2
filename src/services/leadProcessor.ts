@@ -1,6 +1,7 @@
 import type { AppEnv } from "../config/loadEnv.js";
 import { resolveSheetForZone } from "../config/resolveSheetForZone.js";
 import {
+  isSuspendedLuccaAgentSheet,
   isSuspendedPisaAgentSheet,
   isSuspendedPontederaAgentSheet,
 } from "../config/suspendedAgents.js";
@@ -60,7 +61,7 @@ const PISA_AGENT_SHEETS = [
 const LUCCA_VIAREGGIO_AGENT_SHEETS = [
   "ALFREDO",
   "MARY",
-  "GIOVANNI",
+  // "GIOVANNI", // FERIE GIOVANNI → v. src/config/suspendedAgents.ts
 ] as const;
 /** Pool Pontedera attivo. */
 const PONTEDERA_AGENT_SHEETS = [
@@ -68,7 +69,7 @@ const PONTEDERA_AGENT_SHEETS = [
   "REBECCA",
   "FAUSTO",
   "ELISABETTA",
-  "ANTONIO",
+  // "ANTONIO", // FERIE ANTONIO → v. src/config/suspendedAgents.ts
 ] as const;
 const LIVORNO_AGENT_SHEETS = [
   "MATTEO",
@@ -853,6 +854,25 @@ export async function processInboundEmail(
         log.info(
           { uid: uidLabel, listingId, fromSheet: originalSheet, toSheet: target.sheetTitle },
           "[routing] agente Pontedera in ferie: pool vuoto, lead su AG-PONTEDERA",
+        );
+      }
+    } else if (isSuspendedLuccaAgentSheet(target.sheetTitle)) {
+      const originalSheet = target.sheetTitle;
+      if (LUCCA_VIAREGGIO_AGENT_SHEETS.length > 0) {
+        const reassigned = await pickLuccaViareggioAgentSheet();
+        target = {
+          ...target,
+          sheetTitle: reassigned.sheetTitle,
+        };
+        log.info(
+          { uid: uidLabel, listingId, fromSheet: originalSheet, toSheet: target.sheetTitle, strategy: reassigned.strategy },
+          "[routing] agente Lucca in ferie: riassegnato pool attivo",
+        );
+      } else {
+        target = { ...target, sheetTitle: "AG-LUCCA" };
+        log.info(
+          { uid: uidLabel, listingId, fromSheet: originalSheet, toSheet: target.sheetTitle },
+          "[routing] agente Lucca in ferie: pool vuoto, lead su AG-LUCCA",
         );
       }
     }
