@@ -140,7 +140,7 @@ describe("processInboundEmail AG-PISA routing", () => {
     await rm(testStateDir, { force: true, recursive: true });
   });
 
-  it("non assegna ad agenti Pisa in ferie se il mapping punta al tab diretto", async () => {
+  it("non assegna a Valentina (ferie) se il mapping punta al tab diretto", async () => {
     const { processInboundEmail } = await import("../src/services/leadProcessor.js");
     const appended: LeadRowPayload[] = [];
     const sheets = {
@@ -149,12 +149,66 @@ describe("processInboundEmail AG-PISA routing", () => {
       }),
     } as unknown as GoogleSheetsWriter;
 
-    const suspendedCases = [
-      { id: "portaamare-0", zone: "PORTA A MARE", legacySheet: "MARCO" },
-      { id: "santantonio-0", zone: "SANT'ANTONIO", legacySheet: "MARCO" },
+    const listings = {
+      findLatestByExternalListingId: vi.fn(async () => ({
+        ...buildListing("valentina-legacy-0"),
+        zone: "DON BOSCO",
+      })),
+    } as unknown as ListingRepository;
+
+    const env = buildEnv();
+    env.zoneSheetRules.push({
+      name: "legacy_valentina_don_bosco",
+      pattern: "DON BOSCO",
+      match: "contains",
+      spreadsheetId: "spreadsheet-id",
+      sheetTitle: "VALENTINA",
+    });
+
+    await processInboundEmail(
+      {
+        messageId: "message-valentina-legacy-0",
+        from: "portal@example.com",
+        subject: "valentina-legacy-0",
+        receivedAt: new Date("2026-08-17T10:00:00Z"),
+        textBody: "Lead DON BOSCO",
+      },
+      { env, listings, sheets },
+      new Date("2026-08-17T10:00:00Z"),
+    );
+
+    expect(appended).toHaveLength(1);
+    expect(appended[0]?.sheetTitle).not.toBe("VALENTINA");
+    expect([
+      "MASSIMO",
+      "DAVIDE",
+      "EROS",
+      "SAMUELE",
+      "GIUSEPPE",
+      "TOMMASO",
+      "MATTIA",
+      "STEFANIA",
+      "MARCO",
+      "LUIGI",
+      "MORGAN",
+    ]).toContain(appended[0]?.sheetTitle);
+  });
+
+  it("assegna PORTA A MARE e SANT'ANTONIO a MARCO", async () => {
+    const { processInboundEmail } = await import("../src/services/leadProcessor.js");
+    const appended: LeadRowPayload[] = [];
+    const sheets = {
+      appendLead: vi.fn(async (payload: LeadRowPayload) => {
+        appended.push(payload);
+      }),
+    } as unknown as GoogleSheetsWriter;
+
+    const marcoCases = [
+      { id: "portaamare-0", zone: "PORTA A MARE" },
+      { id: "santantonio-0", zone: "SANT'ANTONIO" },
     ] as const;
 
-    for (const testCase of suspendedCases) {
+    for (const testCase of marcoCases) {
       appended.length = 0;
       const listings = {
         findLatestByExternalListingId: vi.fn(async () => ({
@@ -165,11 +219,11 @@ describe("processInboundEmail AG-PISA routing", () => {
 
       const env = buildEnv();
       env.zoneSheetRules.push({
-        name: `legacy_${testCase.legacySheet.toLowerCase()}_${testCase.id}`,
+        name: `marco_${testCase.id}`,
         pattern: testCase.zone,
         match: "contains",
         spreadsheetId: "spreadsheet-id",
-        sheetTitle: testCase.legacySheet,
+        sheetTitle: "MARCO",
       });
 
       await processInboundEmail(
@@ -185,19 +239,7 @@ describe("processInboundEmail AG-PISA routing", () => {
       );
 
       expect(appended).toHaveLength(1);
-      expect(appended[0]?.sheetTitle).not.toBe(testCase.legacySheet);
-      expect([
-        "MASSIMO",
-        "DAVIDE",
-        "EROS",
-        "SAMUELE",
-        "GIUSEPPE",
-        "TOMMASO",
-        "MATTIA",
-        "STEFANIA",
-        "LUIGI",
-        "MORGAN",
-      ]).toContain(appended[0]?.sheetTitle);
+      expect(appended[0]?.sheetTitle).toBe("MARCO");
     }
   });
 
@@ -297,7 +339,7 @@ describe("processInboundEmail AG-PISA routing", () => {
     } as unknown as ListingRepository;
 
     const env = buildEnv();
-    for (let i = 0; i < 10; i += 1) {
+    for (let i = 0; i < 11; i += 1) {
       const id = i % 2 === 0 ? `passi-${i}` : `calambrone-${i}`;
       await processInboundEmail(
         {
@@ -321,13 +363,14 @@ describe("processInboundEmail AG-PISA routing", () => {
       "TOMMASO",
       "MATTIA",
       "STEFANIA",
+      "MARCO",
       "LUIGI",
       "MORGAN",
     ]);
     expect(appended.map((row) => row.sheetTitle)).not.toContain("ELISABETTA");
     expect(appended.map((row) => row.sheetTitle)).not.toContain("FAUSTO");
     expect(appended.map((row) => row.sheetTitle)).not.toContain("LUIS");
-    expect(appended.map((row) => row.sheetTitle)).not.toContain("MARCO");
+    expect(appended.map((row) => row.sheetTitle)).not.toContain("VALENTINA");
   });
 
   it("assegna AG-VIAREGGIO solo agli agenti del pool Lucca", async () => {

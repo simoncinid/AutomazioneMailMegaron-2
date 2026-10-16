@@ -51,29 +51,33 @@ describe("QZ9 config allineata al .gs", () => {
     const suspendedBlock = extractGsArrayBlock(gs, "qz9SuspendedAgentOwnerZone");
     const suspendedKeys = parseGsStringMapKeys(suspendedBlock);
     expect(suspendedKeys).toEqual(
-      expect.arrayContaining(["valentina", "marco", "antonio", "giovanni"]),
+      expect.arrayContaining(["valentina", "antonio", "giovanni"]),
     );
+    expect(suspendedKeys).not.toContain("marco");
     expect(QZ9_SUSPENDED_AGENT_OWNER_ZONE.valentina).toBe("pisa");
-    expect(QZ9_SUSPENDED_AGENT_OWNER_ZONE.marco).toBe("pisa");
+    expect(QZ9_SUSPENDED_AGENT_OWNER_ZONE.marco).toBeUndefined();
     expect(QZ9_SUSPENDED_AGENT_OWNER_ZONE.antonio).toBe("pontedera");
     expect(QZ9_SUSPENDED_AGENT_OWNER_ZONE.giovanni).toBe("lucca");
-    expect([...SUSPENDED_PISA_AGENT_CODES]).toEqual(["valentina", "marco"]);
+    expect([...SUSPENDED_PISA_AGENT_CODES]).toEqual(["valentina"]);
     expect([...SUSPENDED_PONTEDERA_AGENT_CODES]).toEqual(["antonio"]);
     expect([...SUSPENDED_LUCCA_AGENT_CODES]).toEqual(["giovanni"]);
   });
 
-  it("valentina/antonio/giovanni fuori dai pool attivi", () => {
+  it("valentina/antonio/giovanni fuori dai pool attivi; marco nel pool Pisa", () => {
     expect(QZ9_POOLS_BY_ZONE.pisa).not.toContain("valentina");
+    expect(QZ9_POOLS_BY_ZONE.pisa).toContain("marco");
     expect(QZ9_POOLS_BY_ZONE.pontedera).not.toContain("antonio");
     expect(QZ9_POOLS_BY_ZONE.lucca).not.toContain("giovanni");
     expect(QZ9_AGENT_OWNER_ZONE_BY_CODE.valentina).toBeUndefined();
+    expect(QZ9_AGENT_OWNER_ZONE_BY_CODE.marco).toBe("pisa");
     expect(QZ9_AGENT_OWNER_ZONE_BY_CODE.antonio).toBeUndefined();
     expect(QZ9_AGENT_OWNER_ZONE_BY_CODE.giovanni).toBeUndefined();
   });
 
-  it("morgan attivo; antonio/giovanni solo in tab map sospesi", () => {
+  it("morgan/marco attivi; antonio/giovanni solo in tab map sospesi", () => {
     expect(QZ9_POOLS_BY_ZONE.pisa).toContain("morgan");
     expect(QZ9_AGENT_TAB_BY_CODE.morgan).toBe("morgan");
+    expect(QZ9_AGENT_TAB_BY_CODE.marco).toBe("marco");
     expect(QZ9_AGENT_TAB_BY_CODE.antonio).toBe("antonio");
     expect(QZ9_AGENT_TAB_BY_CODE.giovanni).toBe("giovanni");
   });
@@ -110,15 +114,17 @@ describe("QZ9 routing redistribuzione", () => {
     if (r.mode !== "move") return;
     expect(r.routeZone).toBe("pisa");
     expect(r.destPoolCodes).not.toContain("valentina");
+    expect(r.destPoolCodes).toContain("marco");
     expect(r.destPoolCodes).toContain("morgan");
   });
 
-  it("tab marco (sospeso) redistribuisce al pool Pisa", () => {
+  it("tab marco (attivo) redistribuisce agli altri Pisa (senza marco)", () => {
     const r = qz9ComputeRouteForSource("marco", agentMap);
     expect(r.mode).toBe("move");
     if (r.mode !== "move") return;
     expect(r.routeZone).toBe("pisa");
     expect(r.destPoolCodes).not.toContain("marco");
+    expect(r.destPoolCodes).toContain("morgan");
   });
 
   it("tab morgan redistribuisce agli altri Pisa (senza morgan)", () => {

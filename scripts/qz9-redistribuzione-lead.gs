@@ -7,14 +7,13 @@
  * 2) qz9InstallTriggerGiornaliero    (una volta)
  *
  * POOL ATTIVI
- * - Pisa:      massimo, davide, eros, samuele, giuseppe, tommaso, mattia, stefania, luigi, morgan
+ * - Pisa:      massimo, davide, eros, samuele, giuseppe, tommaso, mattia, stefania, marco, luigi, morgan
  * - Pontedera: luis, rebecca, fausto, elisabetta
  * - Livorno:   matteo, viviana, massimiliano, guido
  * - Lucca:     alfredo, mary
  *
  * FERIE / SOSPESI (tab sorgente restano attivi; lead nuovi non vanno a loro)
- * - Pisa:      valentina (nessuna zona; ex DON BOSCO/PISANOVA → morgan),
- *              marco (zone → AG-PISA nel backend)
+ * - Pisa:      valentina (nessuna zona; ex DON BOSCO/PISANOVA → morgan)
  * - Pontedera: antonio (zone → AG-PONTEDERA nel backend)
  * - Lucca:     giovanni (zone → AG-LUCCA nel backend)
  *
@@ -78,7 +77,7 @@ const qz9PoolsByZone = {
   pontedera: ["luis", "rebecca", "fausto", "elisabetta"],
   livorno: ["matteo", "viviana", "massimiliano", "guido"],
   lucca: ["alfredo", "mary"],
-  pisa: ["massimo", "davide", "eros", "samuele", "giuseppe", "tommaso", "mattia", "stefania", "luigi", "morgan"],
+  pisa: ["massimo", "davide", "eros", "samuele", "giuseppe", "tommaso", "mattia", "stefania", "marco", "luigi", "morgan"],
   viareggio: [],
 };
 
@@ -103,6 +102,7 @@ const qz9AgentOwnerZoneByCode = {
   giuseppe: "pisa",
   tommaso: "pisa",
   mattia: "pisa",
+  marco: "pisa",
   luigi: "pisa",
   stefania: "pisa",
   morgan: "pisa",
@@ -121,7 +121,6 @@ const qz9AgentOwnerZoneByCode = {
 const qz9SuspendedAgentOwnerZone = {
   // Pisa — sospesi (fuori pool; tab ancora sorgente per drenare "Da Chiamare")
   valentina: "pisa", // nessuna zona in mapping; lead residui → pool pisa
-  marco: "pisa",
   // Pontedera / Lucca — sospesi
   antonio: "pontedera",
   giovanni: "lucca",
@@ -154,13 +153,13 @@ const qz9AgentTabByCode = {
   giuseppe: "giuseppe",
   tommaso: "TOMMASO",
   mattia: "mattia",
+  marco: "marco",
   luigi: "luigi",
   stefania: "stefania",
   morgan: "morgan",
 
   // Sospesi (tab sorgente)
   valentina: "valentina",
-  marco: "marco",
   antonio: "antonio",
   giovanni: "giovanni",
 };

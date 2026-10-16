@@ -38,6 +38,7 @@ export const QZ9_POOLS_BY_ZONE: Record<string, string[]> = {
     "tommaso",
     "mattia",
     "stefania",
+    "marco",
     "luigi",
     "morgan",
   ],
@@ -59,6 +60,7 @@ export const QZ9_AGENT_OWNER_ZONE_BY_CODE: Record<string, string> = {
   giuseppe: "pisa",
   tommaso: "pisa",
   mattia: "pisa",
+  marco: "pisa",
   luigi: "pisa",
   stefania: "pisa",
   morgan: "pisa",
@@ -71,7 +73,6 @@ export const QZ9_AGENT_OWNER_ZONE_BY_CODE: Record<string, string> = {
 /** Sospesi: tab sorgente, fuori pool. */
 export const QZ9_SUSPENDED_AGENT_OWNER_ZONE: Record<string, string> = {
   valentina: "pisa",
-  marco: "pisa",
   antonio: "pontedera",
   giovanni: "lucca",
 };

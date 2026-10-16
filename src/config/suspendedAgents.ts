@@ -21,15 +21,14 @@
  *    e al pool qz9PoolsByZone corrispondente.
  *
  * Sospesi (ott 2026):
- * - Pisa:      valentina (nessuna zona; DON BOSCO/PISANOVA → MORGAN),
- *              marco → zone su AG-PISA (pool random attivo)
+ * - Pisa:      valentina (nessuna zona; DON BOSCO/PISANOVA → MORGAN)
  * - Pontedera: antonio → zone su AG-PONTEDERA (pool attivo)
  * - Lucca:     giovanni → zone su AG-LUCCA (pool attivo)
  *
  * Valentina: tab resta sorgente QZ9 per drenare lead residui; fuori pool e senza mapping zone.
  */
 
-export const SUSPENDED_PISA_AGENT_CODES = ["valentina", "marco"] as const;
+export const SUSPENDED_PISA_AGENT_CODES = ["valentina"] as const;
 export const SUSPENDED_PONTEDERA_AGENT_CODES = ["antonio"] as const;
 export const SUSPENDED_LUCCA_AGENT_CODES = ["giovanni"] as const;
 
