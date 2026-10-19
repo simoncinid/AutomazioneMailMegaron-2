@@ -65,7 +65,7 @@ const LUCCA_VIAREGGIO_AGENT_SHEETS = [
 ] as const;
 /** Pool Pontedera attivo. */
 const PONTEDERA_AGENT_SHEETS = [
-  "LUIS",
+  // "LUIS", // FERIE LUIS → v. src/config/suspendedAgents.ts
   "REBECCA",
   "FAUSTO",
   "ELISABETTA",

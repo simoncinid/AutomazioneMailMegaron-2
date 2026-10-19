@@ -8,13 +8,13 @@
  *
  * POOL ATTIVI
  * - Pisa:      massimo, davide, eros, samuele, giuseppe, tommaso, mattia, stefania, marco, luigi, morgan
- * - Pontedera: luis, rebecca, fausto, elisabetta
+ * - Pontedera: rebecca, fausto, elisabetta
  * - Livorno:   matteo, viviana, massimiliano, guido
  * - Lucca:     alfredo, mary
  *
  * FERIE / SOSPESI (tab sorgente restano attivi; lead nuovi non vanno a loro)
  * - Pisa:      valentina (nessuna zona; ex DON BOSCO/PISANOVA → morgan)
- * - Pontedera: antonio (zone → AG-PONTEDERA nel backend)
+ * - Pontedera: antonio, luis (zone → AG-PONTEDERA nel backend)
  * - Lucca:     giovanni (zone → AG-LUCCA nel backend)
  *
  * ═══ RIATTIVARE UN AGENTE AL 100% (es. STEFANIA) ═══
@@ -74,7 +74,7 @@ const qz9KeepAgencySheets = new Set(["AG-PISA", "AG-LUCCA", "AG-VIAREGGIO"]);
  * + togliere da qz9SuspendedAgentOwnerZone. V. header e suspendedAgents.ts.
  */
 const qz9PoolsByZone = {
-  pontedera: ["luis", "rebecca", "fausto", "elisabetta"],
+  pontedera: ["rebecca", "fausto", "elisabetta"],
   livorno: ["matteo", "viviana", "massimiliano", "guido"],
   lucca: ["alfredo", "mary"],
   pisa: ["massimo", "davide", "eros", "samuele", "giuseppe", "tommaso", "mattia", "stefania", "marco", "luigi", "morgan"],
@@ -108,7 +108,6 @@ const qz9AgentOwnerZoneByCode = {
   morgan: "pisa",
 
   // Pontedera — attivi
-  luis: "pontedera",
   rebecca: "pontedera",
   fausto: "pontedera",
   elisabetta: "pontedera",
@@ -123,13 +122,13 @@ const qz9SuspendedAgentOwnerZone = {
   valentina: "pisa", // nessuna zona in mapping; lead residui → pool pisa
   // Pontedera / Lucca — sospesi
   antonio: "pontedera",
+  luis: "pontedera",
   giovanni: "lucca",
 };
 
 // Mappa codice agente -> nome tab reale nel file
 const qz9AgentTabByCode = {
   // Pontedera — attivi
-  luis: "luis",
   rebecca: "rebecca",
   fausto: "fausto",
   elisabetta: "elisabetta",
@@ -161,6 +160,7 @@ const qz9AgentTabByCode = {
   // Sospesi (tab sorgente)
   valentina: "valentina",
   antonio: "antonio",
+  luis: "luis",
   giovanni: "giovanni",
 };
 

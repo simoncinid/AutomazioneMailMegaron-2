@@ -47,7 +47,8 @@ function pickSheetByZoneCityProvince(
       if (cityIn("calci")) return "GIUSEPPE";
       if (cityIn("san giuliano terme")) return "DAVIDE";
       if (cityIn("castelfranco di sotto")) return "AG-PONTEDERA";
-      if (cityIn("vicopisano")) return "LUIS";
+      // FERIE LUIS: era "LUIS"
+      if (cityIn("vicopisano")) return "AG-PONTEDERA";
       if (cityIn("cascina")) return "TOMMASO";
       if (cityIn("vecchiano")) return "DAVIDE";
       return null;
@@ -61,7 +62,8 @@ function pickSheetByZoneCityProvince(
       if (cityIn("ponsacco")) return "AG-PONTEDERA";
       return null;
     case "cevoli":
-      if (cityIn("vicopisano")) return "LUIS";
+      // FERIE LUIS: era "LUIS"
+      if (cityIn("vicopisano")) return "AG-PONTEDERA";
       if (cityIn("casciana terme lari")) return "FAUSTO";
       return null;
     case "darsena":

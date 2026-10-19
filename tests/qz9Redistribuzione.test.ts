@@ -51,15 +51,16 @@ describe("QZ9 config allineata al .gs", () => {
     const suspendedBlock = extractGsArrayBlock(gs, "qz9SuspendedAgentOwnerZone");
     const suspendedKeys = parseGsStringMapKeys(suspendedBlock);
     expect(suspendedKeys).toEqual(
-      expect.arrayContaining(["valentina", "antonio", "giovanni"]),
+      expect.arrayContaining(["valentina", "antonio", "luis", "giovanni"]),
     );
     expect(suspendedKeys).not.toContain("marco");
     expect(QZ9_SUSPENDED_AGENT_OWNER_ZONE.valentina).toBe("pisa");
     expect(QZ9_SUSPENDED_AGENT_OWNER_ZONE.marco).toBeUndefined();
     expect(QZ9_SUSPENDED_AGENT_OWNER_ZONE.antonio).toBe("pontedera");
+    expect(QZ9_SUSPENDED_AGENT_OWNER_ZONE.luis).toBe("pontedera");
     expect(QZ9_SUSPENDED_AGENT_OWNER_ZONE.giovanni).toBe("lucca");
     expect([...SUSPENDED_PISA_AGENT_CODES]).toEqual(["valentina"]);
-    expect([...SUSPENDED_PONTEDERA_AGENT_CODES]).toEqual(["antonio"]);
+    expect([...SUSPENDED_PONTEDERA_AGENT_CODES]).toEqual(["antonio", "luis"]);
     expect([...SUSPENDED_LUCCA_AGENT_CODES]).toEqual(["giovanni"]);
   });
 
@@ -67,10 +68,12 @@ describe("QZ9 config allineata al .gs", () => {
     expect(QZ9_POOLS_BY_ZONE.pisa).not.toContain("valentina");
     expect(QZ9_POOLS_BY_ZONE.pisa).toContain("marco");
     expect(QZ9_POOLS_BY_ZONE.pontedera).not.toContain("antonio");
+    expect(QZ9_POOLS_BY_ZONE.pontedera).not.toContain("luis");
     expect(QZ9_POOLS_BY_ZONE.lucca).not.toContain("giovanni");
     expect(QZ9_AGENT_OWNER_ZONE_BY_CODE.valentina).toBeUndefined();
     expect(QZ9_AGENT_OWNER_ZONE_BY_CODE.marco).toBe("pisa");
     expect(QZ9_AGENT_OWNER_ZONE_BY_CODE.antonio).toBeUndefined();
+    expect(QZ9_AGENT_OWNER_ZONE_BY_CODE.luis).toBeUndefined();
     expect(QZ9_AGENT_OWNER_ZONE_BY_CODE.giovanni).toBeUndefined();
   });
 
@@ -97,8 +100,9 @@ describe("QZ9 routing redistribuzione", () => {
     expect(r.mode).toBe("move");
     if (r.mode !== "move") return;
     expect(r.routeZone).toBe("pontedera");
-    expect(r.destPoolCodes).toEqual(["luis", "rebecca", "fausto", "elisabetta"]);
+    expect(r.destPoolCodes).toEqual(["rebecca", "fausto", "elisabetta"]);
     expect(r.destPoolCodes).not.toContain("antonio");
+    expect(r.destPoolCodes).not.toContain("luis");
   });
 
   it("AG-LIVORNO muove sul pool Livorno", () => {
@@ -135,13 +139,23 @@ describe("QZ9 routing redistribuzione", () => {
     expect(r.destPoolCodes).toContain("massimo");
   });
 
+  it("tab luis (sospeso) redistribuisce al pool Pontedera", () => {
+    const r = qz9ComputeRouteForSource("luis", agentMap);
+    expect(r.mode).toBe("move");
+    if (r.mode !== "move") return;
+    expect(r.routeZone).toBe("pontedera");
+    expect(r.destPoolCodes).not.toContain("luis");
+    expect(r.destPoolCodes).toEqual(["rebecca", "fausto", "elisabetta"]);
+  });
+
   it("tab antonio (sospeso) redistribuisce al pool Pontedera", () => {
     const r = qz9ComputeRouteForSource("antonio", agentMap);
     expect(r.mode).toBe("move");
     if (r.mode !== "move") return;
     expect(r.routeZone).toBe("pontedera");
     expect(r.destPoolCodes).not.toContain("antonio");
-    expect(r.destPoolCodes).toEqual(["luis", "rebecca", "fausto", "elisabetta"]);
+    expect(r.destPoolCodes).not.toContain("luis");
+    expect(r.destPoolCodes).toEqual(["rebecca", "fausto", "elisabetta"]);
   });
 
   it("tab giovanni (sospeso) redistribuisce al pool Lucca", () => {

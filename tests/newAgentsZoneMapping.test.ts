@@ -34,6 +34,19 @@ describe("nuovi agenti — mapping zone (Antonio/Giovanni in ferie)", () => {
     expect(sheetsForZone("Ponsacco")).toEqual(["AG-PONTEDERA", "AG-PONTEDERA"]);
   });
 
+  it("zone Vicopisano di Luis vanno su AG-PONTEDERA", () => {
+    const exclusive = [
+      "Vicopisano",
+      "Caprona",
+      "Cucigliana",
+      "Uliveto Terme",
+      "San Giovanni alla Vena",
+    ];
+    for (const zone of exclusive) {
+      expect(sheetsForZone(zone), zone).toEqual(["AG-PONTEDERA"]);
+    }
+  });
+
   it("zone Lucca di Giovanni vanno su AG-LUCCA", () => {
     const exclusive = [
       "ANTRACCOLI",
@@ -80,6 +93,7 @@ describe("agenti sospesi", () => {
     expect(valentinaZones).toEqual([]);
     expect(isSuspendedPisaAgentSheet("VALENTINA")).toBe(true);
     expect(isSuspendedPontederaAgentSheet("ANTONIO")).toBe(true);
+    expect(isSuspendedPontederaAgentSheet("LUIS")).toBe(true);
     expect(isSuspendedLuccaAgentSheet("GIOVANNI")).toBe(true);
   });
 });

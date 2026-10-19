@@ -26,7 +26,7 @@ export const QZ9_AGENCY_ZONE_BY_SHEET: Record<string, string> = {
 export const QZ9_KEEP_AGENCY_SHEETS = new Set(["AG-PISA", "AG-LUCCA", "AG-VIAREGGIO"]);
 
 export const QZ9_POOLS_BY_ZONE: Record<string, string[]> = {
-  pontedera: ["luis", "rebecca", "fausto", "elisabetta"],
+  pontedera: ["rebecca", "fausto", "elisabetta"],
   livorno: ["matteo", "viviana", "massimiliano", "guido"],
   lucca: ["alfredo", "mary"],
   pisa: [
@@ -64,7 +64,6 @@ export const QZ9_AGENT_OWNER_ZONE_BY_CODE: Record<string, string> = {
   luigi: "pisa",
   stefania: "pisa",
   morgan: "pisa",
-  luis: "pontedera",
   rebecca: "pontedera",
   fausto: "pontedera",
   elisabetta: "pontedera",
@@ -74,6 +73,7 @@ export const QZ9_AGENT_OWNER_ZONE_BY_CODE: Record<string, string> = {
 export const QZ9_SUSPENDED_AGENT_OWNER_ZONE: Record<string, string> = {
   valentina: "pisa",
   antonio: "pontedera",
+  luis: "pontedera",
   giovanni: "lucca",
 };
 
