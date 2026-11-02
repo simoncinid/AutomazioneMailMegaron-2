@@ -24,14 +24,14 @@ function rulesFromHardCoded(): ZoneSheetRule[] {
   }));
 }
 
-describe("nuovi agenti — mapping zone (Antonio/Giovanni in ferie)", () => {
+describe("nuovi agenti — mapping zone (Giovanni in ferie, Antonio attivo)", () => {
   it("Morgan riceve ancora Pisanova e Don Bosco", () => {
     expect(sheetsForZone("PISANOVA")).toEqual(["MORGAN"]);
     expect(sheetsForZone("DON BOSCO")).toEqual(["MORGAN"]);
   });
 
-  it("Ponsacco va su AG-PONTEDERA (FERIE ANTONIO)", () => {
-    expect(sheetsForZone("Ponsacco")).toEqual(["AG-PONTEDERA", "AG-PONTEDERA"]);
+  it("Ponsacco va su ANTONIO", () => {
+    expect(sheetsForZone("Ponsacco")).toEqual(["ANTONIO", "ANTONIO"]);
   });
 
   it("zone Vicopisano di Luis vanno su AG-PONTEDERA", () => {
@@ -75,24 +75,24 @@ describe("nuovi agenti — mapping zone (Antonio/Giovanni in ferie)", () => {
     ).toBe("AG-PISA");
   });
 
-  it("disambigua Centro Storico Ponsacco → AG-PONTEDERA", () => {
+  it("disambigua Centro Storico Ponsacco → ANTONIO", () => {
     const rules = rulesFromHardCoded();
     expect(
       resolveSheetForZone("Centro Storico", rules, "sid", "Default", {
         city: "Ponsacco",
       }).sheetTitle,
-    ).toBe("AG-PONTEDERA");
+    ).toBe("ANTONIO");
   });
 });
 
 describe("agenti sospesi", () => {
-  it("Valentina senza zone; Antonio e Giovanni sospesi", () => {
+  it("Valentina senza zone; Luis e Giovanni sospesi; Antonio attivo", () => {
     const valentinaZones = getHardCodedZoneSheetMapping().filter(
       ([, sheet]) => sheet.trim().toLowerCase() === "valentina",
     );
     expect(valentinaZones).toEqual([]);
     expect(isSuspendedPisaAgentSheet("VALENTINA")).toBe(true);
-    expect(isSuspendedPontederaAgentSheet("ANTONIO")).toBe(true);
+    expect(isSuspendedPontederaAgentSheet("ANTONIO")).toBe(false);
     expect(isSuspendedPontederaAgentSheet("LUIS")).toBe(true);
     expect(isSuspendedLuccaAgentSheet("GIOVANNI")).toBe(true);
   });

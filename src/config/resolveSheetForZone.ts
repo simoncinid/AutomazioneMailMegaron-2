@@ -58,8 +58,7 @@ function pickSheetByZoneCityProvince(
       return null;
     case "centro storico":
       if (cityIn("livorno")) return "GUIDO";
-      // FERIE ANTONIO: era "ANTONIO"
-      if (cityIn("ponsacco")) return "AG-PONTEDERA";
+      if (cityIn("ponsacco")) return "ANTONIO";
       return null;
     case "cevoli":
       // FERIE LUIS: era "LUIS"

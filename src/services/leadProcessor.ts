@@ -69,7 +69,7 @@ const PONTEDERA_AGENT_SHEETS = [
   "REBECCA",
   "FAUSTO",
   "ELISABETTA",
-  // "ANTONIO", // FERIE ANTONIO → v. src/config/suspendedAgents.ts
+  "ANTONIO",
 ] as const;
 const LIVORNO_AGENT_SHEETS = [
   "MATTEO",

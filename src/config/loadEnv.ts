@@ -263,7 +263,7 @@ const BASE_HARD_CODED_ZONE_SHEET_MAPPING: Array<[string, string]> = [
   ["I Poggini", "AG-PONTEDERA"],
   ["Le Melorie", "AG-PONTEDERA"],
   ["Parco Urbano", "AG-PONTEDERA"],
-  ["Ponsacco", "AG-PONTEDERA"], // FERIE ANTONIO: era "ANTONIO"
+  ["Ponsacco", "ANTONIO"],
   ["Val Di Cava", "AG-PONTEDERA"],
   ["Zona Coop", "AG-PONTEDERA"],
   ["Nocolino", "AG-PONTEDERA"],
@@ -327,7 +327,7 @@ const BASE_HARD_CODED_ZONE_SHEET_MAPPING: Array<[string, string]> = [
   ["EMPOLI - PONTE A ELSA", "AG-PONTEDERA"],
   ["FUCECCHIO - BOTTEGHE", "AG-PONTEDERA"],
   ["Pomarance", "AG-PISA"],
-  ["Ponsacco", "AG-PONTEDERA"], // FERIE ANTONIO: era "ANTONIO"
+  ["Ponsacco", "ANTONIO"],
   ["Pontedera", "ELISABETTA"],
   ["Riparbella", "AG-PISA"],
   ["San Giuliano Terme", "DAVIDE"], // FERIE DAVIDE: era "DAVIDE"

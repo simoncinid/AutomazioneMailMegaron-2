@@ -12,7 +12,7 @@ import {
 describe("suspendedAgents", () => {
   it("elenca tutti gli agenti in ferie attesi", () => {
     expect([...SUSPENDED_PISA_AGENT_CODES]).toEqual(["valentina"]);
-    expect([...SUSPENDED_PONTEDERA_AGENT_CODES]).toEqual(["antonio", "luis"]);
+    expect([...SUSPENDED_PONTEDERA_AGENT_CODES]).toEqual(["luis"]);
     expect([...SUSPENDED_LUCCA_AGENT_CODES]).toEqual(["giovanni"]);
   });
 
@@ -25,9 +25,9 @@ describe("suspendedAgents", () => {
     expect(isSuspendedAgentSheet("LUIS")).toBe(true);
     expect(isSuspendedPontederaAgentSheet("LUIS")).toBe(true);
     expect(isSuspendedAgentSheet("MARCO")).toBe(false);
-    expect(isSuspendedPontederaAgentSheet("Antonio")).toBe(true);
+    expect(isSuspendedPontederaAgentSheet("Antonio")).toBe(false);
     expect(isSuspendedLuccaAgentSheet("GIOVANNI")).toBe(true);
-    expect(isSuspendedAgentSheet("antonio")).toBe(true);
+    expect(isSuspendedAgentSheet("antonio")).toBe(false);
     expect(isSuspendedAgentSheet("giovanni")).toBe(true);
   });
 });
