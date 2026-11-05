@@ -27,7 +27,7 @@ export const QZ9_KEEP_AGENCY_SHEETS = new Set(["AG-PISA", "AG-LUCCA", "AG-VIAREG
 
 export const QZ9_POOLS_BY_ZONE: Record<string, string[]> = {
   pontedera: ["rebecca", "fausto", "elisabetta", "antonio"],
-  livorno: ["matteo", "viviana", "massimiliano", "guido"],
+  livorno: ["matteo", "viviana", "massimiliano", "guido", "lisa"],
   lucca: ["alfredo", "mary"],
   pisa: [
     "massimo",

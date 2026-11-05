@@ -45,6 +45,7 @@ describe("QZ9 config allineata al .gs", () => {
     expect(parseGsStringArrayField(poolsBlock, "pisa")).toEqual(QZ9_POOLS_BY_ZONE.pisa);
     expect(parseGsStringArrayField(poolsBlock, "pontedera")).toEqual(QZ9_POOLS_BY_ZONE.pontedera);
     expect(parseGsStringArrayField(poolsBlock, "lucca")).toEqual(QZ9_POOLS_BY_ZONE.lucca);
+    expect(parseGsStringArrayField(poolsBlock, "livorno")).toEqual(QZ9_POOLS_BY_ZONE.livorno);
   });
 
   it("sospesi allineati tra .gs e backend", () => {

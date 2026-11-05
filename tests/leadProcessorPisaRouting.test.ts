@@ -424,7 +424,7 @@ describe("processInboundEmail AG-PISA routing", () => {
     } as unknown as ListingRepository;
 
     const env = buildEnv();
-    for (let i = 0; i < 8; i += 1) {
+    for (let i = 0; i < 10; i += 1) {
       const id = `livorno-${i}`;
       await processInboundEmail(
         {
@@ -444,10 +444,12 @@ describe("processInboundEmail AG-PISA routing", () => {
       "VIVIANA",
       "MASSIMILIANO",
       "GUIDO",
+      "LISA",
       "MATTEO",
       "VIVIANA",
       "MASSIMILIANO",
       "GUIDO",
+      "LISA",
     ]);
     expect(appended.map((row) => row.sheetTitle)).not.toContain("EROS");
   });

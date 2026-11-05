@@ -9,7 +9,7 @@
  * POOL ATTIVI
  * - Pisa:      massimo, davide, eros, samuele, giuseppe, tommaso, mattia, stefania, marco, luigi, morgan
  * - Pontedera: rebecca, fausto, elisabetta, antonio
- * - Livorno:   matteo, viviana, massimiliano, guido
+ * - Livorno:   matteo, viviana, massimiliano, guido, lisa
  * - Lucca:     alfredo, mary
  *
  * FERIE / SOSPESI (tab sorgente restano attivi; lead nuovi non vanno a loro)
@@ -75,7 +75,7 @@ const qz9KeepAgencySheets = new Set(["AG-PISA", "AG-LUCCA", "AG-VIAREGGIO"]);
  */
 const qz9PoolsByZone = {
   pontedera: ["rebecca", "fausto", "elisabetta", "antonio"],
-  livorno: ["matteo", "viviana", "massimiliano", "guido"],
+  livorno: ["matteo", "viviana", "massimiliano", "guido", "lisa"],
   lucca: ["alfredo", "mary"],
   pisa: ["massimo", "davide", "eros", "samuele", "giuseppe", "tommaso", "mattia", "stefania", "marco", "luigi", "morgan"],
   viareggio: [],
@@ -88,7 +88,7 @@ const qz9AgentOwnerZoneByCode = {
   viviana: "livorno",
   massimiliano: "livorno",
   guido: "livorno",
-  lisa: "livorno", // assegnazione diretta, non in pool AG-LIVORNO
+  lisa: "livorno", // nel pool AG-LIVORNO; Venezia/Pontino restano assegnazione diretta
 
   // Lucca
   alfredo: "lucca",

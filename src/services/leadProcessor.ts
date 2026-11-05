@@ -76,6 +76,7 @@ const LIVORNO_AGENT_SHEETS = [
   "VIVIANA",
   "MASSIMILIANO",
   "GUIDO",
+  "LISA", // anche zone dirette Venezia / Pontino
 ] as const;
 const PISA_RANDOM_POOL_ZONE_KEYS = new Set([
   "capannoli",
