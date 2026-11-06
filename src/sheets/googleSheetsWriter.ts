@@ -66,7 +66,19 @@ const END_COLUMN_INDEX_BY_KIND: Record<RowKind, number> = {
 };
 
 const DEFAULT_STATO = "Da Chiamare";
+/** Righe extra oltre il minimo necessario, per non espandere a ogni singola lead. */
+const GRID_ROW_EXPAND_BUFFER = 200;
 const log = logger.child({ module: "googleSheetsWriter" });
+
+/** Quante righe aggiungere in coda se `requiredLastRow` supera la griglia attuale. */
+export function rowsToAppendForCapacity(
+  currentRowCount: number,
+  requiredLastRow: number,
+  buffer: number = GRID_ROW_EXPAND_BUFFER,
+): number {
+  if (requiredLastRow <= currentRowCount) return 0;
+  return requiredLastRow - currentRowCount + Math.max(0, buffer);
+}
 
 /**
  * Riempie la colonna A (lead.email) anche se vuota: senza placeholder le righe
@@ -201,6 +213,9 @@ export class GoogleSheetsWriter {
     if (rows.length === 0) return;
 
     const startRow = await this.resolveNextAppendRow(spreadsheetId, sheetTitle);
+    const requiredLastRow = startRow + rows.length - 1;
+    await this.ensureSheetRowCapacity(spreadsheetId, sheetTitle, requiredLastRow);
+
     const range = formatSheetRange(sheetTitle, `A${startRow}`);
 
     await withGoogleSheetsOperation(
@@ -212,6 +227,64 @@ export class GoogleSheetsWriter {
           requestBody: { values: rows },
         }),
       { spreadsheetId, sheetTitle, range, operation: "values.update.appendAtEnd" },
+    );
+  }
+
+  /**
+   * Se la griglia del tab è troppo corta per scrivere fino a `requiredLastRow`,
+   * aggiunge righe in coda (appendDimension: non sposta/rompe le righe esistenti).
+   */
+  private async ensureSheetRowCapacity(
+    spreadsheetId: string,
+    sheetTitle: string,
+    requiredLastRow: number,
+  ): Promise<void> {
+    const meta = await withGoogleSheetsOperation(
+      (sheets) =>
+        sheets.spreadsheets.get({
+          spreadsheetId,
+          fields: "sheets(properties(sheetId,title,gridProperties(rowCount)))",
+        }),
+      { spreadsheetId, sheetTitle, operation: "spreadsheets.get.gridRows" },
+    );
+
+    const sheet = (meta.data.sheets ?? []).find((s) => s.properties?.title === sheetTitle);
+    const sheetId = sheet?.properties?.sheetId;
+    const rowCount = sheet?.properties?.gridProperties?.rowCount ?? 0;
+    if (sheetId == null) {
+      throw new Error(`Foglio non trovato nello spreadsheet: ${sheetTitle}`);
+    }
+
+    const rowsToAdd = rowsToAppendForCapacity(rowCount, requiredLastRow);
+    if (rowsToAdd <= 0) return;
+
+    log.info(
+      { spreadsheetId, sheetTitle, rowCount, requiredLastRow, rowsToAdd },
+      "Griglia foglio piena: aggiungo righe in coda",
+    );
+
+    await withGoogleSheetsOperation(
+      (sheets) =>
+        sheets.spreadsheets.batchUpdate({
+          spreadsheetId,
+          requestBody: {
+            requests: [
+              {
+                appendDimension: {
+                  sheetId,
+                  dimension: "ROWS",
+                  length: rowsToAdd,
+                },
+              },
+            ],
+          },
+        }),
+      {
+        spreadsheetId,
+        sheetTitle,
+        operation: "spreadsheets.batchUpdate.appendRows",
+        rowsToAdd,
+      },
     );
   }
 
