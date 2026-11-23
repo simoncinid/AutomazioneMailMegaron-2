@@ -7,7 +7,7 @@
  * 2) qz9InstallTriggerGiornaliero    (una volta)
  *
  * POOL ATTIVI
- * - Pisa:      massimo, davide, eros, samuele, giuseppe, tommaso, mattia, stefania, marco, luigi, morgan
+ * - Pisa:      massimo, davide, eros, samuele, giuseppe, tommaso, mattia, stefania, marco, luigi, morgan, lazzeri
  * - Pontedera: rebecca, fausto, elisabetta, antonio
  * - Livorno:   matteo, viviana, massimiliano, guido, lisa
  * - Lucca:     alfredo, mary
@@ -16,6 +16,8 @@
  * - Pisa:      valentina (nessuna zona; ex DON BOSCO/PISANOVA → morgan)
  * - Pontedera: luis (zone → AG-PONTEDERA nel backend)
  * - Lucca:     giovanni (zone → AG-LUCCA nel backend)
+ *
+ * Lazzeri: zone dirette RIGLIONE / ORATOIO / PUTIGNANO + pool random Pisa
  *
  * ═══ RIATTIVARE UN AGENTE AL 100% (es. STEFANIA) ═══
  * Checklist completa anche in src/config/suspendedAgents.ts (backend Node).
@@ -77,7 +79,7 @@ const qz9PoolsByZone = {
   pontedera: ["rebecca", "fausto", "elisabetta", "antonio"],
   livorno: ["matteo", "viviana", "massimiliano", "guido", "lisa"],
   lucca: ["alfredo", "mary"],
-  pisa: ["massimo", "davide", "eros", "samuele", "giuseppe", "tommaso", "mattia", "stefania", "marco", "luigi", "morgan"],
+  pisa: ["massimo", "davide", "eros", "samuele", "giuseppe", "tommaso", "mattia", "stefania", "marco", "luigi", "morgan", "lazzeri"],
   viareggio: [],
 };
 
@@ -106,6 +108,7 @@ const qz9AgentOwnerZoneByCode = {
   luigi: "pisa",
   stefania: "pisa",
   morgan: "pisa",
+  lazzeri: "pisa",
 
   // Pontedera — attivi
   rebecca: "pontedera",
@@ -157,6 +160,7 @@ const qz9AgentTabByCode = {
   luigi: "luigi",
   stefania: "stefania",
   morgan: "morgan",
+  lazzeri: "LAZZERI",
 
   // Sospesi (tab sorgente)
   valentina: "valentina",

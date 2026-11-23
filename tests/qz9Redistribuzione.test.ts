@@ -79,9 +79,12 @@ describe("QZ9 config allineata al .gs", () => {
     expect(QZ9_AGENT_OWNER_ZONE_BY_CODE.giovanni).toBeUndefined();
   });
 
-  it("morgan/marco/antonio attivi; giovanni solo in tab map sospesi", () => {
+  it("morgan/lazzeri/marco/antonio attivi; giovanni solo in tab map sospesi", () => {
     expect(QZ9_POOLS_BY_ZONE.pisa).toContain("morgan");
+    expect(QZ9_POOLS_BY_ZONE.pisa).toContain("lazzeri");
+    expect(QZ9_AGENT_OWNER_ZONE_BY_CODE.lazzeri).toBe("pisa");
     expect(QZ9_AGENT_TAB_BY_CODE.morgan).toBe("morgan");
+    expect(QZ9_AGENT_TAB_BY_CODE.lazzeri).toBe("LAZZERI");
     expect(QZ9_AGENT_TAB_BY_CODE.marco).toBe("marco");
     expect(QZ9_AGENT_TAB_BY_CODE.antonio).toBe("antonio");
     expect(QZ9_AGENT_TAB_BY_CODE.giovanni).toBe("giovanni");
@@ -141,6 +144,15 @@ describe("QZ9 routing redistribuzione", () => {
     expect(r.destPoolCodes).toContain("massimo");
   });
 
+  it("tab LAZZERI redistribuisce agli altri Pisa (senza lazzeri)", () => {
+    const r = qz9ComputeRouteForSource("LAZZERI", agentMap);
+    expect(r.mode).toBe("move");
+    if (r.mode !== "move") return;
+    expect(r.routeZone).toBe("pisa");
+    expect(r.destPoolCodes).not.toContain("lazzeri");
+    expect(r.destPoolCodes).toContain("morgan");
+  });
+
   it("tab luis (sospeso) redistribuisce al pool Pontedera", () => {
     const r = qz9ComputeRouteForSource("luis", agentMap);
     expect(r.mode).toBe("move");
@@ -189,7 +201,7 @@ describe("QZ9 routing redistribuzione", () => {
 
     expect(picks[0]).toBe("massimo");
     expect(picks[1]).toBe("davide");
-    expect(picks[r.destPoolCodes.length - 1]).toBe("morgan");
+    expect(picks[r.destPoolCodes.length - 1]).toBe("lazzeri");
     expect(picks[r.destPoolCodes.length]).toBe("massimo");
     expect(picks).not.toContain("valentina");
   });

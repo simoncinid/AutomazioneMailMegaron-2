@@ -52,6 +52,7 @@ const sortLeadAgentTabs = [
   "luigi",
   "stefania",
   "morgan",
+  "LAZZERI",
   "valentina",
 ];
 

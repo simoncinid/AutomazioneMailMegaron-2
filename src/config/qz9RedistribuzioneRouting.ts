@@ -41,6 +41,7 @@ export const QZ9_POOLS_BY_ZONE: Record<string, string[]> = {
     "marco",
     "luigi",
     "morgan",
+    "lazzeri",
   ],
   viareggio: [],
 };
@@ -64,6 +65,7 @@ export const QZ9_AGENT_OWNER_ZONE_BY_CODE: Record<string, string> = {
   luigi: "pisa",
   stefania: "pisa",
   morgan: "pisa",
+  lazzeri: "pisa",
   rebecca: "pontedera",
   fausto: "pontedera",
   elisabetta: "pontedera",
@@ -101,6 +103,7 @@ export const QZ9_AGENT_TAB_BY_CODE: Record<string, string> = {
   luigi: "luigi",
   stefania: "stefania",
   morgan: "morgan",
+  lazzeri: "LAZZERI",
   valentina: "valentina",
   marco: "marco",
 };

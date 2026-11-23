@@ -191,7 +191,59 @@ describe("processInboundEmail AG-PISA routing", () => {
       "MARCO",
       "LUIGI",
       "MORGAN",
+      "LAZZERI",
     ]).toContain(appended[0]?.sheetTitle);
+  });
+
+  it("assegna RIGLIONE, ORATOIO e PUTIGNANO a LAZZERI", async () => {
+    const { processInboundEmail } = await import("../src/services/leadProcessor.js");
+    const appended: LeadRowPayload[] = [];
+    const sheets = {
+      appendLead: vi.fn(async (payload: LeadRowPayload) => {
+        appended.push(payload);
+      }),
+    } as unknown as GoogleSheetsWriter;
+
+    const lazzeriCases = [
+      { id: "riglione-0", zone: "RIGLIONE" },
+      { id: "oratoio-0", zone: "ORATOIO" },
+      { id: "putignano-0", zone: "PUTIGNANO" },
+    ] as const;
+
+    for (const testCase of lazzeriCases) {
+      appended.length = 0;
+      const listings = {
+        findLatestByExternalListingId: vi.fn(async () => ({
+          ...buildListing(testCase.id),
+          zone: testCase.zone,
+        })),
+      } as unknown as ListingRepository;
+
+      const env = buildEnv();
+      env.zoneSheetRules.push({
+        name: `lazzeri_${testCase.id}`,
+        pattern: testCase.zone,
+        match: "contains",
+        spreadsheetId: "spreadsheet-id",
+        sheetTitle: "LAZZERI",
+      });
+
+      await processInboundEmail(
+        {
+          messageId: `message-${testCase.id}`,
+          from: "portal@example.com",
+          subject: testCase.id,
+          receivedAt: new Date("2026-05-25T10:00:00Z"),
+          textBody: `Lead ${testCase.zone}`,
+        },
+        { env, listings, sheets },
+        new Date("2026-05-25T10:00:00Z"),
+      );
+
+      expect(appended).toHaveLength(1);
+      expect(appended[0]?.sheetTitle).toBe("LAZZERI");
+      expect(appended[0]?.zone).toBe(testCase.zone);
+    }
   });
 
   it("assegna PORTA A MARE e SANT'ANTONIO a MARCO", async () => {
@@ -339,7 +391,7 @@ describe("processInboundEmail AG-PISA routing", () => {
     } as unknown as ListingRepository;
 
     const env = buildEnv();
-    for (let i = 0; i < 11; i += 1) {
+    for (let i = 0; i < 12; i += 1) {
       const id = i % 2 === 0 ? `passi-${i}` : `calambrone-${i}`;
       await processInboundEmail(
         {
@@ -366,11 +418,13 @@ describe("processInboundEmail AG-PISA routing", () => {
       "MARCO",
       "LUIGI",
       "MORGAN",
+      "LAZZERI",
     ]);
     expect(appended.map((row) => row.sheetTitle)).not.toContain("ELISABETTA");
     expect(appended.map((row) => row.sheetTitle)).not.toContain("FAUSTO");
     expect(appended.map((row) => row.sheetTitle)).not.toContain("LUIS");
     expect(appended.map((row) => row.sheetTitle)).not.toContain("VALENTINA");
+    expect(appended.map((row) => row.sheetTitle)).not.toContain("MARTA");
   });
 
   it("assegna AG-VIAREGGIO solo agli agenti del pool Lucca", async () => {
@@ -550,7 +604,7 @@ describe("processInboundEmail AG-PISA routing", () => {
   });
 
   it("assegna randomicamente le zone ex Patrizia sul pool Pisa", async () => {
-    // pool Pisa ha 10 agenti: index 1 = DAVIDE → floor(0.15 * 10) = 1
+    // pool Pisa ha 12 agenti: index 1 = DAVIDE → floor(0.15 * 12) = 1
     const randomSpy = vi.spyOn(Math, "random").mockReturnValue(0.15);
     const { processInboundEmail } = await import("../src/services/leadProcessor.js");
     const appended: LeadRowPayload[] = [];
