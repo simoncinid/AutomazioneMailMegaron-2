@@ -57,7 +57,7 @@ const PISA_AGENT_SHEETS = [
   "MARCO",
   "LUIGI",
   "MORGAN",
-  "Lazzeri",
+  "LAZZERI",
 ] as const;
 const LUCCA_VIAREGGIO_AGENT_SHEETS = [
   "ALFREDO",

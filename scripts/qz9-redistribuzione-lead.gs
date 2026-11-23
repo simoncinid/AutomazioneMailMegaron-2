@@ -17,7 +17,7 @@
  * - Pontedera: luis (zone → AG-PONTEDERA nel backend)
  * - Lucca:     giovanni (zone → AG-LUCCA nel backend)
  *
- * Lazzeri: zone dirette RIGLIONE / ORATOIO / PUTIGNANO + pool random Pisa
+ * LAZZERI: zone dirette RIGLIONE / ORATOIO / PUTIGNANO + pool random Pisa
  *
  * ═══ RIATTIVARE UN AGENTE AL 100% (es. STEFANIA) ═══
  * Checklist completa anche in src/config/suspendedAgents.ts (backend Node).
@@ -160,7 +160,7 @@ const qz9AgentTabByCode = {
   luigi: "luigi",
   stefania: "stefania",
   morgan: "morgan",
-  lazzeri: "Lazzeri",
+  lazzeri: "LAZZERI",
 
   // Sospesi (tab sorgente)
   valentina: "valentina",

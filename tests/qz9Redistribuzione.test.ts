@@ -84,7 +84,7 @@ describe("QZ9 config allineata al .gs", () => {
     expect(QZ9_POOLS_BY_ZONE.pisa).toContain("lazzeri");
     expect(QZ9_AGENT_OWNER_ZONE_BY_CODE.lazzeri).toBe("pisa");
     expect(QZ9_AGENT_TAB_BY_CODE.morgan).toBe("morgan");
-    expect(QZ9_AGENT_TAB_BY_CODE.lazzeri).toBe("Lazzeri");
+    expect(QZ9_AGENT_TAB_BY_CODE.lazzeri).toBe("LAZZERI");
     expect(QZ9_AGENT_TAB_BY_CODE.marco).toBe("marco");
     expect(QZ9_AGENT_TAB_BY_CODE.antonio).toBe("antonio");
     expect(QZ9_AGENT_TAB_BY_CODE.giovanni).toBe("giovanni");
@@ -144,8 +144,8 @@ describe("QZ9 routing redistribuzione", () => {
     expect(r.destPoolCodes).toContain("massimo");
   });
 
-  it("tab Lazzeri redistribuisce agli altri Pisa (senza lazzeri)", () => {
-    const r = qz9ComputeRouteForSource("Lazzeri", agentMap);
+  it("tab LAZZERI redistribuisce agli altri Pisa (senza lazzeri)", () => {
+    const r = qz9ComputeRouteForSource("LAZZERI", agentMap);
     expect(r.mode).toBe("move");
     if (r.mode !== "move") return;
     expect(r.routeZone).toBe("pisa");
