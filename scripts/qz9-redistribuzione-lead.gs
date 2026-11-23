@@ -160,7 +160,7 @@ const qz9AgentTabByCode = {
   luigi: "luigi",
   stefania: "stefania",
   morgan: "morgan",
-  lazzeri: "LAZZERI",
+  lazzeri: "Lazzeri",
 
   // Sospesi (tab sorgente)
   valentina: "valentina",

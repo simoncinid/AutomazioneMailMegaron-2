@@ -103,7 +103,7 @@ export const QZ9_AGENT_TAB_BY_CODE: Record<string, string> = {
   luigi: "luigi",
   stefania: "stefania",
   morgan: "morgan",
-  lazzeri: "LAZZERI",
+  lazzeri: "Lazzeri",
   valentina: "valentina",
   marco: "marco",
 };

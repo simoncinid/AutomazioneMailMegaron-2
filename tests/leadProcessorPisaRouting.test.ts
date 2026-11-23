@@ -191,11 +191,11 @@ describe("processInboundEmail AG-PISA routing", () => {
       "MARCO",
       "LUIGI",
       "MORGAN",
-      "LAZZERI",
+      "Lazzeri",
     ]).toContain(appended[0]?.sheetTitle);
   });
 
-  it("assegna RIGLIONE, ORATOIO e PUTIGNANO a LAZZERI", async () => {
+  it("assegna RIGLIONE, ORATOIO e PUTIGNANO a Lazzeri", async () => {
     const { processInboundEmail } = await import("../src/services/leadProcessor.js");
     const appended: LeadRowPayload[] = [];
     const sheets = {
@@ -225,7 +225,7 @@ describe("processInboundEmail AG-PISA routing", () => {
         pattern: testCase.zone,
         match: "contains",
         spreadsheetId: "spreadsheet-id",
-        sheetTitle: "LAZZERI",
+        sheetTitle: "Lazzeri",
       });
 
       await processInboundEmail(
@@ -241,7 +241,7 @@ describe("processInboundEmail AG-PISA routing", () => {
       );
 
       expect(appended).toHaveLength(1);
-      expect(appended[0]?.sheetTitle).toBe("LAZZERI");
+      expect(appended[0]?.sheetTitle).toBe("Lazzeri");
       expect(appended[0]?.zone).toBe(testCase.zone);
     }
   });
@@ -418,7 +418,7 @@ describe("processInboundEmail AG-PISA routing", () => {
       "MARCO",
       "LUIGI",
       "MORGAN",
-      "LAZZERI",
+      "Lazzeri",
     ]);
     expect(appended.map((row) => row.sheetTitle)).not.toContain("ELISABETTA");
     expect(appended.map((row) => row.sheetTitle)).not.toContain("FAUSTO");

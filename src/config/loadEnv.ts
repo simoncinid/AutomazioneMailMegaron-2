@@ -20,7 +20,7 @@ const BASE_HARD_CODED_ZONE_SHEET_MAPPING: Array<[string, string]> = [
   ["LA VETTOLA", "LUIGI"],
   ["MARINA DI PISA", "AG-PISA"],
   ["MONTACCHIELLO", "AG-PONTEDERA"], // FERIE REBECCA: era "REBECCA"
-  ["ORATOIO", "LAZZERI"],
+  ["ORATOIO", "Lazzeri"],
   ["OSPEDALETTO", "AG-PONTEDERA"], // FERIE REBECCA: era "REBECCA"
   ["PIAGGE", "STEFANIA"],
   ["PISANOVA", "MORGAN"], // era VALENTINA → AG-PISA
@@ -30,8 +30,8 @@ const BASE_HARD_CODED_ZONE_SHEET_MAPPING: Array<[string, string]> = [
   ["BORGATA SESTRIERE", "MASSIMO"],
   ["PORTA NUOVA", "MATTIA"],
   ["PRATALE", "GIUSEPPE"],
-  ["PUTIGNANO", "LAZZERI"],
-  ["RIGLIONE", "LAZZERI"],
+  ["PUTIGNANO", "Lazzeri"],
+  ["RIGLIONE", "Lazzeri"],
   ["SAN FRANCESCO", "EROS"],
   ["SAN GIUSTO", "AG-PISA"],
   ["SAN MARCO", "AG-PISA"],

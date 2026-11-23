@@ -45,7 +45,7 @@ const fixShiftedAgentTabs = [
   "luigi",
   "stefania",
   "morgan",
-  "LAZZERI",
+  "Lazzeri",
   "valentina",
 ];
 

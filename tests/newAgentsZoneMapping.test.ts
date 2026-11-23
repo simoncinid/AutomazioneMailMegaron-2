@@ -31,9 +31,9 @@ describe("nuovi agenti — mapping zone (Giovanni in ferie, Antonio attivo)", ()
   });
 
   it("Lazzeri riceve Riglione, Oratoio e Putignano", () => {
-    expect(sheetsForZone("RIGLIONE")).toEqual(["LAZZERI"]);
-    expect(sheetsForZone("ORATOIO")).toEqual(["LAZZERI"]);
-    expect(sheetsForZone("PUTIGNANO")).toEqual(["LAZZERI"]);
+    expect(sheetsForZone("RIGLIONE")).toEqual(["Lazzeri"]);
+    expect(sheetsForZone("ORATOIO")).toEqual(["Lazzeri"]);
+    expect(sheetsForZone("PUTIGNANO")).toEqual(["Lazzeri"]);
   });
 
   it("Ponsacco va su ANTONIO", () => {
