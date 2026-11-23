@@ -7,7 +7,7 @@
  */
 
 // ═══ MODIFICA QUI ═══
-const sortLeadSheetName = "TOMMASO"; // nome tab esatto (es. "stefania", "TOMMASO")
+const sortLeadSheetName = "TOMMASO"; // nome tab esatto MAIUSCOLO (es. "STEFANIA", "TOMMASO")
 const sortLeadAscending = true; // true = più vecchi in alto | false = più recenti in alto
 // ═══════════════════
 
@@ -28,32 +28,32 @@ const sortLeadAllowedStati = [
 ];
 
 const sortLeadAgentTabs = [
-  "luis",
-  "rebecca",
-  "elisabetta",
-  "fausto",
-  "antonio",
-  "matteo",
-  "viviana",
-  "massimiliano",
-  "guido",
-  "lisa",
-  "alfredo",
-  "mary",
-  "giovanni",
-  "massimo",
-  "davide",
-  "eros",
-  "samuele",
-  "giuseppe",
+  "LUIS",
+  "REBECCA",
+  "ELISABETTA",
+  "FAUSTO",
+  "ANTONIO",
+  "MATTEO",
+  "VIVIANA",
+  "MASSIMILIANO",
+  "GUIDO",
+  "LISA",
+  "ALFREDO",
+  "MARY",
+  "GIOVANNI",
+  "MASSIMO",
+  "DAVIDE",
+  "EROS",
+  "SAMUELE",
+  "GIUSEPPE",
   "TOMMASO",
-  "mattia",
-  "marco",
-  "luigi",
-  "stefania",
-  "morgan",
+  "MATTIA",
+  "MARCO",
+  "LUIGI",
+  "STEFANIA",
+  "MORGAN",
   "LAZZERI",
-  "valentina",
+  "VALENTINA",
 ];
 
 /** Ordina il tab impostato in sortLeadSheetName. */

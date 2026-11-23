@@ -79,15 +79,19 @@ describe("QZ9 config allineata al .gs", () => {
     expect(QZ9_AGENT_OWNER_ZONE_BY_CODE.giovanni).toBeUndefined();
   });
 
-  it("morgan/lazzeri/marco/antonio attivi; giovanni solo in tab map sospesi", () => {
+  it("morgan/lazzeri/marco/antonio attivi; tab Google tutti MAIUSCOLI", () => {
     expect(QZ9_POOLS_BY_ZONE.pisa).toContain("morgan");
     expect(QZ9_POOLS_BY_ZONE.pisa).toContain("lazzeri");
     expect(QZ9_AGENT_OWNER_ZONE_BY_CODE.lazzeri).toBe("pisa");
-    expect(QZ9_AGENT_TAB_BY_CODE.morgan).toBe("morgan");
+    expect(QZ9_AGENT_TAB_BY_CODE.morgan).toBe("MORGAN");
     expect(QZ9_AGENT_TAB_BY_CODE.lazzeri).toBe("LAZZERI");
-    expect(QZ9_AGENT_TAB_BY_CODE.marco).toBe("marco");
-    expect(QZ9_AGENT_TAB_BY_CODE.antonio).toBe("antonio");
-    expect(QZ9_AGENT_TAB_BY_CODE.giovanni).toBe("giovanni");
+    expect(QZ9_AGENT_TAB_BY_CODE.marco).toBe("MARCO");
+    expect(QZ9_AGENT_TAB_BY_CODE.antonio).toBe("ANTONIO");
+    expect(QZ9_AGENT_TAB_BY_CODE.giovanni).toBe("GIOVANNI");
+    expect(QZ9_AGENT_TAB_BY_CODE.mattia).toBe("MATTIA");
+    for (const tab of Object.values(QZ9_AGENT_TAB_BY_CODE)) {
+      expect(tab).toBe(tab.toUpperCase());
+    }
   });
 });
 

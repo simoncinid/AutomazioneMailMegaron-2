@@ -129,43 +129,43 @@ const qz9SuspendedAgentOwnerZone = {
   giovanni: "lucca",
 };
 
-// Mappa codice agente -> nome tab reale nel file
+// Mappa codice agente -> nome tab reale nel file (tutti MAIUSCOLI).
 const qz9AgentTabByCode = {
   // Pontedera — attivi
-  rebecca: "rebecca",
-  fausto: "fausto",
-  elisabetta: "elisabetta",
-  antonio: "antonio",
+  rebecca: "REBECCA",
+  fausto: "FAUSTO",
+  elisabetta: "ELISABETTA",
+  antonio: "ANTONIO",
 
   // Livorno
-  matteo: "matteo",
-  viviana: "viviana",
-  massimiliano: "massimiliano",
-  guido: "guido",
-  lisa: "lisa",
+  matteo: "MATTEO",
+  viviana: "VIVIANA",
+  massimiliano: "MASSIMILIANO",
+  guido: "GUIDO",
+  lisa: "LISA",
 
   // Lucca — attivi
-  alfredo: "alfredo",
-  mary: "mary",
+  alfredo: "ALFREDO",
+  mary: "MARY",
 
   // Pisa — attivi
-  massimo: "massimo",
-  davide: "davide",
-  eros: "eros",
-  samuele: "samuele",
-  giuseppe: "giuseppe",
+  massimo: "MASSIMO",
+  davide: "DAVIDE",
+  eros: "EROS",
+  samuele: "SAMUELE",
+  giuseppe: "GIUSEPPE",
   tommaso: "TOMMASO",
-  mattia: "mattia",
-  marco: "marco",
-  luigi: "luigi",
-  stefania: "stefania",
-  morgan: "morgan",
+  mattia: "MATTIA",
+  marco: "MARCO",
+  luigi: "LUIGI",
+  stefania: "STEFANIA",
+  morgan: "MORGAN",
   lazzeri: "LAZZERI",
 
   // Sospesi (tab sorgente)
-  valentina: "valentina",
-  luis: "luis",
-  giovanni: "giovanni",
+  valentina: "VALENTINA",
+  luis: "LUIS",
+  giovanni: "GIOVANNI",
 };
 
 const qz9ProvinceRoutedAgents = new Set();
